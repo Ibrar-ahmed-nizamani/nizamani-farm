@@ -18,7 +18,7 @@ export default async function CustomerTransactionsPage({
 }) {
   const customerId = (await params).customerID;
   const { transactions, customer } = await getCustomerSummary(customerId);
-
+  console.log(transactions);
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
@@ -42,6 +42,7 @@ export default async function CustomerTransactionsPage({
           <TableHeader>
             <TableRow>
               <TableHead>Payment</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
@@ -53,9 +54,9 @@ export default async function CustomerTransactionsPage({
                   <TableCell>
                     Rs {transaction.amount.toLocaleString()}
                   </TableCell>
-
+                  <TableCell>{transaction.description || "N/A"}</TableCell>
                   <TableCell>
-                    {new Date(transaction.date).toLocaleDateString()}
+                    {new Date(transaction.date).toLocaleDateString("en-GB")}
                   </TableCell>
                 </TableRow>
               ))}

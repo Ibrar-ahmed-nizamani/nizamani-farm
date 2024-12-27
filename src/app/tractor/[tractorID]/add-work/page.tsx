@@ -1,4 +1,3 @@
-import { EquipmentRateForm } from "@/components/tractor/equipment-rates-form";
 import { ExpenseForm } from "@/components/tractor/work-form";
 import { CardDescription } from "@/components/ui/card";
 import { getTractorDetails } from "@/lib/actions/tractor";
@@ -12,14 +11,15 @@ export default async function AddTractorWorkPage({
   const tractorDetails = await getTractorDetails(tractorID);
 
   return (
-    <section>
+    <section className="space-y-4">
       <div className="mb-3">
         <h2 className="text-xl font-semibold">{tractorDetails.tractorName}</h2>
         <CardDescription className="text-base">
           {tractorDetails.tractorModel}
         </CardDescription>
       </div>
-      <EquipmentRateForm />
+      <h3 className="text-lg font-semibold">Add Tractor Work</h3>
+      {/* <EquipmentRateForm /> */}
       <ExpenseForm tractorID={tractorID} />
     </section>
   );

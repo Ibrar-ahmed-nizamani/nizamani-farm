@@ -15,6 +15,7 @@ export interface Transaction {
   amount: number;
   type: "DEBIT" | "CREDIT";
   date: Date;
+  description: string;
   workId?: ObjectId; // Reference to work if transaction is from work
 }
 
@@ -33,5 +34,14 @@ export interface Work {
     amount: number;
   }[];
   totalAmount: number;
+  createdAt: Date;
+}
+
+export interface TractorExpense {
+  _id: ObjectId;
+  tractorId: ObjectId;
+  amount: number;
+  date: Date;
+  description: string;
   createdAt: Date;
 }

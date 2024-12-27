@@ -35,6 +35,17 @@ export default function AddTransactionForm({
             <input type="hidden" name="customerId" value={customerId} />
 
             <div>
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                name="description"
+                type="text"
+                placeholder="Enter transaction description"
+                required
+              />
+            </div>
+
+            <div>
               <Label htmlFor="amount">Amount</Label>
               <Input
                 id="amount"

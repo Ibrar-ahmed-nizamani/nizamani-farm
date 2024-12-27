@@ -12,12 +12,14 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
 
     const amount = parseFloat(formData.get("amount") as string);
     const date = new Date(formData.get("date") as string);
+    const description = formData.get("description") as string;
 
     // Insert transaction
     await db.collection("transactions").insertOne({
       customerId: new ObjectId(customerId),
       amount,
       date,
+      description,
       type: "CREDIT",
       createdAt: new Date(),
     });

@@ -100,11 +100,31 @@ export async function getTractorDetails(tractorId: string) {
       throw new Error("Tractor not found");
     }
 
-    // Return only the necessary fields
+    // Get total income from works
+    const works = await db
+      .collection("works")
+      .find({ tractorId: new ObjectId(tractorId) })
+      .toArray();
+    const totalIncome = works.reduce((sum, work) => sum + work.totalAmount, 0);
+
+    // Get total expenses
+    const expenses = await db
+      .collection("tractorExpenses")
+      .find({ tractorId: new ObjectId(tractorId) })
+      .toArray();
+    const totalExpenses = expenses.reduce(
+      (sum, expense) => sum + expense.amount,
+      0
+    );
+
+    // Return all fields including financial summary
     return {
       id: tractor._id.toString(),
       tractorName: tractor.tractorName,
       tractorModel: tractor.tractorModel,
+      totalIncome,
+      totalExpenses,
+      revenue: totalIncome - totalExpenses,
     };
   } catch (error) {
     console.error("Failed to fetch tractor details:", error);

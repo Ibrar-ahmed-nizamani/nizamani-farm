@@ -3,7 +3,6 @@
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function submitTractorWork(
   prevState: unknown,
@@ -95,11 +94,12 @@ export async function submitTractorWork(
 
     revalidatePath("/accounting/tractor");
     revalidatePath(`/accounting/tractor/${customer._id}`);
+    return { success: true, message: "Work submitted successfully" };
   } catch (error) {
     console.error("Failed to submit work:", error);
     return { success: false, message: "Failed to submit work" };
   }
-  redirect(`/tractor/${tractorId}`);
+  // redirect(`/tractor/${tractorId}`);
 }
 
 export async function getCustomerWorks(customerId: string) {

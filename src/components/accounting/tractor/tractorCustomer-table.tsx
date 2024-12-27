@@ -25,13 +25,9 @@ export default async function TractorCustomerTable() {
     0
   );
   const totalRemaining = totalDebit - totalPayment;
-  // const extraExpenses = 500; // Mock value for extra expenses
 
   return (
     <div className="space-y-8">
-      <Button variant="outline">
-        <Link href="/">Show Extra Expenses List</Link>
-      </Button>
       <div className="flex flex-wrap gap-4">
         <Badge className="p-2 text-base font-normal">
           Total Payment: Rs {totalPayment}
@@ -42,9 +38,6 @@ export default async function TractorCustomerTable() {
         <Badge variant="outline" className="p-2 text-base font-normal">
           Total Remaining: Rs {totalRemaining}
         </Badge>
-        {/* <Badge variant="outline" className="p-2 text-base font-normal">
-          Other Expenses: Rs {extraExpenses}
-        </Badge> */}
       </div>
       {customers.length === 0 ? (
         <EmptyTractorData title="Customer" />
@@ -64,7 +57,7 @@ export default async function TractorCustomerTable() {
             {customers.map((customer, index) => (
               <TableRow key={index}>
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{customer.name}</TableCell>
+                <TableCell>{customer.name.toUpperCase()}</TableCell>
                 <TableCell className="text-green-600">
                   Rs {customer.totalPaid}
                 </TableCell>
