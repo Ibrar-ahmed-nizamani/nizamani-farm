@@ -7,12 +7,28 @@ export interface Tractor {
 }
 
 export interface TractorWork {
+  no: number;
   id: string;
-  customer: string;
-  categoryHours: CategoryHours[];
-  totalAmount: number;
+  customerId: string;
+  tractorId: string;
+  customerName: string;
   date: string;
-  diesel: number;
+  driverName: string;
+  equipments: {
+    name: string;
+    hours: number;
+    ratePerHour: number;
+    amount: number;
+  }[];
+  totalAmount: number;
+  createdAt: string;
+  customer: {
+    id: string;
+    name: string;
+    totalDebit: number;
+    totalPaid: number;
+    createdAt: string;
+  };
 }
 
 export interface CategoryHours {

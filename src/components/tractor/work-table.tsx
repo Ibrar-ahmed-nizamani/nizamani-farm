@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { MoreVertical, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,57 +19,48 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TractorWork } from "@/lib/type-definitions";
 
-interface Equipment {
-  name: string;
-  hours: number;
-  ratePerHour: number;
-  amount: number;
-}
-
-interface TractorWork {
-  id: string;
-  customerId: string;
-  tractorId: string;
-  customerName: string;
-  date: string;
-  dieselExpense: number;
-  driverName: string;
-  equipments: Equipment[];
-  totalAmount: number;
-  createdAt: string;
-  customer: {
-    id: string;
-    name: string;
-    totalDebit: number;
-    totalPaid: number;
-    createdAt: string;
+interface TractorWorkTableProps {
+  works: TractorWork[];
+  pagination: {
+    total: number;
+    pages: number;
+    currentPage: number;
   };
 }
 
-interface TractorWorkTableProps {
-  tractorWorks: TractorWork[];
-}
-
 export default function TractorWorkTable({
-  tractorWorks,
+  works,
+  pagination,
 }: TractorWorkTableProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", page.toString());
+    router.replace(`${pathname}?${params.toString()}`);
+  };
+
   return (
-    <div className="container mx-auto py-10">
+    <div className="space-y-4">
       <Table className="border">
         <TableHeader>
           <TableRow>
+            <TableHead>No.</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Category & Hours</TableHead>
-            {/* <TableHead>Diesel</TableHead> */}
             <TableHead>Total Amount</TableHead>
             <TableHead>Date</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tractorWorks.map((work) => (
+          {works.map((work) => (
             <TableRow key={work.id}>
+              <TableCell>{work.no}</TableCell>
               <TableCell>{work.customerName}</TableCell>
               <TableCell>
                 {work.equipments.map((equipment, index) => (
@@ -78,7 +70,6 @@ export default function TractorWorkTable({
                   </div>
                 ))}
               </TableCell>
-              {/* <TableCell>{work.dieselExpense}</TableCell> */}
               <TableCell>
                 <span className="text-green-600">
                   {work.totalAmount.toFixed(2)}
@@ -113,6 +104,20 @@ export default function TractorWorkTable({
           ))}
         </TableBody>
       </Table>
+
+      <div className="flex justify-center gap-2 mt-4">
+        {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
+          (page) => (
+            <Button
+              key={page}
+              variant={page === pagination.currentPage ? "default" : "outline"}
+              onClick={() => handlePageChange(page)}
+            >
+              {page}
+            </Button>
+          )
+        )}
+      </div>
     </div>
   );
 }

@@ -175,7 +175,7 @@ export function ExpenseForm({ tractorID }: { tractorID: string }) {
                   <SelectTrigger className="min-w-[200px]">
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[200px] overflow-y-auto">
                     {customers.map((customer) => (
                       <SelectItem key={customer._id} value={customer._id}>
                         {customer.name}

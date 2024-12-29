@@ -131,15 +131,56 @@ export async function getCustomerWorks(customerId: string) {
   }
 }
 
-export async function getTractorWorks(tractorId: string) {
+interface MatchCondition {
+  tractorId: ObjectId;
+  date?: {
+    $gte: Date;
+    $lte: Date;
+  };
+}
+
+export async function getTractorWorks(
+  tractorId: string,
+  year?: string,
+  page: number = 1
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
+    const limit = 20; // Hardcoded limit
 
+    // Get available years
+    const availableYears = await db.collection("works").distinct("date", {
+      tractorId: new ObjectId(tractorId),
+    });
+
+    const years = [
+      ...new Set(availableYears.map((date) => new Date(date).getFullYear())),
+    ].sort((a, b) => b - a);
+
+    // Build match condition
+
+    const matchCondition: MatchCondition = {
+      tractorId: new ObjectId(tractorId),
+    };
+    if (year && year !== "all") {
+      matchCondition.date = {
+        $gte: new Date(`${year}-01-01`),
+        $lte: new Date(`${year}-12-31`),
+      };
+    }
+
+    // Get total count for pagination
+    const totalCount = await db
+      .collection("works")
+      .countDocuments(matchCondition);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Get paginated works
     const works = await db
       .collection("works")
       .aggregate([
-        { $match: { tractorId: new ObjectId(tractorId) } },
+        { $match: matchCondition },
         {
           $lookup: {
             from: "customers",
@@ -149,31 +190,54 @@ export async function getTractorWorks(tractorId: string) {
           },
         },
         { $unwind: "$customer" },
+        { $sort: { date: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
       ])
       .toArray();
 
-    // Serialize the MongoDB documents
-    return works.map((work) => ({
-      id: work._id.toString(),
-      customerId: work.customerId.toString(),
-      tractorId: work.tractorId.toString(),
-      customerName: work.customerName,
-      date: work.date.toISOString(),
-      dieselExpense: work.dieselExpense,
-      driverName: work.driverName,
-      equipments: work.equipments,
-      totalAmount: work.totalAmount,
-      createdAt: work.createdAt.toISOString(),
-      customer: {
-        id: work.customer._id.toString(),
-        name: work.customer.name,
-        totalDebit: work.customer.totalDebit,
-        totalPaid: work.customer.totalPaid,
-        createdAt: work.customer.createdAt.toISOString(),
+    return {
+      works: works.map((work, index) => ({
+        no: totalCount - ((page - 1) * limit + index),
+        id: work._id.toString(),
+        customerId: work.customerId.toString(),
+        tractorId: work.tractorId.toString(),
+        customerName: work.customerName,
+        date: work.date.toISOString(),
+        driverName: work.driverName,
+        equipments: work.equipments,
+        totalAmount: work.totalAmount,
+        createdAt: work.createdAt.toISOString(),
+        customer: {
+          id: work.customer._id.toString(),
+          name: work.customer.name,
+          totalDebit: work.customer.totalDebit,
+          totalPaid: work.customer.totalPaid,
+          createdAt: work.customer.createdAt.toISOString(),
+        },
+      })),
+      pagination: {
+        total: totalCount,
+        pages: totalPages,
+        currentPage: page,
       },
-    }));
+      availableYears: years,
+    };
   } catch (error) {
     console.error("Failed to fetch tractor works:", error);
-    return [];
+    return {
+      works: [],
+      pagination: { total: 0, pages: 0, currentPage: 1 },
+      availableYears: [],
+    };
   }
+}
+
+export async function getFilteredWorks(
+  tractorId: string,
+  year?: string,
+  page: number = 1
+) {
+  const yearNum = year ? parseInt(year) : undefined;
+  return getTractorWorks(tractorId, yearNum?.toString() || undefined, page);
 }

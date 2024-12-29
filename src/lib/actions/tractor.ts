@@ -87,7 +87,7 @@ export async function getTractors(): Promise<Tractor[]> {
   }
 }
 
-export async function getTractorDetails(tractorId: string) {
+export async function getTractorDetails(tractorId: string, year?: string) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -100,17 +100,36 @@ export async function getTractorDetails(tractorId: string) {
       throw new Error("Tractor not found");
     }
 
-    // Get total income from works
+    // Build date filter for the specified year
+    let dateFilter = {};
+    if (year && year !== "all") {
+      const startDate = new Date(`${year}-01-01`);
+      const endDate = new Date(`${year}-12-31`);
+      dateFilter = {
+        date: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      };
+    }
+
+    // Get total income from works with year filter
     const works = await db
       .collection("works")
-      .find({ tractorId: new ObjectId(tractorId) })
+      .find({
+        tractorId: new ObjectId(tractorId),
+        ...dateFilter,
+      })
       .toArray();
     const totalIncome = works.reduce((sum, work) => sum + work.totalAmount, 0);
 
-    // Get total expenses
+    // Get total expenses with year filter
     const expenses = await db
       .collection("tractorExpenses")
-      .find({ tractorId: new ObjectId(tractorId) })
+      .find({
+        tractorId: new ObjectId(tractorId),
+        ...dateFilter,
+      })
       .toArray();
     const totalExpenses = expenses.reduce(
       (sum, expense) => sum + expense.amount,
@@ -125,6 +144,7 @@ export async function getTractorDetails(tractorId: string) {
       totalIncome,
       totalExpenses,
       revenue: totalIncome - totalExpenses,
+      year: year || "all",
     };
   } catch (error) {
     console.error("Failed to fetch tractor details:", error);

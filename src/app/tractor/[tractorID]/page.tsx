@@ -6,16 +6,26 @@ import Link from "next/link";
 import { getTractorWorks } from "@/lib/actions/work";
 import { getTractorDetails } from "@/lib/actions/tractor";
 import { Card, CardContent } from "@/components/ui/card";
+import YearSelector from "@/components/tractor/year-selector";
 
 export default async function TractorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tractorID: string }>;
+  searchParams: Promise<{ year?: string }>;
 }) {
   const tractorID = (await params).tractorID;
+  const selectedYear = (await searchParams).year || "all";
 
-  const works = await getTractorWorks(tractorID);
-  const tractorDetails = await getTractorDetails(tractorID);
+  const { works, pagination, availableYears } = await getTractorWorks(
+    tractorID,
+    selectedYear
+  );
+  const tractorDetails = await getTractorDetails(
+    tractorID,
+    selectedYear === "all" ? undefined : selectedYear
+  );
 
   return (
     <section>
@@ -28,11 +38,14 @@ export default async function TractorDetailPage({
             {tractorDetails.tractorModel}
           </CardDescription>
         </div>
-        <Link href={`/tractor/${tractorID}/expenses`}>
-          <Button variant="outline" size="lg">
-            Show Expenses
-          </Button>
-        </Link>
+        <div className="flex gap-4 items-center">
+          <YearSelector availableYears={availableYears} />
+          <Link href={`/tractor/${tractorID}/expenses`}>
+            <Button variant="outline" size="lg">
+              Show Expenses
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Financial Summary Cards */}
@@ -74,7 +87,7 @@ export default async function TractorDetailPage({
       {works.length === 0 ? (
         <EmptyTractorData title="work" />
       ) : (
-        <TractorWorkTable tractorWorks={works} />
+        <TractorWorkTable works={works} pagination={pagination} />
       )}
     </section>
   );
