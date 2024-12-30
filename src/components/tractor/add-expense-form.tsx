@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useActionState } from "react";
 
-export default function AddExpenseForm({ tractorId }: { tractorId: string }) {
+export default function AddAddTractorWorkForm({ tractorId }: { tractorId: string }) {
   const initialState = { message: null, errors: {} };
   const [state, formAction] = useActionState(addTractorExpense, initialState);
 

@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EquipmentInput } from "./equipment-input";
-import { submitTractorWork } from "@/lib/actions/work";
+import { submitTractorWork, editTractorWork } from "@/lib/actions/work";
 import { getAllCustomers } from "@/lib/actions/customer";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -77,7 +77,30 @@ const workFormSchema = z
 
 type WorkFormValues = z.infer<typeof workFormSchema>;
 
-export function ExpenseForm({ tractorID }: { tractorID: string }) {
+interface WorkFormData {
+  id: string;
+  customerName: string;
+  date: string;
+  driverName: string;
+  equipments: {
+    name: string;
+    hours: number;
+    ratePerHour: number;
+    amount: number;
+  }[];
+}
+
+interface AddTractorWorkFormProps {
+  tractorID: string;
+  initialData?: WorkFormData;
+  isEditing?: boolean;
+}
+
+export function AddTractorWorkForm({
+  tractorID,
+  initialData,
+  isEditing,
+}: AddTractorWorkFormProps) {
   const [customers, setCustomers] = useState<
     Array<{ _id: string; name: string }>
   >([]);
@@ -89,15 +112,32 @@ export function ExpenseForm({ tractorID }: { tractorID: string }) {
   // Initialize the form
   const form = useForm<WorkFormValues>({
     resolver: zodResolver(workFormSchema),
-    defaultValues: {
-      customerName: "",
-      driverName: "",
-      cultivatorHours: 0,
-      rajaHours: 0,
-      gobalHours: 0,
-      laserHours: 0,
-      bladeHours: 0,
-    },
+    defaultValues: initialData
+      ? {
+          customerName: initialData.customerName,
+          date: new Date(initialData.date),
+          driverName: initialData.driverName,
+          cultivatorHours:
+            initialData.equipments.find((e) => e.name === "Cultivator")
+              ?.hours || 0,
+          rajaHours:
+            initialData.equipments.find((e) => e.name === "Raja")?.hours || 0,
+          gobalHours:
+            initialData.equipments.find((e) => e.name === "Gobal")?.hours || 0,
+          laserHours:
+            initialData.equipments.find((e) => e.name === "Laser")?.hours || 0,
+          bladeHours:
+            initialData.equipments.find((e) => e.name === "Blade")?.hours || 0,
+        }
+      : {
+          customerName: "",
+          driverName: "",
+          cultivatorHours: 0,
+          rajaHours: 0,
+          gobalHours: 0,
+          laserHours: 0,
+          bladeHours: 0,
+        },
   });
 
   // Calculate amounts based on hours
@@ -137,18 +177,28 @@ export function ExpenseForm({ tractorID }: { tractorID: string }) {
     });
 
     try {
-      const result = await submitTractorWork({}, formData);
-      console.log(result);
+      let result;
+      if (isEditing && initialData?.id) {
+        result = await editTractorWork(initialData.id, {}, formData);
+      } else {
+        result = await submitTractorWork({}, formData);
+      }
+
       if (result?.success === false) {
         setError(result.message);
       } else {
-        setSuccess("Work submitted successfully");
-        form.reset();
-
+        setSuccess(
+          isEditing
+            ? "Work updated successfully"
+            : "Work submitted successfully"
+        );
+        if (!isEditing) {
+          form.reset();
+        }
         router.push(`/tractor/${tractorID}`);
       }
     } catch {
-      setError("Failed to submit work");
+      setError(isEditing ? "Failed to update work" : "Failed to submit work");
     } finally {
       setSubmitting(false);
     }
@@ -290,8 +340,16 @@ export function ExpenseForm({ tractorID }: { tractorID: string }) {
         {error && <p className="text-red-600">{error}</p>}
         {success && <p className="text-green-600">{success}</p>}
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Submitting..." : "Submit Work"}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={submitting || success !== null}
+        >
+          {submitting
+            ? "Submitting..."
+            : isEditing
+            ? "Update Work"
+            : "Submit Work"}
         </Button>
       </form>
     </Form>

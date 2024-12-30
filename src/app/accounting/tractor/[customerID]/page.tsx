@@ -21,7 +21,7 @@ export default async function CustomerSummary({
   const customerId = (await params).customerID;
   const customerSummary = await getCustomerSummary(customerId);
   const works = customerSummary.works;
-  console.log(customerSummary);
+  console.log(works);
 
   const customerName =
     customerSummary?.customer?.name?.charAt(0).toUpperCase() +
@@ -96,7 +96,7 @@ export default async function CustomerSummary({
               </TableCell>
               <TableCell>Rs {work.totalAmount}</TableCell>
               <TableCell>
-                {new Date(work.createdAt).toLocaleDateString("en-GB")}
+                {new Date(work.date).toLocaleDateString("en-GB")}
               </TableCell>
               <TableCell>
                 <Button asChild variant="outline">

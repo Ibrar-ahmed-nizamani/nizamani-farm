@@ -87,7 +87,11 @@ export default async function TractorDetailPage({
       {works.length === 0 ? (
         <EmptyTractorData title="work" />
       ) : (
-        <TractorWorkTable works={works} pagination={pagination} />
+        <TractorWorkTable
+          works={works}
+          pagination={pagination}
+          tractorId={tractorID}
+        />
       )}
     </section>
   );

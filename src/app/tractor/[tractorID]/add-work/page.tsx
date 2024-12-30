@@ -1,4 +1,4 @@
-import { ExpenseForm } from "@/components/tractor/work-form";
+import { AddTractorWorkForm } from "@/components/tractor/work-form";
 import { CardDescription } from "@/components/ui/card";
 import { getTractorDetails } from "@/lib/actions/tractor";
 
@@ -20,7 +20,7 @@ export default async function AddTractorWorkPage({
       </div>
       <h3 className="text-lg font-semibold">Add Tractor Work</h3>
       {/* <EquipmentRateForm /> */}
-      <ExpenseForm tractorID={tractorID} />
+      <AddTractorWorkForm tractorID={tractorID} />
     </section>
   );
 }

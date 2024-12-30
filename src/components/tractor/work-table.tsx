@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { MoreVertical, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TractorWork } from "@/lib/type-definitions";
+import DeleteWorkDialog from "./delete-work";
+import Link from "next/link";
 
 interface TractorWorkTableProps {
   works: TractorWork[];
@@ -28,15 +31,18 @@ interface TractorWorkTableProps {
     pages: number;
     currentPage: number;
   };
+  tractorId: string;
 }
 
 export default function TractorWorkTable({
   works,
   pagination,
+  tractorId,
 }: TractorWorkTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [deleteWorkId, setDeleteWorkId] = useState<string | null>(null);
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
@@ -88,12 +94,17 @@ export default function TractorWorkTable({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem>
-                      <Eye className="mr-2 h-4 w-4" />
-                      <span>View details</span>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/tractor/${tractorId}/edit-work/${work.id}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        <span>Edit work</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setDeleteWorkId(work.id)}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>Delete</span>
                     </DropdownMenuItem>
@@ -104,6 +115,15 @@ export default function TractorWorkTable({
           ))}
         </TableBody>
       </Table>
+
+      {deleteWorkId && (
+        <DeleteWorkDialog
+          workId={deleteWorkId}
+          tractorId={tractorId}
+          isOpen={!!deleteWorkId}
+          onClose={() => setDeleteWorkId(null)}
+        />
+      )}
 
       <div className="flex justify-center gap-2 mt-4">
         {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(

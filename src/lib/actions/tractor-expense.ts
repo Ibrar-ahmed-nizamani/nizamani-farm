@@ -45,9 +45,34 @@ export async function getTractorExpenses(tractorId: string) {
       .sort({ date: -1 })
       .toArray();
 
-    return expenses;
+    return expenses.map(expense => ({
+      _id: expense._id.toString(),
+      description: expense.description,
+      amount: expense.amount,
+      date: expense.date.toISOString(),
+    }));
   } catch (error) {
     console.error("Failed to fetch expenses:", error);
-    throw new Error("Failed to fetch expenses");
+    return [];
+  }
+}
+
+export async function deleteTractorExpense(
+  expenseId: string,
+  tractorId: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    await db
+      .collection("tractorExpenses")
+      .deleteOne({ _id: new ObjectId(expenseId) });
+
+    revalidatePath(`/tractor/${tractorId}/expenses`);
+    return { success: true, message: "Expense deleted successfully" };
+  } catch (error) {
+    console.error("Failed to delete expense:", error);
+    return { success: false, message: "Failed to delete expense" };
   }
 }

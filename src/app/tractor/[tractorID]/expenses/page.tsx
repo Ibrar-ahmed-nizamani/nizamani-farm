@@ -1,17 +1,10 @@
 import { getTractorExpenses } from "@/lib/actions/tractor-expense";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import EmptyTractorData from "@/components/shared/empty-tractor-data";
 import { getTractorDetails } from "@/lib/actions/tractor";
 import { CardDescription } from "@/components/ui/card";
+import ExpensesTable from "@/components/tractor/expenses-table";
 
 export default async function TractorExpensesPage({
   params,
@@ -20,9 +13,8 @@ export default async function TractorExpensesPage({
 }) {
   const tractorID = (await params).tractorID;
   const expenses = await getTractorExpenses(tractorID);
-
   const tractorDetails = await getTractorDetails(tractorID);
-  console.log(tractorDetails);
+  console.log(expenses);
   return (
     <section className="">
       <div className="mb-3">
@@ -43,26 +35,7 @@ export default async function TractorExpensesPage({
       {expenses.length === 0 ? (
         <EmptyTractorData title="expenses" />
       ) : (
-        <Table className="border">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Description</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {expenses.map((expense) => (
-              <TableRow key={expense._id.toString()}>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>Rs {expense.amount.toLocaleString()}</TableCell>
-                <TableCell>
-                  {new Date(expense.date).toLocaleDateString("en-GB")}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <ExpensesTable expenses={expenses} tractorId={tractorID} />
       )}
     </section>
   );
