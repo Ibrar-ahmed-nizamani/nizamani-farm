@@ -10,7 +10,7 @@ export default function TractorName({
   return (
     <div className="mb-3">
       <h2 className="text-xl font-semibold">{tractorName}</h2>
-      {tractorName}
+      
       <CardDescription className="text-base">{tractorModel}</CardDescription>
     </div>
   );

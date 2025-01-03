@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2,  } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,13 +28,18 @@ interface ExpensesTableProps {
     date: string;
   }[];
   tractorId: string;
+  
 }
 
-export default function ExpensesTable({ expenses, tractorId }: ExpensesTableProps) {
+export default function ExpensesTable({
+  expenses,
+  tractorId,
+  
+}: ExpensesTableProps) {
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
 
   return (
-    <>
+    <div className="space-y-4">
       <Table className="border">
         <TableHeader>
           <TableRow>
@@ -85,6 +90,6 @@ export default function ExpensesTable({ expenses, tractorId }: ExpensesTableProp
           onClose={() => setDeleteExpenseId(null)}
         />
       )}
-    </>
+    </div>
   );
-} 
+}

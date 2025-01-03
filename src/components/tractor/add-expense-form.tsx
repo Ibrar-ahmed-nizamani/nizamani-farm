@@ -7,9 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useActionState } from "react";
 
-export default function AddAddTractorWorkForm({ tractorId }: { tractorId: string }) {
-  const initialState = { message: null, errors: {} };
-  const [state, formAction] = useActionState(addTractorExpense, initialState);
+export default function AddTractorExpenseForm({
+  tractorId,
+}: {
+  tractorId: string;
+}) {
+  const initialState = { success: false, message: "" };
+  const [state, formAction, loading] = useActionState(
+    addTractorExpense,
+    initialState
+  );
 
   return (
     <Card>
@@ -51,11 +58,17 @@ export default function AddAddTractorWorkForm({ tractorId }: { tractorId: string
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            Add Expense
+          {state.message && (
+            <p className={`text-${state.success ? "green" : "red"}-600`}>
+              {state.message}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Adding..." : "Add Expense"}
           </Button>
         </form>
       </CardContent>
     </Card>
   );
-} 
+}

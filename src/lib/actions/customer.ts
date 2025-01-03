@@ -3,10 +3,22 @@
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 
-export async function getCustomerSummary(customerId: string) {
+export async function getCustomerSummary(customerId: string, year?: string) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
+
+    let dateMatch = {};
+    if (year && year !== "all") {
+      const startDate = new Date(`${year}-01-01`);
+      const endDate = new Date(`${year}-12-31`);
+      dateMatch = {
+        date: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      };
+    }
 
     const customer = await db
       .collection("customers")
@@ -15,7 +27,12 @@ export async function getCustomerSummary(customerId: string) {
     const works = await db
       .collection("works")
       .aggregate([
-        { $match: { customerId: new ObjectId(customerId) } },
+        {
+          $match: {
+            customerId: new ObjectId(customerId),
+            ...dateMatch,
+          },
+        },
         {
           $lookup: {
             from: "tractors",
@@ -35,28 +52,38 @@ export async function getCustomerSummary(customerId: string) {
             },
           },
         },
-        { $sort: { createdAt: -1 } },
+        { $sort: { date: -1 } },
       ])
       .toArray();
 
-    // console.log("Found works:", works);
-    // console.log("Sample work tractorId:", works[0]?.tractorId);
-    // console.log("Sample work tractor:", works[0]?.tractor);
-
     const transactions = await db
       .collection("transactions")
-      .find({ customerId: new ObjectId(customerId) })
+      .find({
+        customerId: new ObjectId(customerId),
+        ...dateMatch,
+      })
       .sort({ date: -1 })
       .toArray();
+    const totalDebit = transactions.reduce(
+      (sum, transaction) =>
+        sum + (transaction.type === "DEBIT" ? transaction.amount : 0),
+      0
+    );
+    const totalPaid = transactions.reduce(
+      (sum, transaction) =>
+        sum + (transaction.type === "CREDIT" ? transaction.amount : 0),
+      0
+    );
+    const balance = totalDebit - totalPaid;
 
     return {
       customer,
       works,
       transactions,
       summary: {
-        totalDebit: customer?.totalDebit || 0,
-        totalPaid: customer?.totalPaid || 0,
-        balance: (customer?.totalDebit || 0) - (customer?.totalPaid || 0),
+        totalDebit,
+        totalPaid,
+        balance,
       },
     };
   } catch (error) {
@@ -77,14 +104,13 @@ export async function getAllCustomers() {
       .toArray();
 
     // Serialize the MongoDB documents
-    return customers.map(customer => ({
+    return customers.map((customer) => ({
       _id: customer._id.toString(),
       name: customer.name,
       totalDebit: customer.totalDebit,
       totalPaid: customer.totalPaid,
-      createdAt: customer.createdAt.toISOString()
+      createdAt: customer.createdAt.toISOString(),
     }));
-
   } catch (error) {
     console.error("Failed to fetch customers:", error);
     throw new Error("Failed to fetch customers");
@@ -110,5 +136,33 @@ export async function getCustomerName(customerId: string) {
   } catch (error) {
     console.error("Failed to fetch customer detail:", error);
     throw new Error("Failed to fetch customer detail");
+  }
+}
+
+export async function getCustomerAvailableYears(customerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get unique years from both works and transactions
+    const [workYears, transactionYears] = await Promise.all([
+      db
+        .collection("works")
+        .distinct("date", { customerId: new ObjectId(customerId) }),
+      db
+        .collection("transactions")
+        .distinct("date", { customerId: new ObjectId(customerId) }),
+    ]);
+
+    // Combine years from both collections and get unique years
+    const allDates = [...workYears, ...transactionYears];
+    const uniqueYears = Array.from(
+      new Set(allDates.map((date) => new Date(date).getFullYear()))
+    ).sort((a, b) => b - a); // Sort years in descending order
+
+    return uniqueYears;
+  } catch (error) {
+    console.error("Failed to fetch customer years:", error);
+    return [];
   }
 }

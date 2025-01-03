@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { getCustomerSummary } from "@/lib/actions/customer";
 import EmptyTractorData from "@/components/shared/empty-tractor-data";
+import { ArrowLeftIcon } from "lucide-react";
 
 export default async function CustomerTransactionsPage({
   params,
@@ -26,14 +27,20 @@ export default async function CustomerTransactionsPage({
           {customer?.name.charAt(0).toUpperCase() + customer?.name.slice(1) ||
             "Customer"}
         </h3>
-        <div className="mt-4 space-x-4">
-          <Link
+        <Link href={`/accounting/tractor/${customerId}`}>
+          <Button variant="link">
+            <ArrowLeftIcon className="w-4 h-4" />
+            Back to Customer
+          </Button>
+        </Link>
+      </div>
+      <div className="mt-4 space-x-4">
+        <Link
             href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
           >
             <Button>Add Transaction</Button>
           </Link>
         </div>
-      </div>
       {transactions.filter((transaction) => transaction.type !== "DEBIT")
         .length === 0 ? (
         <EmptyTractorData title="transactions" />

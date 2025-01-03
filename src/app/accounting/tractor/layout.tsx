@@ -1,3 +1,5 @@
+import { Separator } from "@/components/ui/separator";
+
 export default function TractorLayout({
   children,
 }: Readonly<{
@@ -5,7 +7,8 @@ export default function TractorLayout({
 }>) {
   return (
     <>
-      <h2 className="text-2xl ">Tractor Customers</h2>
+      <h1 className="text-3xl ">Tractor Accounting</h1>
+      <Separator />
       {children}
     </>
   );

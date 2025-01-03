@@ -67,7 +67,14 @@ export default function TractorWorkTable({
           {works.map((work) => (
             <TableRow key={work.id}>
               <TableCell>{work.no}</TableCell>
-              <TableCell>{work.customerName}</TableCell>
+              <TableCell>
+                <Link
+                  className="hover:underline"
+                  href={`/accounting/tractor/${work.customerId}`}
+                >
+                  {work.customerName}
+                </Link>
+              </TableCell>
               <TableCell>
                 {work.equipments.map((equipment, index) => (
                   <div key={index} className="flex gap-8 mb-2">

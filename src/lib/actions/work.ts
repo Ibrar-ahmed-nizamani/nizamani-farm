@@ -102,15 +102,23 @@ export async function submitTractorWork(
   // redirect(`/tractor/${tractorId}`);
 }
 
-export async function getCustomerWorks(customerId: string) {
+export async function getCustomerWorks(customerId: string, year?: string) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
+    const query: any = { customerId: new ObjectId(customerId) };
+    if (year && year !== "all") {
+      query.date = {
+        $gte: new Date(`${year}-01-01`),
+        $lte: new Date(`${year}-12-31`),
+      };
+    }
+
     const works = await db
       .collection("works")
       .aggregate([
-        { $match: { customerId: new ObjectId(customerId) } },
+        { $match: query },
         {
           $lookup: {
             from: "tractors",
@@ -124,7 +132,30 @@ export async function getCustomerWorks(customerId: string) {
       .sort({ date: -1 })
       .toArray();
 
-    return works;
+    // Serialize the works data
+    return works.map((work) => ({
+      _id: work._id.toString(),
+      customerId: work.customerId.toString(),
+      tractorId: work.tractorId.toString(),
+      customerName: work.customerName,
+      date: work.date.toISOString(),
+      driverName: work.driverName,
+      equipments: work.equipments.map((eq: any) => ({
+        name: eq.name,
+        hours: eq.hours,
+        ratePerHour: eq.ratePerHour,
+        amount: eq.amount,
+      })),
+      totalAmount: work.totalAmount,
+      createdAt: work.createdAt?.toISOString(),
+      updatedAt: work.updatedAt?.toISOString(),
+      tractor: {
+        _id: work.tractor._id.toString(),
+        tractorName: work.tractor.tractorName,
+        tractorModel: work.tractor.tractorModel,
+        tractorNumber: work.tractor.tractorNumber,
+      },
+    }));
   } catch (error) {
     console.error("Failed to fetch works:", error);
     throw new Error("Failed to fetch works");
@@ -462,5 +493,41 @@ export async function editTractorWork(
   } catch (error) {
     console.error("Failed to update work:", error);
     return { success: false, message: "Failed to update work" };
+  }
+}
+
+export async function getAllTractorWorks(tractorId: string, year?: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const query: any = { tractorId: new ObjectId(tractorId) };
+
+    if (year && year !== "all") {
+      query.date = {
+        $gte: new Date(`${year}-01-01`),
+        $lte: new Date(`${year}-12-31`),
+      };
+    }
+
+    const works = await db
+      .collection("works")
+      .find(query)
+      .sort({ date: -1 })
+      .toArray();
+
+    return works.map((work) => ({
+      _id: work._id.toString(),
+      tractorId: work.tractorId.toString(),
+      customerId: work.customerId.toString(),
+      customerName: work.customerName,
+      date: work.date,
+      equipments: work.equipments,
+      totalAmount: work.totalAmount,
+      driverName: work.driverName,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch all works:", error);
+    return [];
   }
 }

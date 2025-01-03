@@ -9,108 +9,134 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 // import { CustomerTractorWork } from "@/lib/type-definitions";
-import { getCustomerSummary } from "@/lib/actions/customer";
+import {
+  getCustomerSummary,
+  getCustomerAvailableYears,
+} from "@/lib/actions/customer";
+import { Edit2 } from "lucide-react";
+import CustomerCompleteReport from "@/components/accounting/customer/customer-complete-report";
+import SummaryCards from "@/components/shared/summary-cards";
+import YearSelector from "@/components/tractor/year-selector";
+import BackButton from "@/components/shared/back-button";
 
 export default async function CustomerSummary({
   params,
+  searchParams,
 }: {
   params: Promise<{ customerID: string }>;
+  searchParams: Promise<{ year?: string }>;
 }) {
   const customerId = (await params).customerID;
-  const customerSummary = await getCustomerSummary(customerId);
-  const works = customerSummary.works;
-  console.log(works);
+  const selectedYear = (await searchParams).year || "all";
+
+  // Fetch data in parallel
+  const [customerSummary, availableYears] = await Promise.all([
+    getCustomerSummary(customerId, selectedYear),
+    getCustomerAvailableYears(customerId),
+  ]);
 
   const customerName =
     customerSummary?.customer?.name?.charAt(0).toUpperCase() +
     customerSummary?.customer?.name?.slice(1);
-
   const summary = customerSummary.summary;
-  // Calculate total amount paid from transactions
-  const amountPaid = summary.totalPaid;
-
-  // Calculate total debit from works
-  const totalDebit = summary.totalDebit;
-
-  // Calculate remaining amount due
-  const amountDue = summary.balance;
-
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">{customerName}</h3>
-        <div className="mt-4 space-x-4">
-          <Link
-            href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
-          >
-            <Button>Add Transaction</Button>
-          </Link>
-          <Link href={`/accounting/tractor/${customerId}/transaction`}>
-            <Button variant="outline">Show Transactions</Button>
-          </Link>
+    <>
+      <section className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold">{customerName}</h3>
+          <BackButton />
         </div>
-      </div>
+        <div className="flex items-center justify-end">
+          <div className="flex items-center space-x-4">
+            <CustomerCompleteReport
+              customerId={customerId}
+              customerName={customerName}
+              year={selectedYear}
+            />
+            <YearSelector availableYears={availableYears} />
 
-      <div className="flex flex-wrap gap-4">
-        <Badge variant="destructive" className="p-2 text-base font-normal">
-          Total Debit: Rs {totalDebit}
-        </Badge>
-        <Badge className="p-2 text-base font-normal">
-          Amount Paid: Rs {amountPaid}
-        </Badge>
-        <Badge variant="outline" className="p-2 text-base font-normal">
-          Due: Rs {amountDue}
-        </Badge>
-      </div>
+            <Link href={`/accounting/tractor/${customerId}/transaction`}>
+              <Button variant="outline">Show Transactions</Button>
+            </Link>
+            <Link
+              href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
+            >
+              <Button>Add Transaction</Button>
+            </Link>
+          </div>
+        </div>
 
-      <Table className="border">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Tractor</TableHead>
-            <TableHead>Equipment & Hours</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {works.map((work, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <div>{work.tractor?.tractorName || "N/A"}</div>
-                <CardDescription>
-                  {work.tractor?.tractorModel || "N/A"}
-                </CardDescription>
-              </TableCell>
-              <TableCell>
-                {work.equipments?.map(
-                  (equipment: { name: string; hours: number }, idx: number) => (
-                    <div key={idx} className="flex gap-8 mb-2">
-                      <span className="w-16">{equipment.name}</span> -
-                      <span>{equipment.hours} hours</span>
-                    </div>
-                  )
-                ) || "No equipment data"}
-              </TableCell>
-              <TableCell>Rs {work.totalAmount}</TableCell>
-              <TableCell>
-                {new Date(work.date).toLocaleDateString("en-GB")}
-              </TableCell>
-              <TableCell>
-                <Button asChild variant="outline">
-                  <Link
-                    href={`/accounting/tractor/${customerId}/work/${work.id}`}
-                  >
-                    View Detail
-                  </Link>
-                </Button>
-              </TableCell>
+        <SummaryCards
+          cards={[
+            {
+              label: "Total Debit",
+              value: summary.totalDebit,
+              type: "expense",
+            },
+            {
+              label: "Amount Paid",
+              value: summary.totalPaid,
+              type: "income",
+            },
+            {
+              label: "Due Amount",
+              value: summary.balance,
+              type: "due",
+            },
+          ]}
+        />
+
+        <Table className="border ">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tractor</TableHead>
+              <TableHead>Equipment & Hours</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </section>
+          </TableHeader>
+          <TableBody>
+            {customerSummary.works.map((work, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <div>{work.tractor?.tractorName || "N/A"}</div>
+                  <CardDescription>
+                    {work.tractor?.tractorModel || "N/A"}
+                  </CardDescription>
+                </TableCell>
+                <TableCell>
+                  {work.equipments?.map(
+                    (
+                      equipment: { name: string; hours: number },
+                      idx: number
+                    ) => (
+                      <div key={idx} className="flex gap-8 mb-2">
+                        <span className="w-16">{equipment.name}</span> -
+                        <span>{equipment.hours} hours</span>
+                      </div>
+                    )
+                  ) || "No equipment data"}
+                </TableCell>
+                <TableCell>Rs {work.totalAmount}</TableCell>
+                <TableCell>
+                  {new Date(work.date).toLocaleDateString("en-GB")}
+                </TableCell>
+                <TableCell>
+                  <Button asChild variant="outline">
+                    <Link
+                      href={`/tractor/${work.tractorId}/edit-work/${work._id}`}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" /> Edit Work
+                    </Link>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </section>
+    </>
   );
 }

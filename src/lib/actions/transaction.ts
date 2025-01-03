@@ -4,6 +4,15 @@ import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+interface TransactionQuery {
+  customerId: ObjectId;
+  date?: {
+    $gte: Date;
+    $lte: Date;
+  };
+}
+
 export async function addTransaction(prevState: unknown, formData: FormData) {
   const customerId = formData.get("customerId") as string;
   try {
@@ -41,20 +50,42 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
   redirect(`/accounting/tractor/${customerId}/transaction`);
 }
 
-export async function getCustomerTransactions(customerId: string) {
+export async function getCustomerTransactions(
+  customerId: string,
+  year?: string
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
+    const query: TransactionQuery = { customerId: new ObjectId(customerId) };
+    if (year && year !== "all") {
+      query.date = {
+        $gte: new Date(`${year}-01-01`),
+        $lte: new Date(`${year}-12-31`),
+      };
+    }
+
     const transactions = await db
       .collection("transactions")
-      .find({ customerId: new ObjectId(customerId) })
+      .find(query)
       .sort({ date: -1 })
       .toArray();
-
-    return transactions;
+    console.log(transactions);
+    // Serialize the transactions data
+    return transactions.map((transaction) => ({
+      _id: transaction._id.toString(),
+      customerId: transaction.customerId.toString(),
+      amount: transaction.amount,
+      date: transaction.date.toISOString(),
+      description: transaction.description,
+      type: transaction.type,
+      createdAt: transaction.createdAt?.toISOString(),
+      updatedAt: transaction.updatedAt?.toISOString(),
+      customerName: transaction.customerName,
+    }));
   } catch (error) {
     console.error("Failed to fetch transactions:", error);
-    throw new Error("Failed to fetch transactions");
+    return [];
   }
 }

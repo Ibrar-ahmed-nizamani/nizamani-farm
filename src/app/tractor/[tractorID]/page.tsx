@@ -5,22 +5,26 @@ import { CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 import { getTractorWorks } from "@/lib/actions/work";
 import { getTractorDetails } from "@/lib/actions/tractor";
-import { Card, CardContent } from "@/components/ui/card";
 import YearSelector from "@/components/tractor/year-selector";
+import PrintReport from "@/components/tractor/print-report";
+import CompleteReport from "@/components/tractor/complete-report";
+import SummaryCards from "@/components/shared/summary-cards";
 
 export default async function TractorDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ tractorID: string }>;
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ year?: string; page?: string }>;
 }) {
   const tractorID = (await params).tractorID;
   const selectedYear = (await searchParams).year || "all";
+  const page = (await searchParams).page || 1;
 
   const { works, pagination, availableYears } = await getTractorWorks(
     tractorID,
-    selectedYear
+    selectedYear,
+    Number(page)
   );
   const tractorDetails = await getTractorDetails(
     tractorID,
@@ -39,6 +43,11 @@ export default async function TractorDetailPage({
           </CardDescription>
         </div>
         <div className="flex gap-4 items-center">
+          <CompleteReport
+            tractorDetails={tractorDetails}
+            tractorId={tractorID}
+            year={selectedYear}
+          />
           <YearSelector availableYears={availableYears} />
           <Link href={`/tractor/${tractorID}/expenses`}>
             <Button variant="outline" size="lg">
@@ -48,42 +57,48 @@ export default async function TractorDetailPage({
         </div>
       </div>
 
-      {/* Financial Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <p className=" font-medium">Total Income</p>
-            <h3 className="text-xl font-bold text-green-600">
-              Rs {tractorDetails.totalIncome.toLocaleString()}
-            </h3>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="font-medium">Total Expenses</p>
-            <h3 className="text-xl font-bold text-red-600">
-              Rs {tractorDetails.totalExpenses.toLocaleString()}
-            </h3>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="font-medium">Net Revenue</p>
-            <h3
-              className={`text-xl font-bold ${
-                tractorDetails.revenue >= 0 ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              Rs {tractorDetails.revenue.toLocaleString()}
-            </h3>
-          </CardContent>
-        </Card>
-      </div>
+      <SummaryCards
+        cards={[
+          {
+            label: "Total Income",
+            value: tractorDetails.totalIncome,
+            type: "income",
+          },
+          {
+            label: "Total Expenses",
+            value: tractorDetails.totalExpenses,
+            type: "expense",
+          },
+          {
+            label: "Net Revenue",
+            value: tractorDetails.revenue,
+            type: "balance",
+          },
+        ]}
+      />
 
       <h3 className="text-xl font-semibold mb-3">Tractor Works List</h3>
-      <Button asChild size="lg" className="mb-4">
-        <Link href={`/tractor/${tractorID}/add-work`}>Add Work</Link>
-      </Button>
+      <div className="flex justify-between ">
+        <div className="flex gap-8">
+          <Button asChild size="lg" className="mb-4">
+            <Link href={`/tractor/${tractorID}/add-work`}>Add Work</Link>
+          </Button>
+          <Link href={`/tractor/${tractorID}/expenses/add-expense`}>
+            <Button variant="destructive" size="lg">
+              Add expense
+            </Button>
+          </Link>
+        </div>
+        <div>
+          <PrintReport
+            tractorId={tractorID}
+            tractorDetails={{
+              ...tractorDetails,
+              year: selectedYear,
+            }}
+          />
+        </div>
+      </div>
       {works.length === 0 ? (
         <EmptyTractorData title="work" />
       ) : (

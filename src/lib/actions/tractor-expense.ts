@@ -45,7 +45,7 @@ export async function getTractorExpenses(tractorId: string) {
       .sort({ date: -1 })
       .toArray();
 
-    return expenses.map(expense => ({
+    return expenses.map((expense) => ({
       _id: expense._id.toString(),
       description: expense.description,
       amount: expense.amount,
@@ -74,5 +74,55 @@ export async function deleteTractorExpense(
   } catch (error) {
     console.error("Failed to delete expense:", error);
     return { success: false, message: "Failed to delete expense" };
+  }
+}
+
+export async function getAllTractorExpenses(tractorId: string, year?: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const query = { tractorId: new ObjectId(tractorId) };
+
+    if (year && year !== "all") {
+      query.date = {
+        $gte: new Date(`${year}-01-01`),
+        $lte: new Date(`${year}-12-31`),
+      };
+    }
+
+    const expenses = await db
+      .collection("tractorExpenses")
+      .find(query)
+      .sort({ date: -1 })
+      .toArray();
+
+    return expenses.map((expense) => ({
+      _id: expense._id.toString(),
+      description: expense.description,
+      amount: expense.amount,
+      date: expense.date.toISOString(),
+    }));
+  } catch (error) {
+    console.error("Failed to fetch expenses:", error);
+    return [];
+  }
+}
+
+export async function getExpenseYears(tractorId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const years = await db
+      .collection("tractorExpenses")
+      .distinct("date", { tractorId: new ObjectId(tractorId) });
+
+    return Array.from(
+      new Set(years.map((date) => new Date(date).getFullYear()))
+    ).sort((a, b) => b - a);
+  } catch (error) {
+    console.error("Failed to fetch expense years:", error);
+    return [];
   }
 }
