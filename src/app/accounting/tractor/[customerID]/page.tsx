@@ -14,11 +14,12 @@ import {
   getCustomerSummary,
   getCustomerAvailableYears,
 } from "@/lib/actions/customer";
-import { Edit2 } from "lucide-react";
+import { ArrowLeftIcon, Edit2 } from "lucide-react";
 import CustomerCompleteReport from "@/components/accounting/customer/customer-complete-report";
 import SummaryCards from "@/components/shared/summary-cards";
 import YearSelector from "@/components/tractor/year-selector";
 import BackButton from "@/components/shared/back-button";
+import CustomerWorksReport from "@/components/accounting/customer/customer-works-report";
 
 export default async function CustomerSummary({
   params,
@@ -45,7 +46,14 @@ export default async function CustomerSummary({
       <section className="space-y-6">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold">{customerName}</h3>
-          <BackButton />
+          <div className="flex items-center space-x-4">
+            <BackButton />
+            <Link href={`/accounting/tractor`}>
+              <Button variant="link">
+                <ArrowLeftIcon className="w-4 h-4" /> Back to Customers
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="flex items-center justify-end">
           <div className="flex items-center space-x-4">
@@ -86,6 +94,13 @@ export default async function CustomerSummary({
             },
           ]}
         />
+        <div className="flex justify-end">
+          <CustomerWorksReport
+            customerName={customerName}
+            customerId={customerId}
+            year={selectedYear}
+          />
+        </div>
 
         <Table className="border ">
           <TableHeader>

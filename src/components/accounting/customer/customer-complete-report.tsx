@@ -248,6 +248,8 @@ export default function CustomerCompleteReport({
                       entry.runningBalance > 0 ? "debit" : "credit"
                     }">
                       Rs ${Math.abs(entry.runningBalance).toLocaleString()}
+                      
+                      ${entry.runningBalance > 0 ? "De" : "Cr"}
                     </td>
                   </tr>
                 `

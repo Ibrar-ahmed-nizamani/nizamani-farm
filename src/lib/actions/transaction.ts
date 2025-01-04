@@ -89,3 +89,70 @@ export async function getCustomerTransactions(
     return [];
   }
 }
+
+export async function deleteTransaction(
+  transactionId: string,
+  customerId: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the transaction amount before deleting
+    const transaction = await db
+      .collection("transactions")
+      .findOne({ _id: new ObjectId(transactionId) });
+
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+
+    // Delete the transaction
+    await db
+      .collection("transactions")
+      .deleteOne({ _id: new ObjectId(transactionId) });
+
+    // Update customer's totalPaid
+    if (transaction.type === "CREDIT") {
+      await db
+        .collection("customers")
+        .updateOne(
+          { _id: new ObjectId(customerId) },
+          { $inc: { totalPaid: -transaction.amount } }
+        );
+    }
+
+    revalidatePath(`/accounting/tractor/${customerId}`);
+    revalidatePath(`/accounting/tractor/${customerId}/transaction`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete transaction:", error);
+    return { success: false, error: "Failed to delete transaction" };
+  }
+}
+
+export async function getTransactionAvailableYears(customerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get unique years from CREDIT transactions only
+    const dates = await db
+      .collection("transactions")
+      .distinct("date", { 
+        customerId: new ObjectId(customerId),
+        type: "CREDIT"
+      });
+
+    // Convert dates to years and sort
+    const uniqueYears = Array.from(
+      new Set(dates.map(date => new Date(date).getFullYear()))
+    ).sort((a, b) => b - a); // Sort years in descending order
+
+    return uniqueYears;
+  } catch (error) {
+    console.error("Failed to fetch transaction years:", error);
+    return [];
+  }
+}

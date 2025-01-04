@@ -1,27 +1,36 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getCustomerSummary } from "@/lib/actions/customer";
+
 import EmptyTractorData from "@/components/shared/empty-tractor-data";
 import { ArrowLeftIcon } from "lucide-react";
+import TransactionReport from "@/components/transaction/transaction-report";
+import { getCustomerName } from "@/lib/actions/customer";
+
+import { getCustomerTransactions } from "@/lib/actions/transaction";
+import YearSelector from "@/components/tractor/year-selector";
+import TransactionsTable from "@/components/transaction/transactions-table";
+import { getTransactionAvailableYears } from "@/lib/actions/transaction";
 
 export default async function CustomerTransactionsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ customerID: string }>;
+  searchParams: Promise<{ year?: string }>;
 }) {
   const customerId = (await params).customerID;
-  const { transactions, customer } = await getCustomerSummary(customerId);
-  console.log(transactions);
+  const selectedYear = (await searchParams).year || "all";
+
+  const [transactions, availableYears, customerDetails] = await Promise.all([
+    getCustomerTransactions(customerId, selectedYear),
+    getTransactionAvailableYears(customerId),
+    getCustomerName(customerId),
+  ]);
+
+  const customer = customerDetails;
+  console.log(customer);
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-semibold">
           {customer?.name.charAt(0).toUpperCase() + customer?.name.slice(1) ||
@@ -34,41 +43,32 @@ export default async function CustomerTransactionsPage({
           </Button>
         </Link>
       </div>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Customer Payments</h3>
+        <div className="flex items-center gap-4">
+          <YearSelector availableYears={availableYears} />
+          <TransactionReport
+            customerName={customer?.name}
+            customerId={customerId}
+            year={selectedYear}
+          />
+        </div>
+      </div>
       <div className="mt-4 space-x-4">
         <Link
-            href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
-          >
-            <Button>Add Transaction</Button>
-          </Link>
-        </div>
-      {transactions.filter((transaction) => transaction.type !== "DEBIT")
+          href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
+        >
+          <Button>Add Transaction</Button>
+        </Link>
+      </div>
+      {transactions.filter((transaction) => transaction.type === "CREDIT")
         .length === 0 ? (
         <EmptyTractorData title="transactions" />
       ) : (
-        <Table className="border">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Payment</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions
-              .filter((transaction) => transaction.type !== "DEBIT")
-              .map((transaction) => (
-                <TableRow key={transaction._id.toString()}>
-                  <TableCell>
-                    Rs {transaction.amount.toLocaleString()}
-                  </TableCell>
-                  <TableCell>{transaction.description || "N/A"}</TableCell>
-                  <TableCell>
-                    {new Date(transaction.date).toLocaleDateString("en-GB")}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+        <TransactionsTable
+          transactions={transactions}
+          customerId={customerId}
+        />
       )}
     </section>
   );
