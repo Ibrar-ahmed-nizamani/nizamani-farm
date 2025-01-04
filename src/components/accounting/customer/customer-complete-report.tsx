@@ -210,8 +210,8 @@ export default function CustomerCompleteReport({
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
+                  
+                  <th>Payment Detail</th>
                   <th>Tractor Details</th>
                   <th>Equipment Details</th>
                   <th class="amount">Debit</th>
@@ -225,14 +225,7 @@ export default function CustomerCompleteReport({
                     (entry) => `
                   <tr>
                     <td>${new Date(entry.date).toLocaleDateString("en-GB")}</td>
-                    <td>
-                      <span class="badge ${entry.type}">
-                        ${
-                          entry.type.charAt(0).toUpperCase() +
-                          entry.type.slice(1)
-                        }
-                      </span>
-                    </td>
+                    
                     <td>${entry.description}</td>
                     <td>${entry.tractorDetails || "-"}</td>
                     <td>${entry.equipmentDetails || "-"}</td>
