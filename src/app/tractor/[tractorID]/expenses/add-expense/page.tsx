@@ -1,8 +1,7 @@
+import BackButton from "@/components/shared/back-button";
 import AddTractorExpenseForm from "@/components/tractor/add-expense-form";
 import TractorName from "@/components/tractor/tractor-name";
-import { Button } from "@/components/ui/button";
 import { getTractorDetails } from "@/lib/actions/tractor";
-import Link from "next/link";
 
 export default async function AddExpensePage({
   params,
@@ -20,11 +19,7 @@ export default async function AddExpensePage({
           tractorName={tractorDetails.tractorName}
           tractorModel={tractorDetails.tractorModel}
         />
-        <Button asChild variant="link">
-          <Link href={`/tractor/${tractorID}/expenses`}>
-            ← Back to expenses
-          </Link>
-        </Button>
+        <BackButton />
       </div>
       <h2 className="text-xl font-semi mb-6">Add Tractor Expense</h2>
       <AddTractorExpenseForm tractorId={tractorID} />

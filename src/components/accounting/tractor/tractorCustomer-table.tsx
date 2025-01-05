@@ -6,16 +6,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getAllCustomers } from "@/lib/actions/customer";
 import EmptyTractorData from "@/components/shared/empty-tractor-data";
+import SummaryCards from "@/components/shared/summary-cards";
 
 export default async function TractorCustomerTable() {
   const customers = await getAllCustomers();
-  // console.log(customers);
+
   const totalPayment = customers.reduce(
     (sum, customer) => sum + (customer.totalPaid || 0),
     0
@@ -28,17 +29,13 @@ export default async function TractorCustomerTable() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap gap-4">
-        <Badge className="p-2 text-base font-normal">
-          Total Payment: Rs {totalPayment}
-        </Badge>
-        <Badge variant="destructive" className="p-2 text-base font-normal">
-          Total Debit: Rs {totalDebit}
-        </Badge>
-        <Badge variant="outline" className="p-2 text-base font-normal">
-          Total Remaining: Rs {totalRemaining}
-        </Badge>
-      </div>
+      <SummaryCards
+        cards={[
+          { label: "Total Payment", value: totalPayment, type: "income" },
+          { label: "Total Debit", value: totalDebit, type: "expense" },
+          { label: "Total Remaining", value: totalRemaining, type: "due" },
+        ]}
+      />
       {customers.length === 0 ? (
         <EmptyTractorData title="Customer" />
       ) : (
