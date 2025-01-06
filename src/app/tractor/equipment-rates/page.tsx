@@ -1,7 +1,7 @@
 import EquipmentRatesForm from "@/components/settings/equipment-rates-form";
 import BackButton from "@/components/shared/back-button";
 import { getEquipmentRates } from "@/lib/actions/equipment-rate";
-import Link from "next/link";
+
 
 export default async function EquipmentRatesPage() {
   const equipmentRates = await getEquipmentRates();

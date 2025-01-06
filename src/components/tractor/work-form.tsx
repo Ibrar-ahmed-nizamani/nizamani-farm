@@ -35,15 +35,6 @@ import { getAllCustomers } from "@/lib/actions/customer";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-// Define equipment rates
-const EQUIPMENT_RATES = {
-  cultivator: 2200,
-  raja: 1800,
-  gobal: 2000,
-  laser: 2500,
-  blade: 2300,
-};
-
 // Define the validation schema
 const workFormSchema = z
   .object({
@@ -92,11 +83,21 @@ interface WorkFormData {
 
 interface AddTractorWorkFormProps {
   tractorID: string;
+  cultivatorRate: number;
+  bladeRate: number;
+  laserRate: number;
+  gobalRate: number;
+  rajaRate: number;
   initialData?: WorkFormData;
   isEditing?: boolean;
 }
 
 export function AddTractorWorkForm({
+  bladeRate,
+  cultivatorRate,
+  gobalRate,
+  laserRate,
+  rajaRate,
   tractorID,
   initialData,
   isEditing,
@@ -108,6 +109,15 @@ export function AddTractorWorkForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
+
+  // Define equipment rates
+  const EQUIPMENT_RATES = {
+    cultivator: cultivatorRate,
+    raja: rajaRate,
+    gobal: gobalRate,
+    laser: laserRate,
+    blade: bladeRate,
+  };
 
   // Initialize the form
   const form = useForm<WorkFormValues>({
