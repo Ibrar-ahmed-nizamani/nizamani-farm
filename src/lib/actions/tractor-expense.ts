@@ -82,7 +82,9 @@ export async function getAllTractorExpenses(tractorId: string, year?: string) {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const query = { tractorId: new ObjectId(tractorId) };
+    const query: { tractorId: ObjectId; date?: { $gte: Date; $lte: Date } } = {
+      tractorId: new ObjectId(tractorId),
+    };
 
     if (year && year !== "all") {
       query.date = {

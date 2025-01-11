@@ -43,3 +43,78 @@ export interface CustomerTractorWork {
   amount: number;
   date: string;
 }
+
+// types/milk-summary
+
+export interface MilkExpense {
+  _id: string;
+  typeId: string;
+  amount: number;
+  date: string;
+  type: {
+    _id: string;
+    name: string;
+  };
+}
+
+export interface WorkerCredit {
+  _id: string;
+  workerId: string;
+  amount: number;
+  date: string;
+  description: string;
+  worker: {
+    _id: string;
+    name: string;
+  };
+}
+
+export interface CustomerRecord {
+  _id: string;
+  customerId: string;
+  date: string;
+  quantity: number;
+  price: number;
+  amount: number;
+  customerName: string;
+}
+
+export interface Transaction {
+  date: Date;
+  type: "expense" | "income";
+  description: string;
+  amount: number;
+  details: string;
+  balance?: number;
+}
+
+export interface MilkSummaryData {
+  expenses: MilkExpense[];
+  workerCredits: WorkerCredit[];
+  customerRecords: CustomerRecord[];
+  years: number[];
+  months: number[];
+}
+
+export interface SummaryCardProps {
+  cards: {
+    label: string;
+    value: number;
+    type: "income" | "expense" | "balance";
+  }[];
+}
+
+// Base interface for MongoDB filter operations
+export interface MongoDBFilter {
+  date?: DateFilter;
+}
+
+// Interface for MongoDB date comparison operators
+export interface DateFilter {
+  $gte?: Date;
+  $gt?: Date;
+  $lt?: Date;
+  $lte?: Date;
+  $eq?: Date;
+  $ne?: Date;
+}

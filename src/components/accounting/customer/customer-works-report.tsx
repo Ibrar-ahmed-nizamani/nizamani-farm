@@ -119,7 +119,11 @@ export default function CustomerWorksReport({
                     <td>
                       ${work.equipments
                         .map(
-                          (eq) =>
+                          (eq: {
+                            name: string;
+                            hours: number;
+                            amount: number;
+                          }) =>
                             `${eq.name}: ${
                               eq.hours
                             }hrs - Rs${eq.amount.toLocaleString()}`

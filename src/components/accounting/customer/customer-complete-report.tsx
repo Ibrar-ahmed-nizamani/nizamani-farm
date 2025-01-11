@@ -51,7 +51,7 @@ export default function CustomerCompleteReport({
             debit: work.totalAmount,
             netAmount: work.totalAmount,
             equipmentDetails: work.equipments
-              .map((eq) => `${eq.name}: ${eq.hours}hrs - Rs${eq.amount}`)
+              .map((eq: { name: string; hours: number; amount: number }) => `${eq.name}: ${eq.hours}hrs - Rs${eq.amount}`)
               .join(", "),
             tractorDetails: `${work.tractor.tractorName} - ${work.tractor.tractorModel}`,
             runningBalance: 0,

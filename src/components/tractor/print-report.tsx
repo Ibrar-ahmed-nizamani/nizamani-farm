@@ -164,7 +164,7 @@ export default function PrintReport({
                     <td>
                       ${work.equipments
                         .map(
-                          (eq) =>
+                          (eq: { name: string; hours: number; amount: number }) =>
                             `<div class="equipment-details">${eq.name}: ${
                               eq.hours
                             } hrs - Rs ${eq.amount.toLocaleString()}</div>`

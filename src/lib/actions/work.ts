@@ -4,6 +4,21 @@ import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 import { revalidatePath } from "next/cache";
 
+interface WorkQuery {
+  customerId: ObjectId;
+  date?: {
+    $gte: Date;
+    $lte: Date;
+  };
+}
+
+interface Equipment {
+  name: string;
+  hours: number;
+  ratePerHour: number;
+  amount: number;
+}
+
 export async function submitTractorWork(
   prevState: unknown,
   formData: FormData
@@ -99,7 +114,6 @@ export async function submitTractorWork(
     console.error("Failed to submit work:", error);
     return { success: false, message: "Failed to submit work" };
   }
-  // redirect(`/tractor/${tractorId}`);
 }
 
 export async function getCustomerWorks(customerId: string, year?: string) {
@@ -107,7 +121,7 @@ export async function getCustomerWorks(customerId: string, year?: string) {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const query: any = { customerId: new ObjectId(customerId) };
+    const query: WorkQuery = { customerId: new ObjectId(customerId) };
     if (year && year !== "all") {
       query.date = {
         $gte: new Date(`${year}-01-01`),
@@ -140,7 +154,7 @@ export async function getCustomerWorks(customerId: string, year?: string) {
       customerName: work.customerName,
       date: work.date.toISOString(),
       driverName: work.driverName,
-      equipments: work.equipments.map((eq: any) => ({
+      equipments: work.equipments.map((eq: Equipment) => ({
         name: eq.name,
         hours: eq.hours,
         ratePerHour: eq.ratePerHour,
@@ -501,7 +515,7 @@ export async function getAllTractorWorks(tractorId: string, year?: string) {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const query: any = { tractorId: new ObjectId(tractorId) };
+    const query: { tractorId: ObjectId; date?: { $gte: Date; $lte: Date } } = { tractorId: new ObjectId(tractorId) };
 
     if (year && year !== "all") {
       query.date = {

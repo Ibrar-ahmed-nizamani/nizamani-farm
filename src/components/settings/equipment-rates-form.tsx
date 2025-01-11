@@ -32,7 +32,14 @@ interface EquipmentRatesFormProps {
 
 // Create a dynamic schema based on initial rates
 const createFormSchema = (initialRates: EquipmentRate[]) => {
-  const rateFields: Record<string, z.ZodType<any>> = {};
+  const rateFields: Record<
+    string,
+    z.ZodEffects<
+      z.ZodOptional<z.ZodString>,
+      number | undefined,
+      string | undefined
+    >
+  > = {};
 
   initialRates.forEach((equipment) => {
     rateFields[equipment._id] = z
@@ -78,7 +85,7 @@ export default function EquipmentRatesForm({
 
     try {
       const updatePromises = Object.entries(values)
-        .filter(([_, rate]) => rate !== undefined)
+        .filter(([, rate]) => rate !== undefined)
         .map(([id, rate]) => updateEquipmentRate(id, rate as number));
 
       const results = await Promise.all(updatePromises);
@@ -96,7 +103,7 @@ export default function EquipmentRatesForm({
           message: "Failed to update some equipment rates",
         });
       }
-    } catch (err) {
+    } catch {
       setStatus({
         type: "error",
         message: "An error occurred while updating rates",
