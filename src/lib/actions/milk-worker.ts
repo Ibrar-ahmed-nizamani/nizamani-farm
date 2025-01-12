@@ -129,7 +129,7 @@ export async function getMilkWorkerTransactions(
       type: transaction.type,
       amount: transaction.amount,
       description: transaction.description,
-      date:transaction.date,
+      date: transaction.date,
       _id: transaction._id.toString(),
       workerId: transaction.workerId.toString(),
     }));
@@ -164,7 +164,7 @@ export async function getMilkWorkerDates(workerId: string) {
       .toArray();
 
     return transactions.map((transaction) => ({
-      ...transaction,
+      date: transaction.date,
       _id: transaction._id.toString(),
       workerId: transaction.workerId.toString(),
     }));
@@ -214,5 +214,38 @@ export async function addMilkWorkerTransaction(
       success: false,
       error: "Failed to add transaction",
     };
+  }
+}
+
+export async function deleteMilkWorkerTransaction(
+  workerId: string,
+  transactionId: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // First, verify the transaction exists and belongs to the worker
+    const transaction = await db
+      .collection("milk_worker_transactions")
+      .findOne({
+        _id: new ObjectId(transactionId),
+        workerId: new ObjectId(workerId),
+      });
+
+    if (!transaction) {
+      return { success: false, error: "Transaction not found" };
+    }
+
+    // Delete the transaction
+    await db.collection("milk_worker_transactions").deleteOne({
+      _id: new ObjectId(transactionId),
+    });
+
+    revalidatePath(`/milk/workers/${workerId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete worker transaction:", error);
+    return { success: false, error: "Failed to delete transaction" };
   }
 }

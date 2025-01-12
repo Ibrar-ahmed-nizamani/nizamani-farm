@@ -7,7 +7,7 @@ export default function TractorLayout({
 }>) {
   return (
     <>
-      <h1 className="text-3xl ">Customer</h1>
+      <h1 className="text-3xl ">Tractor Customers</h1>
       <Separator />
       {children}
     </>

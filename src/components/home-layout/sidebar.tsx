@@ -1,18 +1,10 @@
 import Link from "next/link";
-import {
-  Tractor,
-  FileText,
-  ChartNoAxesCombinedIcon,
-  MilkIcon,
-  VeganIcon,
-} from "lucide-react";
+import { Tractor, FileText, MilkIcon } from "lucide-react";
 
 const menuItems = [
-  { icon: ChartNoAxesCombinedIcon, label: "Summary", href: "/" },
-  { icon: VeganIcon, label: "Cattle", href: "/cattle" },
   { icon: MilkIcon, label: "Milk", href: "/milk" },
   { icon: Tractor, label: "Tractor", href: "/tractor" },
-  { icon: FileText, label: "Accounting", href: "/accounting" },
+  { icon: FileText, label: "Tractor Accounting", href: "/accounting/tractor" },
 ];
 
 export function Sidebar() {

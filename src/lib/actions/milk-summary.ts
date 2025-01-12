@@ -4,8 +4,6 @@
 import clientPromise from "@/lib/mongodb";
 import { MongoDBFilter } from "../type-definitions";
 
-
-
 export async function getMilkSummaryData(year?: string, month?: string) {
   try {
     const client = await clientPromise;
@@ -113,10 +111,13 @@ export async function getMilkSummaryData(year?: string, month?: string) {
     return {
       expenses: expenses.map((exp) => ({
         ...exp,
+        amount: exp.amount,
+        date: exp.date,
         _id: exp._id.toString(),
         typeId: exp.typeId.toString(),
         type: {
           ...exp.type,
+          name: exp.type.name,
           _id: exp.type._id.toString(),
         },
       })),
@@ -124,6 +125,10 @@ export async function getMilkSummaryData(year?: string, month?: string) {
         ...credit,
         _id: credit._id.toString(),
         workerId: credit.workerId.toString(),
+        type: credit.type,
+        amount: credit.amount,
+        date: credit.date,
+        description: credit.description,
         worker: {
           ...credit.worker,
           _id: credit.worker._id.toString(),

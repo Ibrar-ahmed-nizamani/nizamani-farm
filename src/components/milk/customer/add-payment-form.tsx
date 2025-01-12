@@ -46,7 +46,7 @@ export default function AddPaymentForm({ customerId }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      amount: "",
+      amount: 0,
       description: "Milk Payment",
     },
   });

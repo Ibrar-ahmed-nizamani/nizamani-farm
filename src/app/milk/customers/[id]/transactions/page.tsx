@@ -1,10 +1,23 @@
+// app/milk/customers/[id]/transactions/page.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   getMilkCustomer,
   getMilkCustomerTransactions,
 } from "@/lib/actions/milk-customer-actions";
+import BackLink from "@/components/ui/back-link";
+import { formatDate } from "@/lib/utils";
+import { DeleteTransaction } from "@/components/milk/customer/delete-transaction";
+import EmptyState from "@/components/shared/empty-state";
 
 export default async function CustomerTransactionsPage({
   params,
@@ -19,32 +32,56 @@ export default async function CustomerTransactionsPage({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{customer.name} - Transactions</h1>
-        <div className="flex gap-2">
-          <Link href={`/milk/customers/${id}`}>
-            <Button variant="outline">View Records</Button>
-          </Link>
-          <Link href={`/milk/customers/${id}/add-payment`}>
-            <Button>Add Payment</Button>
-          </Link>
-        </div>
+        <BackLink href={`/milk/customers/${id}`} linkText="Back To Customer" />
       </div>
 
-      <div className="border rounded-lg">
-        <div className="grid grid-cols-4 gap-4 p-4 font-medium border-b">
-          <div>Date</div>
-          <div>Description</div>
-          <div>Amount (Rs )</div>
-        </div>
-        {transactions.map((transaction) => (
-          <div
-            key={transaction._id}
-            className="grid grid-cols-4 gap-4 p-4 border-b last:border-0"
-          >
-            <div>{format(new Date(transaction.date), "dd/MM/yyyy")}</div>
-            <div>{transaction.description}</div>
-            <div>{transaction.amount.toLocaleString()}</div>
-          </div>
-        ))}
+      <div className="flex gap-2">
+        <Link href={`/milk/customers/${id}/add-payment`}>
+          <Button>Add Payment</Button>
+        </Link>
+      </div>
+
+      <div className="rounded-md border">
+        {transactions.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Amount (Rs)</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((transaction) => (
+                <TableRow key={transaction._id}>
+                  <TableCell>
+                    {formatDate(
+                      format(new Date(transaction.date), "dd/MM/yyyy")
+                    )}
+                  </TableCell>
+                  <TableCell>{transaction.description}</TableCell>
+                  <TableCell>{transaction.amount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <DeleteTransaction
+                      customerId={id}
+                      transactionId={transaction._id}
+                      date={format(new Date(transaction.date), "dd/MM/yyyy")}
+                      amount={transaction.amount}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <EmptyState
+            title="No transaction records found"
+            description="Start by adding your first transaction"
+            link={`/milk/customers/${id}/add-payment`}
+            linkText="Add Payment"
+          />
+        )}
       </div>
     </div>
   );

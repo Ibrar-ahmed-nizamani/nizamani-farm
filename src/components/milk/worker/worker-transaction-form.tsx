@@ -54,7 +54,7 @@ export default function AddTransactionForm({ workerId }: Props) {
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       type: "credit",
-      amount: "",
+      amount: 0,
       description: "",
     },
   });
@@ -78,7 +78,7 @@ export default function AddTransactionForm({ workerId }: Props) {
         form.reset({
           date: new Date().toISOString().split("T")[0],
           type: "credit",
-          amount: "",
+          amount: 0,
           description: "",
         });
       } else {

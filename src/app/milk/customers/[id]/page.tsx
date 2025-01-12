@@ -21,6 +21,10 @@ import {
   MonthSelector,
   YearSelector,
 } from "@/components/milk/customer/selectors";
+import SummaryCards from "@/components/shared/summary-cards";
+import { formatDate } from "@/lib/utils";
+import BackLink from "@/components/ui/back-link";
+import EmptyState from "@/components/shared/empty-state";
 
 export default async function CustomerPage({
   params,
@@ -44,7 +48,15 @@ export default async function CustomerPage({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{customer.name}</h1>
-        <div className="flex gap-2">
+        <BackLink href="/milk/customers" linkText="Back to Customers" />
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex gap-4 items-center">
+          <YearSelector records={yearsAndMonths} />
+          <MonthSelector records={yearsAndMonths} />
+        </div>
+        <div className="flex gap-4">
           <CompleteCustomerReport
             customerDetails={{
               customerName: customer.name,
@@ -65,71 +77,71 @@ export default async function CustomerPage({
         </div>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <YearSelector records={yearsAndMonths} />
-        <MonthSelector records={yearsAndMonths} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold text-gray-500">Total Debit</h3>
-          <p className="text-2xl font-bold">
-            Rs {summary.totalDebit.toLocaleString()}
-          </p>
-        </div>
-        <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold text-gray-500">Total Paid</h3>
-          <p className="text-2xl font-bold">
-            Rs {summary.totalPaid.toLocaleString()}
-          </p>
-        </div>
-        <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold text-gray-500">Balance</h3>
-          <p className="text-2xl font-bold">
-            Rs {summary.balance.toLocaleString()}
-          </p>
-        </div>
-      </div>
+      <SummaryCards
+        cards={[
+          {
+            label: "Total Debit",
+            value: summary.totalDebit,
+            type: "expense",
+          },
+          {
+            label: "Total Paid",
+            value: summary.totalPaid,
+            type: "income",
+          },
+          {
+            label: "Due",
+            value: summary.balance,
+            type: "due",
+          },
+        ]}
+      />
 
       <AddCustomerMilkForm
         customerId={id}
         defaultQuantity={customer.defaultQuantity}
         defaultPrice={customer.defaultPrice}
       />
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Quantity (L)</TableHead>
-              <TableHead>Price (Rs)</TableHead>
-              <TableHead>Amount (Rs)</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {milkRecords.map((record) => (
-              <TableRow key={record._id}>
-                <TableCell>
-                  {format(new Date(record.date), "dd/MM/yyyy")}
-                </TableCell>
-                <TableCell>{record.quantity}</TableCell>
-                <TableCell>{record.price}</TableCell>
-                <TableCell>{record.amount.toLocaleString()}</TableCell>
-
-                <TableCell>
-                  <DeleteMilkRecord
-                    customerId={id}
-                    recordId={record._id}
-                    date={format(new Date(record.date), "dd/MM/yyyy")}
-                  />
-                </TableCell>
+      {milkRecords.length > 0 ? (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Quantity (L)</TableHead>
+                <TableHead>Price (Rs)</TableHead>
+                <TableHead>Amount (Rs)</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {milkRecords.map((record) => (
+                <TableRow key={record._id}>
+                  <TableCell>
+                    {formatDate(format(new Date(record.date), "dd/MM/yyyy"))}
+                  </TableCell>
+                  <TableCell>{record.quantity}</TableCell>
+                  <TableCell>{record.price}</TableCell>
+                  <TableCell>{record.amount.toLocaleString()}</TableCell>
+
+                  <TableCell>
+                    <DeleteMilkRecord
+                      customerId={id}
+                      recordId={record._id}
+                      date={format(new Date(record.date), "dd/MM/yyyy")}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <EmptyState
+          title="No milk record found"
+          description="Start by adding your first milk record"
+        />
+      )}
     </div>
   );
 }

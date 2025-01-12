@@ -95,9 +95,11 @@ export async function getMilkCustomer(customerId: string) {
     if (!customer) {
       throw new Error("Customer not found");
     }
-
     return {
       ...customer,
+      name: customer.name,
+      defaultQuantity: customer.defaultQuantity,
+      defaultPrice: customer.defaultPrice,
       _id: customer._id.toString(),
     };
   } catch (error) {
@@ -132,6 +134,7 @@ export async function updateMilkCustomerDefaults(
     return { success: false, error: "Failed to update customer defaults" };
   }
 }
+
 async function checkExistingMilkRecord(customerId: string, date: Date) {
   const client = await clientPromise;
   const db = client.db("farm");
@@ -327,11 +330,16 @@ export async function getMilkCustomerSummary(
       0
     );
     const balance = totalDebit - totalPaid;
+    console.log(milkRecords);
 
     return {
       customer,
       milkRecords: milkRecords.map((record) => ({
         ...record,
+        date: record.date,
+        quantity: record.quantity,
+        price: record.price,
+        amount: record.amount,
         _id: record._id.toString(),
         customerId: record.customerId.toString(),
       })),
@@ -339,6 +347,10 @@ export async function getMilkCustomerSummary(
         ...transaction,
         _id: transaction._id.toString(),
         customerId: transaction.customerId.toString(),
+        amount: transaction.amount,
+        description: transaction.description,
+        type: transaction.type,
+        date: transaction.date,
       })),
       summary: {
         totalDebit,
@@ -378,10 +390,13 @@ export async function getMilkCustomerTransactions(
       })
       .sort({ date: -1 })
       .toArray();
-
+    console.log(transactions);
     return transactions.map((transaction) => ({
-      ...transaction,
       _id: transaction._id.toString(),
+      amount: transaction.amount,
+      description: transaction.description,
+      type: transaction.type,
+      date: transaction.date,
       customerId: transaction.customerId.toString(),
     }));
   } catch (error) {
@@ -399,7 +414,6 @@ export async function getMilkCustomerDates(customerId: string) {
       .collection("milk-records")
       .find({
         customerId: new ObjectId(customerId),
-        // ...dateMatch,
       })
       .sort({ date: -1 })
       .toArray();
@@ -407,6 +421,10 @@ export async function getMilkCustomerDates(customerId: string) {
     return {
       milkRecords: milkRecords.map((record) => ({
         ...record,
+        date: record.date,
+        quantity: record.quantity,
+        price: record.price,
+        amount: record.amount,
         _id: record._id.toString(),
         customerId: record.customerId.toString(),
       })),
@@ -414,5 +432,45 @@ export async function getMilkCustomerDates(customerId: string) {
   } catch (error) {
     console.error("Failed to fetch milk customer year and months", error);
     throw new Error("Failed to fetch milk customer  year and months");
+  }
+}
+
+export async function deleteMilkTransaction(
+  customerId: string,
+  transactionId: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // First, get the transaction to know the amount to decrease
+    const transaction = await db.collection("milk-transactions").findOne({
+      _id: new ObjectId(transactionId),
+      customerId: new ObjectId(customerId),
+    });
+
+    if (!transaction) {
+      return { success: false, error: "Transaction not found" };
+    }
+
+    // Delete the transaction
+    await db.collection("milk-transactions").deleteOne({
+      _id: new ObjectId(transactionId),
+    });
+
+    // Update customer's totalPaid by decreasing the amount
+    await db
+      .collection("milk-customers")
+      .updateOne(
+        { _id: new ObjectId(customerId) },
+        { $inc: { totalPaid: -transaction.amount } }
+      );
+
+    revalidatePath(`/milk/customers/${customerId}`);
+    revalidatePath(`/milk/customers/${customerId}/transactions`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete transaction:", error);
+    return { success: false, error: "Failed to delete transaction" };
   }
 }

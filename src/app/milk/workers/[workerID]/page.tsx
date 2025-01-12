@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
+import { formatDate } from "@/lib/utils";
+import { DeleteWorkerTransaction } from "@/components/milk/worker/delete-worker-transaction";
 
 export default async function WorkerPage({
   params,
@@ -32,13 +34,24 @@ export default async function WorkerPage({
   const { year, month } = await searchParams;
   const worker = await getMilkWorker(id);
   const transactions = await getMilkWorkerTransactions(id, year, month);
-  const records = await getMilkWorkerDates(id);
-  console.log(records);
+  const yearsAndMonths = await getMilkWorkerDates(id);
 
+  // Calculate total balance
   const balance = transactions.reduce(
     (acc, curr) => acc + (curr.type === "credit" ? curr.amount : -curr.amount),
     0
   );
+
+  // Calculate running balance for each transaction
+  let runningBalance = 0;
+  const transactionsWithBalance = transactions.map((transaction) => {
+    runningBalance +=
+      transaction.type === "credit" ? transaction.amount : -transaction.amount;
+    return {
+      ...transaction,
+      runningBalance,
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -55,8 +68,8 @@ export default async function WorkerPage({
 
       <div className="flex items-center justify-between">
         <div className="flex gap-4 items-center">
-          <WorkerYearSelector records={records} />
-          <WorkerMonthSelector records={records} />
+          <WorkerYearSelector records={yearsAndMonths} />
+          <WorkerMonthSelector records={yearsAndMonths} />
         </div>
         <div>
           <Button asChild>
@@ -71,30 +84,42 @@ export default async function WorkerPage({
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Amount (Rs)</TableHead>
+              <TableHead>Detail</TableHead>
+              <TableHead>Credit</TableHead>
+              <TableHead>Debit</TableHead>
+              <TableHead className="text-center">
+                Running Balance (Rs)
+              </TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((transaction) => (
+            {transactionsWithBalance.map((transaction) => (
               <TableRow key={transaction._id}>
                 <TableCell>
-                  {format(new Date(transaction.date), "dd/MM/yyyy")}
-                </TableCell>
-                <TableCell
-                  className={
-                    transaction.type === "credit"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }
-                >
-                  {transaction.type.charAt(0).toUpperCase() +
-                    transaction.type.slice(1)}
+                  {formatDate(format(new Date(transaction.date), "dd/MM/yyyy"))}
                 </TableCell>
                 <TableCell>{transaction.description}</TableCell>
-                <TableCell className="text-right">
-                  {transaction.amount.toLocaleString()}
+                <TableCell className="text-green-600">
+                  {transaction.type === "credit" &&
+                    transaction.amount.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-red-600">
+                  {transaction.type === "debit" &&
+                    transaction.amount.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-center">
+                  {transaction.runningBalance.toLocaleString()}
+                  {transaction.runningBalance > 0 ? " Cr" : " Dr"}
+                </TableCell>
+                <TableCell>
+                  <DeleteWorkerTransaction
+                    workerId={worker._id}
+                    transactionId={transaction._id}
+                    date={format(new Date(transaction.date), "dd/MM/yyyy")}
+                    amount={transaction.amount}
+                    type={transaction.type}
+                  />
                 </TableCell>
               </TableRow>
             ))}
