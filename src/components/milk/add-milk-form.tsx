@@ -46,8 +46,8 @@ export default function AddMilkForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      amMilk: 0,
-      pmMilk: 0,
+      amMilk: "",
+      pmMilk: "",
     },
   });
 

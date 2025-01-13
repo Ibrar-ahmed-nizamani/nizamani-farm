@@ -59,7 +59,7 @@ export default async function WorkerPage({
         <div>
           <h1 className="text-2xl font-bold">{worker.name}</h1>
           <p className="text-muted-foreground">
-            Current Balance: Rs {balance.toLocaleString()}
+            Current Balance: Rs {Math.abs(balance)} {balance < 0 ? "Dr" : "Cr"}
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default async function WorkerPage({
                     transaction.amount.toLocaleString()}
                 </TableCell>
                 <TableCell className="text-center">
-                  {transaction.runningBalance.toLocaleString()}
+                  {Math.abs(transaction.runningBalance)}
                   {transaction.runningBalance > 0 ? " Cr" : " Dr"}
                 </TableCell>
                 <TableCell>

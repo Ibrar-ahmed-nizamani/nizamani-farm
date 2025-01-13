@@ -57,8 +57,8 @@ export default function AddCustomerMilkForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      quantity: defaultQuantity,
-      price: defaultPrice,
+      quantity: defaultQuantity.toString(),
+      price: defaultPrice.toString(),
     },
   });
 
