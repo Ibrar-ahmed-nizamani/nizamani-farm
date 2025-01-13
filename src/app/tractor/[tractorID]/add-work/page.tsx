@@ -39,7 +39,7 @@ export default async function AddTractorWorkPage({
           <Link href="/tractor/equipment-rates"> Change Equipment Rates</Link>
         </Button>
       </div>
-      {/* <EquipmentRateForm /> */}
+
       <AddTractorWorkForm
         tractorID={tractorID}
         bladeRate={bladeRate}
