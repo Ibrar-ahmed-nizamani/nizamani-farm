@@ -72,7 +72,7 @@ export default async function MilkPage({ searchParams }: MilkPageProps) {
         <EmptyState
           title="No milk records found"
           description="Start by adding your first milk record"
-          link="/milk/add"
+          link="/milk/milk-records/add"
           linkText="Add Milk Record"
         />
       ) : (

@@ -194,6 +194,7 @@ export async function addMilkRecord(
       );
 
     revalidatePath(`/milk/customers/${customerId}`);
+    revalidatePath(`/milk/customers`);
     return { success: true };
   } catch (error) {
     console.error("Failed to add milk record:", error);

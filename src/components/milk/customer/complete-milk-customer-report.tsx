@@ -164,7 +164,7 @@ export default function CompleteCustomerReport({
                 <strong>Balance:</strong>
                 <p class="${
                   customerDetails.balance >= 0 ? "debit" : "credit"
-                }">Rs ${customerDetails.balance.toLocaleString()} ${
+                }">Rs ${Math.abs(customerDetails.balance)} ${
         customerDetails.balance > 0 ? " Dr" : " Cr"
       }</p>
               </div>
@@ -220,9 +220,9 @@ export default function CompleteCustomerReport({
             </table>
 
             <div style="text-align: right; margin-top: 20px;">
-              <p><strong>Final Balance: Rs ${customerDetails.balance.toLocaleString()} ${
-        customerDetails.balance > 0 ? " Dr" : " Cr"
-      }</strong></p>
+              <p><strong>Final Balance: Rs ${Math.abs(
+                customerDetails.balance
+              )} ${customerDetails.balance > 0 ? " Dr" : " Cr"}</strong></p>
             </div>
           </body>
         </html>
