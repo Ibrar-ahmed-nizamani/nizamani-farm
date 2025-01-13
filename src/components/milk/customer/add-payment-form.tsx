@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+
+import { Loader2 } from "lucide-react";
 import { addMilkPayment } from "@/lib/actions/milk-customer-actions";
 import StatusAlert from "@/components/ui/status-alert";
 

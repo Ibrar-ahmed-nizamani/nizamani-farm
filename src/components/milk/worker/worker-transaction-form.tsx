@@ -23,8 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { addMilkWorkerTransaction } from "@/lib/actions/milk-worker";
 import StatusAlert from "@/components/ui/status-alert";
 import { useRouter } from "next/navigation";
