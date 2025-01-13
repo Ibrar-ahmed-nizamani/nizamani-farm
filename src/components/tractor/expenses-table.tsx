@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Trash2,  } from "lucide-react";
+import { MoreVertical, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,13 +28,11 @@ interface ExpensesTableProps {
     date: string;
   }[];
   tractorId: string;
-  
 }
 
 export default function ExpensesTable({
   expenses,
   tractorId,
-  
 }: ExpensesTableProps) {
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
 
@@ -58,24 +56,14 @@ export default function ExpensesTable({
                 {new Date(expense.date).toLocaleDateString("en-GB")}
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => setDeleteExpenseId(expense._id.toString())}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                  onClick={() => setDeleteExpenseId(expense._id.toString())}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}

@@ -91,32 +91,21 @@ export default function TractorWorkTable({
               <TableCell>
                 {new Date(work.date).toLocaleDateString("en-GB")}
               </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/tractor/${tractorId}/edit-work/${work.id}`}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        <span>Edit work</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={() => setDeleteWorkId(work.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <TableCell className="text-right space-x-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/tractor/${tractorId}/edit-work/${work.id}`}>
+                    <Eye className="h-4 w-4" />
+                    <span>Detail</span>
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-800 hover:bg-red-100 "
+                  onClick={() => setDeleteWorkId(work.id)}
+                >
+                  <Trash2 className=" h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
