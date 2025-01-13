@@ -36,6 +36,13 @@ const formSchema = z.object({
     .refine((val) => !isNaN(val) && val > 0, "Must be a valid positive number"),
 });
 
+// Define the shape of the form values (before transformation)
+type FormInput = {
+  price: string;
+  quantity: string;
+  date: string;
+};
+
 interface Props {
   customerId: string;
   defaultQuantity?: number;
@@ -53,7 +60,7 @@ export default function AddCustomerMilkForm({
     message: string | null;
   }>({ type: null, message: null });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
@@ -71,12 +78,12 @@ export default function AddCustomerMilkForm({
     setStatus(newStatus || { type: null, message: null });
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormInput) => {
     setIsLoading(true);
     try {
       // Update defaults if they've changed
-      const newQuantity = Number(values.quantity);
-      const newPrice = Number(values.price);
+      const newQuantity = parseFloat(values.quantity);
+      const newPrice = parseFloat(values.price);
       if (newQuantity !== defaultQuantity || newPrice !== defaultPrice) {
         await updateMilkCustomerDefaults(customerId, newQuantity, newPrice);
       }

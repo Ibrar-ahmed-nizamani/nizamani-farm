@@ -26,6 +26,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { addMilkWorkerTransaction } from "@/lib/actions/milk-worker";
+import StatusAlert from "@/components/ui/status-alert";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -38,34 +40,44 @@ const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
 });
 
+// Define the shape of the form values (before transformation)
+type FormInput = {
+  date: string;
+  type: "debit" | "credit";
+  amount: string;
+  description: string;
+};
+
 interface Props {
   workerId: string;
 }
 
 export default function AddTransactionForm({ workerId }: Props) {
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<{
     type: "success" | "error" | null;
     message: string | null;
   }>({ type: null, message: null });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       type: "credit",
-      amount: 0,
+      amount: "",
       description: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormInput) => {
     setIsLoading(true);
     try {
       const result = await addMilkWorkerTransaction(
         workerId,
         values.type,
-        Number(values.amount),
+        parseFloat(values.amount),
         new Date(values.date),
         values.description
       );
@@ -78,9 +90,11 @@ export default function AddTransactionForm({ workerId }: Props) {
         form.reset({
           date: new Date().toISOString().split("T")[0],
           type: "credit",
-          amount: 0,
+          amount: "",
           description: "",
         });
+
+        router.push(`/milk/workers/${workerId}`);
       } else {
         setStatus({
           type: "error",
@@ -101,19 +115,12 @@ export default function AddTransactionForm({ workerId }: Props) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {status.type && (
-          <Alert
-            variant={status.type === "success" ? "default" : "destructive"}
-          >
-            {status.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertTitle>
-              {status.type === "success" ? "Success" : "Error"}
-            </AlertTitle>
-            <AlertDescription>{status.message}</AlertDescription>
-          </Alert>
+          <StatusAlert
+            status={{
+              message: status.message,
+              type: status.type,
+            }}
+          />
         )}
 
         <div className="grid gap-4 md:grid-cols-3">

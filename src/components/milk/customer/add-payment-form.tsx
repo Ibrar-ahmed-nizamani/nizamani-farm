@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { addMilkPayment } from "@/lib/actions/milk-customer-actions";
+import StatusAlert from "@/components/ui/status-alert";
 
 const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -29,6 +30,13 @@ const formSchema = z.object({
     .refine((val) => !isNaN(val) && val > 0, "Must be a valid positive number"),
   description: z.string().min(1, "Description is required"),
 });
+
+// Define the shape of the form values (before transformation)
+type FormInput = {
+  date: string;
+  amount: string;
+  description: string;
+};
 
 interface Props {
   customerId: string;
@@ -42,21 +50,21 @@ export default function AddPaymentForm({ customerId }: Props) {
     message: string | null;
   }>({ type: null, message: null });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      amount: 0,
+      amount: "",
       description: "Milk Payment",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormInput) => {
     setIsLoading(true);
     try {
       const result = await addMilkPayment(
         customerId,
-        Number(values.amount),
+        parseFloat(values.amount),
         new Date(values.date),
         values.description
       );
@@ -88,19 +96,9 @@ export default function AddPaymentForm({ customerId }: Props) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {status.type && (
-          <Alert
-            variant={status.type === "success" ? "default" : "destructive"}
-          >
-            {status.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertTitle>
-              {status.type === "success" ? "Success" : "Error"}
-            </AlertTitle>
-            <AlertDescription>{status.message}</AlertDescription>
-          </Alert>
+          <StatusAlert
+            status={{ type: status.type, message: status.message }}
+          />
         )}
 
         <div className="grid gap-4 md:grid-cols-2">

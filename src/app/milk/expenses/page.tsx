@@ -22,7 +22,6 @@ export default async function MilkExpensesPage({ searchParams }: PageProps) {
 
   const yearsAndMonths = await getMilkExpenseYearsAndMonths();
   const expenses = await getMilkExpenses(year, month);
-  console.log(expenses);
   const years = yearsAndMonths.map((yearsAndMonths) => yearsAndMonths.year);
   const availableMonths = year
     ? yearsAndMonths.find((ym) => ym.year.toString() === year)?.months || []

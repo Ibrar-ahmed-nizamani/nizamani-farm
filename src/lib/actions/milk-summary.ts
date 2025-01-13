@@ -158,3 +158,48 @@ export async function getMilkSummaryData(year?: string, month?: string) {
     };
   }
 }
+
+export async function getMilkSummaryYearsAndMonths() {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get dates from all three collections
+    const expenseDates = await db.collection("milk_expenses").distinct("date");
+    const workerDates = await db
+      .collection("milk_worker_transactions")
+      .distinct("date");
+    const recordDates = await db.collection("milk-records").distinct("date");
+
+    // Create a map to store months for each year
+    const yearMonthMap = new Map<number, Set<number>>();
+
+    // Helper function to process dates
+    const processDate = (date: string | Date) => {
+      const dateObj = new Date(date);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1; // Adding 1 since getMonth() returns 0-11
+
+      if (!yearMonthMap.has(year)) {
+        yearMonthMap.set(year, new Set<number>());
+      }
+      yearMonthMap.get(year)?.add(month);
+    };
+
+    // Process dates from all collections
+    [...expenseDates, ...workerDates, ...recordDates].forEach(processDate);
+
+    // Convert the map to the desired format and sort
+    const result = Array.from(yearMonthMap.entries())
+      .map(([year, months]) => ({
+        year,
+        months: Array.from(months).sort((a: number, b: number) => a - b),
+      }))
+      .sort((a, b) => b.year - a.year);
+
+    return result;
+  } catch (error) {
+    console.error("Failed to fetch milk data years and months:", error);
+    return [];
+  }
+}

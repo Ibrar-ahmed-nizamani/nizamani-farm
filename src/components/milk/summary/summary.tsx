@@ -170,7 +170,8 @@ export default function MilkSummaryPage({
                   transaction.balance >= 0 ? "text-green-600" : "text-red-600"
                 }`}
               >
-                Rs {transaction.balance} {transaction.balance > 0 ? "Cr" : "Dr"}
+                Rs {Math.abs(transaction.balance)}{" "}
+                {transaction.balance > 0 ? "Cr" : "Dr"}
               </TableCell>
             </TableRow>
           ))}

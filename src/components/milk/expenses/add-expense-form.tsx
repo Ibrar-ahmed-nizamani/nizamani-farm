@@ -41,6 +41,13 @@ const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
 });
 
+// Define the shape of the form values (before transformation)
+type FormInput = {
+  type: string;
+  amount: string;
+  date: string;
+};
+
 export default function AddExpenseForm({
   expenseTypes,
 }: {
@@ -53,21 +60,21 @@ export default function AddExpenseForm({
     message: string | null;
   }>({ type: null, message: null });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: "",
-      amount: 0,
+      amount: "",
       date: new Date().toISOString().split("T")[0],
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormInput) => {
     setIsLoading(true);
     try {
       const result = await addMilkExpense({
         typeId: values.type,
-        amount: values.amount,
+        amount: parseFloat(values.amount),
         date: new Date(values.date),
       });
 

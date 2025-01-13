@@ -31,7 +31,7 @@ export default async function CustomerTransactionsPage({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{customer.name} - Transactions</h1>
+        <h1 className="text-2xl font-bold">{customer.name} - Payments</h1>
         <BackLink href={`/milk/customers/${id}`} linkText="Back To Customer" />
       </div>
 

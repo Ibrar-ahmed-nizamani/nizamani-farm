@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { addMilkCustomer } from "@/lib/actions/milk-customer-actions";
+import StatusAlert from "@/components/ui/status-alert";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -37,6 +38,15 @@ export default function AddCustomerForm() {
       name: "",
     },
   });
+
+  const handleStatusChange = (
+    newStatus: {
+      type: "success" | "error" | null;
+      message: string | null;
+    } | null
+  ) => {
+    setStatus(newStatus || { type: null, message: null });
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
@@ -68,19 +78,10 @@ export default function AddCustomerForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {status.type && (
-          <Alert
-            variant={status.type === "success" ? "default" : "destructive"}
-          >
-            {status.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertTitle>
-              {status.type === "success" ? "Success" : "Error"}
-            </AlertTitle>
-            <AlertDescription>{status.message}</AlertDescription>
-          </Alert>
+          <StatusAlert
+            status={{ message: status.message, type: status.type }}
+            onStatusChange={handleStatusChange}
+          />
         )}
 
         <div className="flex gap-4">

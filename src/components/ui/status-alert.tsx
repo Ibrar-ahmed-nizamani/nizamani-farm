@@ -52,9 +52,7 @@ export default function StatusAlert({
           <AlertCircle className="h-4 w-4" />
         )}
       </div>
-      {/* <AlertTitle className={status.type === "success" ? "text-green-700" : ""}>
-        {status.type === "success" ? "Success" : "Error"}
-      </AlertTitle> */}
+
       <AlertDescription
         className={status.type === "success" ? "text-green-600" : ""}
       >

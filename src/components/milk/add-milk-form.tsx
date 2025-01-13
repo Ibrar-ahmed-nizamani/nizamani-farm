@@ -20,6 +20,7 @@ import { useState } from "react";
 import StatusAlert from "../ui/status-alert";
 import { Loader2 } from "lucide-react";
 
+// Define the input schema (what the form handles)
 const formSchema = z.object({
   date: z.string().nonempty("Date is required"),
   amMilk: z
@@ -34,6 +35,20 @@ const formSchema = z.object({
     .refine((val) => !isNaN(val) && val >= 0, "Must be a valid number"),
 });
 
+// Define the shape of the form values (before transformation)
+type FormInput = {
+  date: string;
+  amMilk: string;
+  pmMilk: string;
+};
+
+// Define the shape of the transformed values
+type TransformedValues = {
+  date: Date;
+  amMilk: number;
+  pmMilk: number;
+};
+
 export default function AddMilkForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +57,7 @@ export default function AddMilkForm() {
     message: string | null;
   }>({ type: null, message: null });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
@@ -51,16 +66,19 @@ export default function AddMilkForm() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormInput) => {
     setIsSubmitting(true);
     setStatus({ type: null, message: null });
 
     try {
-      const result = await addMilkRecord({
+      // Transform the values explicitly
+      const transformedValues: TransformedValues = {
         date: new Date(values.date),
-        amMilk: values.amMilk,
-        pmMilk: values.pmMilk,
-      });
+        amMilk: parseFloat(values.amMilk),
+        pmMilk: parseFloat(values.pmMilk),
+      };
+
+      const result = await addMilkRecord(transformedValues);
 
       if (result.success) {
         setStatus({

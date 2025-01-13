@@ -36,14 +36,12 @@ export async function submitTractorWork(
       },
     ],
   };
-  console.log(fields.date === "");
   // Check if fields are valid
   if (fields.date === "") {
     return { success: false, message: "Please Add date" };
   }
 
   // Log fields and return success
-  console.log(fields.equipmentData);
 
   return {
     success: true,
@@ -74,8 +72,6 @@ export async function updateEquipmentRates(formData: FormData) {
       rate: newRate ? parseFloat(newRate as string) : equipment.rate,
     };
   });
-
-  console.log("Updated rates:", updatedRates);
 
   // Revalidate the page to reflect the changes
   revalidatePath("/");

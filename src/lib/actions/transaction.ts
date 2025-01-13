@@ -71,7 +71,6 @@ export async function getCustomerTransactions(
       .find(query)
       .sort({ date: -1 })
       .toArray();
-    console.log(transactions);
     // Serialize the transactions data
     return transactions.map((transaction) => ({
       _id: transaction._id.toString(),
@@ -138,16 +137,14 @@ export async function getTransactionAvailableYears(customerId: string) {
     const db = client.db("farm");
 
     // Get unique years from CREDIT transactions only
-    const dates = await db
-      .collection("transactions")
-      .distinct("date", { 
-        customerId: new ObjectId(customerId),
-        type: "CREDIT"
-      });
+    const dates = await db.collection("transactions").distinct("date", {
+      customerId: new ObjectId(customerId),
+      type: "CREDIT",
+    });
 
     // Convert dates to years and sort
     const uniqueYears = Array.from(
-      new Set(dates.map(date => new Date(date).getFullYear()))
+      new Set(dates.map((date) => new Date(date).getFullYear()))
     ).sort((a, b) => b - a); // Sort years in descending order
 
     return uniqueYears;

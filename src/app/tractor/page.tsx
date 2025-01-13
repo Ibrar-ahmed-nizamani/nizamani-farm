@@ -6,7 +6,6 @@ import Link from "next/link";
 
 export default async function TractorPage() {
   const tractorsData = await getTractors();
-  console.log(tractorsData);
   return (
     <section>
       <div className="space-x-6">

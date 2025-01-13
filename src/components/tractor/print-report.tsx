@@ -29,7 +29,6 @@ export default function PrintReport({
 
       // Directly call the server action
       const works = await getAllTractorWorks(tractorId, tractorDetails.year);
-      console.log(works);
       const printContent = `
         <html>
           <head>
@@ -164,7 +163,11 @@ export default function PrintReport({
                     <td>
                       ${work.equipments
                         .map(
-                          (eq: { name: string; hours: number; amount: number }) =>
+                          (eq: {
+                            name: string;
+                            hours: number;
+                            amount: number;
+                          }) =>
                             `<div class="equipment-details">${eq.name}: ${
                               eq.hours
                             } hrs - Rs ${eq.amount.toLocaleString()}</div>`

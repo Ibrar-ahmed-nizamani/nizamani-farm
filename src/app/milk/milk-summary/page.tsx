@@ -2,7 +2,10 @@
 
 import MilkSummaryPage from "@/components/milk/summary/summary";
 
-import { getMilkSummaryData } from "@/lib/actions/milk-summary";
+import {
+  getMilkSummaryData,
+  getMilkSummaryYearsAndMonths,
+} from "@/lib/actions/milk-summary";
 
 export default async function Page({
   searchParams,
@@ -11,5 +14,21 @@ export default async function Page({
 }) {
   const { year, month } = await searchParams;
   const data = await getMilkSummaryData(year, month);
-  return <MilkSummaryPage {...data} />;
+
+  const yearsAndMonths = await getMilkSummaryYearsAndMonths();
+
+  const years = yearsAndMonths.map((yearsAndMonths) => yearsAndMonths.year);
+  const availableMonths = year
+    ? yearsAndMonths.find((ym) => ym.year.toString() === year)?.months || []
+    : [];
+
+  return (
+    <MilkSummaryPage
+      expenses={data.expenses}
+      customerRecords={data.customerRecords}
+      workerCredits={data.workerCredits}
+      years={years}
+      months={availableMonths}
+    />
+  );
 }

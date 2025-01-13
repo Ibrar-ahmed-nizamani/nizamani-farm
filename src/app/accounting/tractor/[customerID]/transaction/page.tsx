@@ -28,7 +28,7 @@ export default async function CustomerTransactionsPage({
   ]);
 
   const customer = customerDetails;
-  console.log(customer);
+
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between">

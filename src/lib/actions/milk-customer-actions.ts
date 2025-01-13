@@ -330,7 +330,6 @@ export async function getMilkCustomerSummary(
       0
     );
     const balance = totalDebit - totalPaid;
-    console.log(milkRecords);
 
     return {
       customer,
@@ -390,7 +389,6 @@ export async function getMilkCustomerTransactions(
       })
       .sort({ date: -1 })
       .toArray();
-    console.log(transactions);
     return transactions.map((transaction) => ({
       _id: transaction._id.toString(),
       amount: transaction.amount,
