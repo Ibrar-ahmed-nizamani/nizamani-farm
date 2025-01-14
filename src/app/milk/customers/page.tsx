@@ -8,6 +8,7 @@ import Link from "next/link";
 
 export default async function MilkCustomersPage() {
   const customers = await getMilkCustomers();
+  console.log(customers);
   const totalDebit = customers.reduce(
     (sum, customer) => sum + customer.totalDebit,
     0

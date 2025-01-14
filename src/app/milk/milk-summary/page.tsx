@@ -21,7 +21,7 @@ export default async function Page({
   const availableMonths = year
     ? yearsAndMonths.find((ym) => ym.year.toString() === year)?.months || []
     : [];
-
+  console.log(data);
   return (
     <MilkSummaryPage
       expenses={data.expenses}
