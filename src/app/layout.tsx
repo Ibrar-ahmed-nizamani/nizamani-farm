@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/home-layout/sidebar";
+import BackupButton from "@/components/home-layout/backup-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <header className="px-8 py-5 text-3xl text-primary border-b">
-          Nizamani Farm
+        <header className="px-8 py-5  border-b flex justify-between items-center">
+          <span className="text-3xl text-primary">Nizamani Farm</span>
+          <BackupButton />
         </header>
         <div className="flex">
           <Sidebar />
