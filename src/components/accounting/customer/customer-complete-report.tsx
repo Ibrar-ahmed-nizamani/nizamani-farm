@@ -51,7 +51,10 @@ export default function CustomerCompleteReport({
             debit: work.totalAmount,
             netAmount: work.totalAmount,
             equipmentDetails: work.equipments
-              .map((eq: { name: string; hours: number; amount: number }) => `${eq.name}: ${eq.hours}hrs - Rs${eq.amount}`)
+              .map(
+                (eq: { name: string; hours: number; amount: number }) =>
+                  `${eq.name}: ${eq.hours}hrs - Rs${eq.amount}`
+              )
               .join(", "),
             tractorDetails: `${work.tractor.tractorName} - ${work.tractor.tractorModel}`,
             runningBalance: 0,
@@ -201,7 +204,9 @@ export default function CustomerCompleteReport({
               <div class="summary-item">
                 <strong>Balance Due</strong>
                 <p class="${balance > 0 ? "debit" : "credit"}">
-                  Rs ${Math.abs(balance).toLocaleString()}
+                  Rs ${Math.abs(balance).toLocaleString()} ${
+        balance < 0 ? "Dr" : "Cr"
+      }
                 </p>
               </div>
             </div>
@@ -242,7 +247,7 @@ export default function CustomerCompleteReport({
                     }">
                       Rs ${Math.abs(entry.runningBalance).toLocaleString()}
                       
-                      ${entry.runningBalance > 0 ? "De" : "Cr"}
+                      ${entry.runningBalance > 0 ? "Dr" : "Cr"}
                     </td>
                   </tr>
                 `
@@ -274,7 +279,9 @@ export default function CustomerCompleteReport({
                 </td>
                 <td class="amount ${balance > 0 ? "debit" : "credit"}" 
                     style="width: 150px; border: 2px solid #ddd;">
-                  <strong>Rs ${Math.abs(balance).toLocaleString()}</strong>
+                  <strong>Rs ${Math.abs(balance).toLocaleString()} ${
+        balance < 0 ? "Dr" : "Cr"
+      }</strong>
                 </td>
               </tr>
             </table>

@@ -41,6 +41,7 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
         { $inc: { totalPaid: amount } }
       );
 
+    revalidatePath(`/accounting/tractor`);
     revalidatePath(`/accounting/tractor/${customerId}`);
     revalidatePath(`/accounting/tractor/${customerId}/transaction`);
   } catch (error) {
@@ -121,6 +122,7 @@ export async function deleteTransaction(
         );
     }
 
+    revalidatePath(`/accounting/tractor`);
     revalidatePath(`/accounting/tractor/${customerId}`);
     revalidatePath(`/accounting/tractor/${customerId}/transaction`);
 

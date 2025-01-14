@@ -69,7 +69,7 @@ export async function updateEquipmentRate(
         { $set: { rate: newRate } }
       );
 
-    revalidatePath("/tractor/[tractorID]/work/add-work");
+    revalidatePath("/tractor/equipment-rates");
     return { success: true };
   } catch (error) {
     console.error("Failed to update equipment rate:", error);

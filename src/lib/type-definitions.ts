@@ -118,3 +118,17 @@ export interface DateFilter {
   $eq?: Date;
   $ne?: Date;
 }
+
+export interface BackupResult {
+  success: boolean;
+  data?: string;
+  filename?: string;
+  error?: string;
+}
+
+export class BackupError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BackupError";
+  }
+}
