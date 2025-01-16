@@ -46,7 +46,7 @@ export default async function TractorCustomerTable() {
               <TableHead>Customer</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Debit</TableHead>
-              <TableHead>Remaining</TableHead>
+              <TableHead>Balance</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -62,7 +62,8 @@ export default async function TractorCustomerTable() {
                   Rs {customer.totalDebit}
                 </TableCell>
                 <TableCell>
-                  Rs {customer.totalDebit - customer.totalPaid}
+                  Rs {Math.abs(customer.totalDebit - customer.totalPaid)}{" "}
+                  {customer.totalDebit - customer.totalPaid > 0 ? "Dr" : "Cr"}
                 </TableCell>
                 <TableCell>
                   <Button variant="outline" asChild>

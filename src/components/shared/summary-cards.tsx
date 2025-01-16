@@ -30,7 +30,7 @@ export default function SummaryCards({ cards }: SummaryCardsProps) {
       {cards.map((card, index) => (
         <Card key={index}>
           <CardContent className="pt-6">
-            <p className="font-medium">{card.label}</p>
+            <p className="font-medium text-lg">{card.label}</p>
             <h3
               className={`text-xl font-bold ${getTextColor(
                 card.type,
