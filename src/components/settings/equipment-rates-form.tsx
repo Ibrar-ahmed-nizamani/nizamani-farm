@@ -16,9 +16,6 @@ import {
 } from "@/components/ui/form";
 import { updateEquipmentRate } from "@/lib/actions/equipment-rate";
 import { useRouter } from "next/navigation";
-import { AlertCircle } from "lucide-react";
-import { CheckCircle2 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import StatusAlert from "../ui/status-alert";
 
 interface EquipmentRate {

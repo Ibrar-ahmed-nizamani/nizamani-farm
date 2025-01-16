@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteMilkDialog from "./delete-milk-dialog";
-import { formatDate, formatDatePattern } from "@/lib/utils";
+import {  formatDatePattern } from "@/lib/utils";
 
 interface MilkRecord {
   _id: string;

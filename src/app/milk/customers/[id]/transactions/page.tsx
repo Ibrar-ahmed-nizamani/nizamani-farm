@@ -14,7 +14,7 @@ import {
   getMilkCustomerTransactions,
 } from "@/lib/actions/milk-customer-actions";
 import BackLink from "@/components/ui/back-link";
-import { formatDate, formatDatePattern } from "@/lib/utils";
+import { formatDatePattern } from "@/lib/utils";
 import { DeleteTransaction } from "@/components/milk/customer/delete-transaction";
 import EmptyState from "@/components/shared/empty-state";
 

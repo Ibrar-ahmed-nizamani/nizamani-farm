@@ -22,7 +22,7 @@ import {
   YearSelector,
 } from "@/components/milk/customer/selectors";
 import SummaryCards from "@/components/shared/summary-cards";
-import { formatDate, formatDatePattern } from "@/lib/utils";
+import { formatDatePattern } from "@/lib/utils";
 import BackLink from "@/components/ui/back-link";
 import EmptyState from "@/components/shared/empty-state";
 

@@ -1,4 +1,3 @@
-
 import {
   getMilkWorker,
   getMilkWorkerDates,
@@ -20,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
-import { formatDate, formatDatePattern } from "@/lib/utils";
+import { formatDatePattern } from "@/lib/utils";
 import { DeleteWorkerTransaction } from "@/components/milk/worker/delete-worker-transaction";
 
 export default async function WorkerPage({
