@@ -13,6 +13,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import DeleteExpenseDialog from "./delete-expense";
+import { formatDatePattern } from "@/lib/utils";
 
 interface ExpensesTableProps {
   expenses: {
@@ -46,9 +47,7 @@ export default function ExpensesTable({
             <TableRow key={expense._id.toString()}>
               <TableCell>{expense.description}</TableCell>
               <TableCell>Rs {expense.amount.toLocaleString()}</TableCell>
-              <TableCell>
-                {new Date(expense.date).toLocaleDateString("en-GB")}
-              </TableCell>
+              <TableCell>{formatDatePattern(expense.date)}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"

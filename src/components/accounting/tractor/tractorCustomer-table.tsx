@@ -33,7 +33,7 @@ export default async function TractorCustomerTable() {
         cards={[
           { label: "Total Payment", value: totalPayment, type: "income" },
           { label: "Total Debit", value: totalDebit, type: "expense" },
-          { label: "Total Remaining", value: totalRemaining, type: "due" },
+          { label: "Balance", value: totalRemaining, type: "due" },
         ]}
       />
       {customers.length === 0 ? (

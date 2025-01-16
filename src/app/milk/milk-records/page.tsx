@@ -23,6 +23,7 @@ export default async function MilkPage({ searchParams }: MilkPageProps) {
   const availableMonths = year
     ? yearsAndMonths.find((ym) => ym.year.toString() === year)?.months || []
     : [];
+
   // Calculate totals
   const totalAmMilk = milkData.reduce((sum, record) => sum + record.amMilk, 0);
   const totalPmMilk = milkData.reduce((sum, record) => sum + record.pmMilk, 0);

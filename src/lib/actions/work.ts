@@ -32,10 +32,12 @@ export async function submitTractorWork(
       .trim();
     // const dieselExpense = parseFloat(formData.get("dieselExpense") as string);
     const dateStr = formData.get("date") as string;
+
     if (!dateStr) {
       return { success: false, message: "Date is required" };
     }
     const date = new Date(dateStr);
+
     if (isNaN(date.getTime())) {
       return { success: false, message: "Invalid date format" };
     }
@@ -79,13 +81,13 @@ export async function submitTractorWork(
 
     const totalAmount = equipments.reduce((sum, eq) => sum + eq.amount, 0);
 
+    console.log("Date before inserting in work result" + date);
     // Insert work record
     const workResult = await db.collection("works").insertOne({
       customerId: customer._id,
       tractorId: new ObjectId(tractorId),
       customerName,
       date,
-      // dieselExpense,
       driverName,
       equipments,
       totalAmount,
@@ -515,7 +517,9 @@ export async function getAllTractorWorks(tractorId: string, year?: string) {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const query: { tractorId: ObjectId; date?: { $gte: Date; $lte: Date } } = { tractorId: new ObjectId(tractorId) };
+    const query: { tractorId: ObjectId; date?: { $gte: Date; $lte: Date } } = {
+      tractorId: new ObjectId(tractorId),
+    };
 
     if (year && year !== "all") {
       query.date = {

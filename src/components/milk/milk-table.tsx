@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteMilkDialog from "./delete-milk-dialog";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDatePattern } from "@/lib/utils";
 
 interface MilkRecord {
   _id: string;
@@ -50,11 +50,7 @@ export default function MilkTable({ milkData }: MilkTableProps) {
           <TableBody>
             {milkData.map((record) => (
               <TableRow key={record._id}>
-                <TableCell>
-                  {formatDate(
-                    new Date(record.date).toLocaleDateString("en-GB")
-                  )}
-                </TableCell>
+                <TableCell>{formatDatePattern(record.date)}</TableCell>
                 <TableCell>{record.amMilk}</TableCell>
                 <TableCell>{record.pmMilk}</TableCell>
                 <TableCell className=" font-medium">

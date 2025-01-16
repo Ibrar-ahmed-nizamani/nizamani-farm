@@ -26,6 +26,7 @@ export default async function TractorDetailPage({
     selectedYear,
     Number(page)
   );
+  console.log(works);
   const tractorDetails = await getTractorDetails(
     tractorID,
     selectedYear === "all" ? undefined : selectedYear

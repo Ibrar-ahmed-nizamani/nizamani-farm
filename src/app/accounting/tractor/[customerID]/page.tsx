@@ -88,7 +88,7 @@ export default async function CustomerSummary({
               type: "income",
             },
             {
-              label: "Due Amount",
+              label: "Balance",
               value: summary.balance,
               type: "due",
             },

@@ -202,10 +202,10 @@ export default function CustomerCompleteReport({
                 <p class="credit">Rs ${totalCredit.toLocaleString()}</p>
               </div>
               <div class="summary-item">
-                <strong>Balance Due</strong>
+                <strong>Balance</strong>
                 <p class="${balance > 0 ? "debit" : "credit"}">
                   Rs ${Math.abs(balance).toLocaleString()} ${
-        balance < 0 ? "Dr" : "Cr"
+        balance > 0 ? "Dr" : "Cr"
       }
                 </p>
               </div>
@@ -275,12 +275,12 @@ export default function CustomerCompleteReport({
               </tr>
               <tr>
                 <td style="text-align: right; padding-right: 20px; border: none;">
-                  <strong>Balance Due:</strong>
+                  <strong>Balance:</strong>
                 </td>
                 <td class="amount ${balance > 0 ? "debit" : "credit"}" 
                     style="width: 150px; border: 2px solid #ddd;">
                   <strong>Rs ${Math.abs(balance).toLocaleString()} ${
-        balance < 0 ? "Dr" : "Cr"
+        balance > 0 ? "Dr" : "Cr"
       }</strong>
                 </td>
               </tr>

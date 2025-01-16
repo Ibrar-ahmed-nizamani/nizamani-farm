@@ -5,6 +5,7 @@ import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getAllTractorWorks } from "@/lib/actions/work";
 import { getAllTractorExpenses } from "@/lib/actions/tractor-expense";
+import { formatDatePattern } from "@/lib/utils";
 
 interface CompleteReportProps {
   tractorDetails: {
@@ -192,7 +193,7 @@ export default function CompleteReport({
               <div class="summary-item">
                 <strong>Net Revenue:</strong>
                 <p class="${netRevenue >= 0 ? "income" : "expense"}">
-                  Rs ${netRevenue.toLocaleString()}
+                  Rs ${Math.abs(netRevenue)} ${netRevenue > 0 ? "Cr" : "Dr"}
                 </p>
               </div>
             </div>
@@ -215,7 +216,7 @@ export default function CompleteReport({
                   .map(
                     (entry) => `
                   <tr>
-                    <td>${new Date(entry.date).toLocaleDateString("en-GB")}</td>
+                    <td>${formatDatePattern(entry.date)}</td>
                     <td>${entry.type}</td>
                     <td>${entry.description}</td>
                     <td>${entry.customerName || "-"}</td>
@@ -231,7 +232,9 @@ export default function CompleteReport({
                     <td class="amount ${
                       entry.runningTotal >= 0 ? "income" : "expense"
                     }">
-                      Rs ${entry.runningTotal.toLocaleString()}
+                      Rs ${Math.abs(entry.runningTotal)} ${
+                      entry.runningTotal > 0 ? "Cr" : "Dr"
+                    }
                     </td>
                   </tr>
                 `
@@ -263,7 +266,9 @@ export default function CompleteReport({
                 </td>
                 <td class="amount ${netRevenue >= 0 ? "income" : "expense"}" 
                     style="width: 150px; border: 2px solid #ddd;">
-                  <strong>Rs ${netRevenue.toLocaleString()}</strong>
+                  <strong>Rs ${Math.abs(netRevenue)} ${
+        netRevenue > 0 ? "Cr" : "Dr"
+      }</strong>
                 </td>
               </tr>
             </table>

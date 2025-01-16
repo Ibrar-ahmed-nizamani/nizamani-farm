@@ -17,6 +17,14 @@ export default function SummaryCards({ cards }: SummaryCardsProps) {
     return value >= 0 ? "text-green-600" : "text-red-600";
   };
 
+  const formatValue = (type: string, value: number) => {
+    if (type === "due") {
+      const sign = value > 0 ? "Dr" : "Cr";
+      return `Rs ${Math.abs(value).toLocaleString()} ${sign}`;
+    }
+    return `Rs ${value.toLocaleString()}`;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       {cards.map((card, index) => (
@@ -29,7 +37,7 @@ export default function SummaryCards({ cards }: SummaryCardsProps) {
                 card.value
               )}`}
             >
-              Rs {card.value.toLocaleString()}
+              {formatValue(card.type, card.value)}
             </h3>
           </CardContent>
         </Card>

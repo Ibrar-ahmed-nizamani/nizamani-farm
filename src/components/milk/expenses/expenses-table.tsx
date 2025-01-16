@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteMilkExpenseDialog from "./delete-expense-dialog";
-import { formatDate } from "@/lib/utils";
+import { formatDatePattern } from "@/lib/utils";
 
 interface MilkExpense {
   _id: string;
@@ -52,11 +52,7 @@ export default function MilkExpensesTable({
           <TableBody>
             {expenses.map((expense) => (
               <TableRow key={expense._id}>
-                <TableCell>
-                  {formatDate(
-                    new Date(expense.date).toLocaleDateString("en-GB")
-                  )}
-                </TableCell>
+                <TableCell>{formatDatePattern(expense.date)}</TableCell>
                 <TableCell>{expense.type.name}</TableCell>
                 <TableCell>Rs {expense.amount.toLocaleString()}</TableCell>
                 <TableCell>

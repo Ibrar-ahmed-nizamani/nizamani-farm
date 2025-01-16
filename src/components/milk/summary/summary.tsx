@@ -2,7 +2,6 @@
 "use client";
 
 import React from "react";
-import { format } from "date-fns";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Table,
@@ -17,6 +16,7 @@ import SummaryCards from "@/components/shared/summary-cards";
 import { MilkSummaryData, Transaction } from "@/lib/type-definitions";
 import DateSelector from "./date-selector";
 import BackLink from "@/components/ui/back-link";
+import { formatDatePattern } from "@/lib/utils";
 
 export default function MilkSummaryPage({
   expenses,
@@ -149,7 +149,9 @@ export default function MilkSummaryPage({
         <TableBody>
           {transactionsWithBalance.map((transaction, index) => (
             <TableRow key={index}>
-              <TableCell>{format(transaction.date, "MMM d, yyyy")}</TableCell>
+              <TableCell>
+                {formatDatePattern(transaction.date.toISOString())}
+              </TableCell>
               <TableCell>
                 {transaction.type === "income" ? transaction.description : "-"}
               </TableCell>

@@ -1,7 +1,7 @@
 // app/milk/customers/[id]/page.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+
 import {
   Table,
   TableBody,
@@ -22,7 +22,7 @@ import {
   YearSelector,
 } from "@/components/milk/customer/selectors";
 import SummaryCards from "@/components/shared/summary-cards";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDatePattern } from "@/lib/utils";
 import BackLink from "@/components/ui/back-link";
 import EmptyState from "@/components/shared/empty-state";
 
@@ -90,7 +90,7 @@ export default async function CustomerPage({
             type: "income",
           },
           {
-            label: "Due",
+            label: "Balance",
             value: summary.balance,
             type: "due",
           },
@@ -117,9 +117,7 @@ export default async function CustomerPage({
             <TableBody>
               {milkRecords.map((record) => (
                 <TableRow key={record._id}>
-                  <TableCell>
-                    {formatDate(format(new Date(record.date), "dd/MM/yyyy"))}
-                  </TableCell>
+                  <TableCell>{formatDatePattern(record.date)}</TableCell>
                   <TableCell>{record.quantity}</TableCell>
                   <TableCell>{record.price}</TableCell>
                   <TableCell>{record.amount.toLocaleString()}</TableCell>
@@ -128,7 +126,7 @@ export default async function CustomerPage({
                     <DeleteMilkRecord
                       customerId={id}
                       recordId={record._id}
-                      date={format(new Date(record.date), "dd/MM/yyyy")}
+                      date={formatDatePattern(record.date)}
                     />
                   </TableCell>
                 </TableRow>

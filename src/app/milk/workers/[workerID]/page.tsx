@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+
 import {
   getMilkWorker,
   getMilkWorkerDates,
@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDatePattern } from "@/lib/utils";
 import { DeleteWorkerTransaction } from "@/components/milk/worker/delete-worker-transaction";
 
 export default async function WorkerPage({
@@ -96,9 +96,7 @@ export default async function WorkerPage({
           <TableBody>
             {transactionsWithBalance.map((transaction) => (
               <TableRow key={transaction._id}>
-                <TableCell>
-                  {formatDate(format(new Date(transaction.date), "dd/MM/yyyy"))}
-                </TableCell>
+                <TableCell>{formatDatePattern(transaction.date)}</TableCell>
                 <TableCell>{transaction.description}</TableCell>
                 <TableCell className="text-green-600">
                   {transaction.type === "credit" &&
@@ -116,7 +114,7 @@ export default async function WorkerPage({
                   <DeleteWorkerTransaction
                     workerId={worker._id}
                     transactionId={transaction._id}
-                    date={format(new Date(transaction.date), "dd/MM/yyyy")}
+                    date={formatDatePattern(transaction.date)}
                     amount={transaction.amount}
                     type={transaction.type}
                   />

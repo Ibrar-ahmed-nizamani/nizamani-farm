@@ -16,6 +16,7 @@ import {
 import { TractorWork } from "@/lib/type-definitions";
 import DeleteWorkDialog from "./delete-work";
 import Link from "next/link";
+import { formatDatePattern } from "@/lib/utils";
 
 interface TractorWorkTableProps {
   works: TractorWork[];
@@ -36,6 +37,10 @@ export default function TractorWorkTable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [deleteWorkId, setDeleteWorkId] = useState<string | null>(null);
+
+  works.map((work) => {
+    console.log(work);
+  });
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
@@ -81,9 +86,7 @@ export default function TractorWorkTable({
                   {work.totalAmount.toFixed(2)}
                 </span>
               </TableCell>
-              <TableCell>
-                {new Date(work.date).toLocaleDateString("en-GB")}
-              </TableCell>
+              <TableCell>{formatDatePattern(work.date)}</TableCell>
               <TableCell className="text-right space-x-2">
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/tractor/${tractorId}/edit-work/${work.id}`}>

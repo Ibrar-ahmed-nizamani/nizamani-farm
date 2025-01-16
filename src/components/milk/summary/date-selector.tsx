@@ -39,8 +39,6 @@ const DateSelector = ({
   onYearChange,
   onMonthChange,
 }: DateSelectorProps) => {
-  console.log(months);
-
   return (
     <div className="flex gap-4">
       <Select value={selectedYear || "all"} onValueChange={onYearChange}>

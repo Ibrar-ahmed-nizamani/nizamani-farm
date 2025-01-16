@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteTransactionDialog from "./delete-transaction";
+import { formatDatePattern } from "@/lib/utils";
 
 interface Transaction {
   _id: string;
@@ -57,9 +58,7 @@ export default function TransactionsTable({
               <TableRow key={transaction._id}>
                 <TableCell>Rs {transaction.amount.toLocaleString()}</TableCell>
                 <TableCell>{transaction.description || "N/A"}</TableCell>
-                <TableCell>
-                  {new Date(transaction.date).toLocaleDateString("en-GB")}
-                </TableCell>
+                <TableCell>{formatDatePattern(transaction.date)}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"

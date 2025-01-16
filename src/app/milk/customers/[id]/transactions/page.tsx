@@ -1,7 +1,6 @@
 // app/milk/customers/[id]/transactions/page.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -15,7 +14,7 @@ import {
   getMilkCustomerTransactions,
 } from "@/lib/actions/milk-customer-actions";
 import BackLink from "@/components/ui/back-link";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDatePattern } from "@/lib/utils";
 import { DeleteTransaction } from "@/components/milk/customer/delete-transaction";
 import EmptyState from "@/components/shared/empty-state";
 
@@ -55,18 +54,14 @@ export default async function CustomerTransactionsPage({
             <TableBody>
               {transactions.map((transaction) => (
                 <TableRow key={transaction._id}>
-                  <TableCell>
-                    {formatDate(
-                      format(new Date(transaction.date), "dd/MM/yyyy")
-                    )}
-                  </TableCell>
+                  <TableCell>{formatDatePattern(transaction.date)}</TableCell>
                   <TableCell>{transaction.description}</TableCell>
                   <TableCell>{transaction.amount.toLocaleString()}</TableCell>
                   <TableCell>
                     <DeleteTransaction
                       customerId={id}
                       transactionId={transaction._id}
-                      date={format(new Date(transaction.date), "dd/MM/yyyy")}
+                      date={formatDatePattern(transaction.date)}
                       amount={transaction.amount}
                     />
                   </TableCell>
