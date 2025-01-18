@@ -90,7 +90,7 @@ export interface Transaction {
 
 export interface MilkSummaryData {
   expenses: MilkExpense[];
-  workerCredits: WorkerCredit[];
+  // workerCredits: WorkerCredit[];
   customerRecords: CustomerRecord[];
   years: number[];
   months: number[];

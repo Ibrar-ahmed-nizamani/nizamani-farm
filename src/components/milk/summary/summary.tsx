@@ -20,7 +20,7 @@ import { formatDatePattern } from "@/lib/utils";
 
 export default function MilkSummaryPage({
   expenses,
-  workerCredits,
+  // workerCredits,
   customerRecords,
   years,
   months,
@@ -60,13 +60,13 @@ export default function MilkSummaryPage({
       amount: -exp.amount,
       details: "-",
     })),
-    ...workerCredits.map((credit) => ({
-      date: new Date(credit.date),
-      type: "expense" as const,
-      description: `Worker : ${credit.worker.name}`,
-      amount: -credit.amount,
-      details: credit.description || "-",
-    })),
+    // ...workerCredits.map((credit) => ({
+    //   date: new Date(credit.date),
+    //   type: "expense" as const,
+    //   description: `Worker : ${credit.worker.name}`,
+    //   amount: -credit.amount,
+    //   details: credit.description || "-",
+    // })),
     ...customerRecords.map((record) => ({
       date: new Date(record.date),
       type: "income" as const,

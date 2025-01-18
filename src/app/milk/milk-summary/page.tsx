@@ -26,7 +26,7 @@ export default async function Page({
     <MilkSummaryPage
       expenses={data.expenses}
       customerRecords={data.customerRecords}
-      workerCredits={data.workerCredits}
+      // workerCredits={data.workerCredits}
       years={years}
       months={availableMonths}
     />

@@ -44,26 +44,26 @@ export async function getMilkSummaryData(year?: string, month?: string) {
       .toArray();
 
     // Get worker credits
-    const workerCredits = await db
-      .collection("milk_worker_transactions")
-      .aggregate([
-        {
-          $match: {
-            ...dateFilter,
-            type: "credit",
-          },
-        },
-        {
-          $lookup: {
-            from: "milk_workers",
-            localField: "workerId",
-            foreignField: "_id",
-            as: "worker",
-          },
-        },
-        { $unwind: "$worker" },
-      ])
-      .toArray();
+    // const workerCredits = await db
+    //   .collection("milk_worker_transactions")
+    //   .aggregate([
+    //     {
+    //       $match: {
+    //         ...dateFilter,
+    //         type: "credit",
+    //       },
+    //     },
+    //     {
+    //       $lookup: {
+    //         from: "milk_workers",
+    //         localField: "workerId",
+    //         foreignField: "_id",
+    //         as: "worker",
+    //       },
+    //     },
+    //     { $unwind: "$worker" },
+    //   ])
+    //   .toArray();
 
     // Get customer records (income)
     const customerRecords = await db
@@ -88,7 +88,7 @@ export async function getMilkSummaryData(year?: string, month?: string) {
     const allYears = Array.from(
       new Set([
         ...years.map((date) => new Date(date).getFullYear()),
-        ...workerCredits.map((credit) => new Date(credit.date).getFullYear()),
+        // ...workerCredits.map((credit) => new Date(credit.date).getFullYear()),
         ...customerRecords.map((record) => new Date(record.date).getFullYear()),
       ])
     ).sort((a, b) => b - a);
@@ -98,9 +98,9 @@ export async function getMilkSummaryData(year?: string, month?: string) {
       ? Array.from(
           new Set([
             ...expenses.map((exp) => new Date(exp.date).getMonth() + 1),
-            ...workerCredits.map(
-              (credit) => new Date(credit.date).getMonth() + 1
-            ),
+            // ...workerCredits.map(
+            //   (credit) => new Date(credit.date).getMonth() + 1
+            // ),
             ...customerRecords.map(
               (record) => new Date(record.date).getMonth() + 1
             ),
@@ -121,19 +121,19 @@ export async function getMilkSummaryData(year?: string, month?: string) {
           _id: exp.type._id.toString(),
         },
       })),
-      workerCredits: workerCredits.map((credit) => ({
-        ...credit,
-        _id: credit._id.toString(),
-        workerId: credit.workerId.toString(),
-        type: credit.type,
-        amount: credit.amount,
-        date: credit.date,
-        description: credit.description,
-        worker: {
-          ...credit.worker,
-          _id: credit.worker._id.toString(),
-        },
-      })),
+      // workerCredits: workerCredits.map((credit) => ({
+      //   ...credit,
+      //   _id: credit._id.toString(),
+      //   workerId: credit.workerId.toString(),
+      //   type: credit.type,
+      //   amount: credit.amount,
+      //   date: credit.date,
+      //   description: credit.description,
+      //   worker: {
+      //     ...credit.worker,
+      //     _id: credit.worker._id.toString(),
+      //   },
+      // })),
       customerRecords: customerRecords.map((record) => ({
         _id: record._id?.toString(),
         customerId: record.customerId?.toString(),
