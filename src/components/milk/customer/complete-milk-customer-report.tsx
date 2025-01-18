@@ -21,7 +21,7 @@ interface CompleteCustomerReportProps {
 
 interface CombinedEntry {
   date: string;
-  type: "milk" | "payment";
+  type: "milk" | "payment" | "debit";
   quantity?: number;
   price?: number;
   amount: number;
@@ -58,14 +58,18 @@ export default function CompleteCustomerReport({
             quantity: record.quantity,
             price: record.price,
             amount: record.amount,
+            description: "Milk Supply",
             runningBalance: 0,
           })
         ),
         ...transactions.map(
           (transaction): CombinedEntry => ({
             date: transaction.date,
-            type: "payment",
-            amount: -transaction.amount,
+            type: transaction.type === "DEBIT" ? "debit" : "payment",
+            amount:
+              transaction.type === "DEBIT"
+                ? transaction.amount
+                : -transaction.amount,
             description: transaction.description,
             runningBalance: 0,
           })
@@ -80,10 +84,25 @@ export default function CompleteCustomerReport({
           };
         });
 
+      // Calculate totals by type
+      const totals = combinedEntries.reduce(
+        (acc, entry) => {
+          if (entry.type === "milk") {
+            acc.milkDebit += entry.amount;
+          } else if (entry.type === "debit") {
+            acc.otherDebit += entry.amount;
+          } else if (entry.type === "payment") {
+            acc.totalPaid += Math.abs(entry.amount);
+          }
+          return acc;
+        },
+        { milkDebit: 0, otherDebit: 0, totalPaid: 0 }
+      );
+
       const printContent = `
         <html>
           <head>
-            <title>Customer Milk Report</title>
+            <title>Customer Account Statement</title>
             <style>
               body {
                 font-family: Arial, sans-serif;
@@ -108,13 +127,12 @@ export default function CompleteCustomerReport({
                 color: #666;
               }
               .summary {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 20px;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
                 gap: 15px;
+                margin-bottom: 20px;
               }
               .summary-item {
-                flex: 1;
                 padding: 10px;
                 background-color: #f9f9f9;
                 border: 1px solid #ddd;
@@ -137,6 +155,10 @@ export default function CompleteCustomerReport({
               .amount { text-align: right; }
               .debit { color: red; }
               .credit { color: green; }
+              .type-label {
+                font-weight: bold;
+                text-transform: capitalize;
+              }
               @media print {
                 button { display: none; }
                 body { padding: 0; }
@@ -145,22 +167,23 @@ export default function CompleteCustomerReport({
           </head>
           <body>
             <div class="header">
-              <h1>${customerDetails.customerName}</h1>
-              <p>Complete Report for: ${year === "all" ? "All Time" : year}${
-        month ? ` - Month: ${monthNumberToName(Number(month))}` : ""
+              <h1>Account Statement - ${customerDetails.customerName}</h1>
+              <p>Period: ${year === "all" ? "All Time" : year}${
+        month ? ` - ${monthNumberToName(Number(month))}` : ""
       }</p>
             </div>
 
             <div class="summary">
               <div class="summary-item">
                 <strong>Total Debit:</strong>
-                <p class="debit">Rs ${customerDetails.totalDebit
+                <p class="debit">Rs ${(totals.milkDebit + totals.otherDebit)
                   .toFixed(0)
                   .toLocaleString()}</p>
               </div>
+              
               <div class="summary-item">
                 <strong>Total Paid:</strong>
-                <p class="credit">Rs ${customerDetails.totalPaid
+                <p class="credit">Rs ${totals.totalPaid
                   .toFixed(0)
                   .toLocaleString()}</p>
               </div>
@@ -169,7 +192,7 @@ export default function CompleteCustomerReport({
                 <p class="${
                   customerDetails.balance >= 0 ? "debit" : "credit"
                 }">Rs ${Math.abs(customerDetails.balance).toFixed(0)} ${
-        customerDetails.balance > 0 ? " Dr" : " Cr"
+        customerDetails.balance > 0 ? "Dr" : "Cr"
       }</p>
               </div>
             </div>
@@ -178,14 +201,12 @@ export default function CompleteCustomerReport({
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Type</th>
-                  <th>Quantity (L)</th>
-                  <th>Price (Rs)</th>
                   <th>Description</th>
-                  
-                  <th>Credit</th>
-                  <th>Debit</th>
-
+                 
+                  <th>Quantity (L)</th>
+                  <th>Rate (Rs)</th>
+                  <th>Debit (Rs)</th>
+                  <th>Credit (Rs)</th>
                   <th class="amount">Balance (Rs)</th>
                 </tr>
               </thead>
@@ -195,17 +216,17 @@ export default function CompleteCustomerReport({
                     (entry) => `
                   <tr>
                     <td>${formatDatePattern(entry.date)}</td>
-                    <td>${entry.type === "milk" ? "Milk" : "Payment"}</td>
+                    <td>${entry.description || "-"}</td>
+                    
                     <td>${entry.quantity || "-"}</td>
                     <td>${entry.price || "-"}</td>
-                    <td>${entry.description || "-"}</td>
-                    <td>${
-                      entry.amount < 0
-                        ? Math.abs(entry.amount).toFixed(0).toLocaleString()
+                    <td class="amount">${
+                      entry.amount > 0
+                        ? entry.amount.toFixed(0).toLocaleString()
                         : "-"
                     }</td>
-                    <td>${
-                      entry.amount > 0
+                    <td class="amount">${
+                      entry.amount < 0
                         ? Math.abs(entry.amount).toFixed(0).toLocaleString()
                         : "-"
                     }</td>
@@ -223,11 +244,11 @@ export default function CompleteCustomerReport({
               </tbody>
             </table>
 
-            <div style="text-align: right; margin-top: 20px;">
+            <div style="text-align: right; margin-top: 20px; font-size: 14px;">
               <p><strong>Final Balance: Rs ${Math.abs(
                 customerDetails.balance
               ).toFixed(0)} ${
-        customerDetails.balance > 0 ? " Dr" : " Cr"
+        customerDetails.balance > 0 ? "Dr" : "Cr"
       }</strong></p>
             </div>
           </body>

@@ -68,12 +68,16 @@ export default async function CustomerPage({
             year={year || "all"}
             month={month}
           />
-          <Link href={`/milk/customers/${id}/transactions`}>
-            <Button variant="outline">View Transactions</Button>
+          <Link href={`/milk/customers/${id}/debits`}>
+            <Button variant="destructive">Debits</Button>
           </Link>
-          <Link href={`/milk/customers/${id}/add-payment`}>
+          <Link href={`/milk/customers/${id}/payments`}>
+            <Button variant="default">Payments</Button>
+          </Link>
+
+          {/* <Link href={`/milk/customers/${id}/payments/add-payment`}>
             <Button>Add Payment</Button>
-          </Link>
+          </Link> */}
         </div>
       </div>
 

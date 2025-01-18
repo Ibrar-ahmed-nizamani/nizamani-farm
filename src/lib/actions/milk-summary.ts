@@ -43,29 +43,7 @@ export async function getMilkSummaryData(year?: string, month?: string) {
       ])
       .toArray();
 
-    // Get worker credits
-    // const workerCredits = await db
-    //   .collection("milk_worker_transactions")
-    //   .aggregate([
-    //     {
-    //       $match: {
-    //         ...dateFilter,
-    //         type: "credit",
-    //       },
-    //     },
-    //     {
-    //       $lookup: {
-    //         from: "milk_workers",
-    //         localField: "workerId",
-    //         foreignField: "_id",
-    //         as: "worker",
-    //       },
-    //     },
-    //     { $unwind: "$worker" },
-    //   ])
-    //   .toArray();
-
-    // Get customer records (income)
+    // Get customer records (milk income)
     const customerRecords = await db
       .collection("milk-records")
       .aggregate([
@@ -82,14 +60,40 @@ export async function getMilkSummaryData(year?: string, month?: string) {
       ])
       .toArray();
 
-    // Get available years
+    // Get customer debits
+    const customerDebits = await db
+      .collection("milk-transactions")
+      .aggregate([
+        {
+          $match: {
+            ...dateFilter,
+            type: "DEBIT",
+          },
+        },
+        {
+          $lookup: {
+            from: "milk-customers",
+            localField: "customerId",
+            foreignField: "_id",
+            as: "customer",
+          },
+        },
+        { $unwind: "$customer" },
+      ])
+      .toArray();
+
+    // Get available years from all collections
     const years = await db.collection("milk_expenses").distinct("date");
+    const recordYears = await db.collection("milk-records").distinct("date");
+    const debitYears = await db
+      .collection("milk-transactions")
+      .distinct("date");
 
     const allYears = Array.from(
       new Set([
         ...years.map((date) => new Date(date).getFullYear()),
-        // ...workerCredits.map((credit) => new Date(credit.date).getFullYear()),
-        ...customerRecords.map((record) => new Date(record.date).getFullYear()),
+        ...recordYears.map((date) => new Date(date).getFullYear()),
+        ...debitYears.map((date) => new Date(date).getFullYear()),
       ])
     ).sort((a, b) => b - a);
 
@@ -98,11 +102,11 @@ export async function getMilkSummaryData(year?: string, month?: string) {
       ? Array.from(
           new Set([
             ...expenses.map((exp) => new Date(exp.date).getMonth() + 1),
-            // ...workerCredits.map(
-            //   (credit) => new Date(credit.date).getMonth() + 1
-            // ),
             ...customerRecords.map(
               (record) => new Date(record.date).getMonth() + 1
+            ),
+            ...customerDebits.map(
+              (debit) => new Date(debit.date).getMonth() + 1
             ),
           ])
         ).sort((a, b) => a - b)
@@ -121,19 +125,6 @@ export async function getMilkSummaryData(year?: string, month?: string) {
           _id: exp.type._id.toString(),
         },
       })),
-      // workerCredits: workerCredits.map((credit) => ({
-      //   ...credit,
-      //   _id: credit._id.toString(),
-      //   workerId: credit.workerId.toString(),
-      //   type: credit.type,
-      //   amount: credit.amount,
-      //   date: credit.date,
-      //   description: credit.description,
-      //   worker: {
-      //     ...credit.worker,
-      //     _id: credit.worker._id.toString(),
-      //   },
-      // })),
       customerRecords: customerRecords.map((record) => ({
         _id: record._id?.toString(),
         customerId: record.customerId?.toString(),
@@ -144,6 +135,14 @@ export async function getMilkSummaryData(year?: string, month?: string) {
         createdAt: record.createdAt?.toISOString(),
         customerName: record.customer?.name || record.customerName,
       })),
+      customerDebits: customerDebits.map((debit) => ({
+        _id: debit._id?.toString(),
+        customerId: debit.customerId?.toString(),
+        date: debit.date?.toISOString(),
+        amount: debit.amount,
+        description: debit.description,
+        customerName: debit.customer?.name,
+      })),
       years: allYears,
       months,
     };
@@ -151,14 +150,13 @@ export async function getMilkSummaryData(year?: string, month?: string) {
     console.error("Failed to fetch milk summary data:", error);
     return {
       expenses: [],
-      workerCredits: [],
       customerRecords: [],
+      customerDebits: [],
       years: [],
       months: [],
     };
   }
 }
-
 export async function getMilkSummaryYearsAndMonths() {
   try {
     const client = await clientPromise;

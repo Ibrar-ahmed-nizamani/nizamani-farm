@@ -1,4 +1,4 @@
-// app/milk/customers/[id]/transactions/page.tsx
+// app/milk/customers/[id]/debits/page.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,38 +10,40 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  getCustomerDebits,
   getMilkCustomer,
-  getMilkCustomerTransactions,
 } from "@/lib/actions/milk-customer-actions";
 import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
 import { DeleteTransaction } from "@/components/milk/customer/delete-transaction";
 import EmptyState from "@/components/shared/empty-state";
 
-export default async function CustomerTransactionsPage({
+export default async function CustomerDebitsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const id = (await params).id;
   const customer = await getMilkCustomer(id);
-  const transactions = await getMilkCustomerTransactions(id);
+  const debits = await getCustomerDebits(id);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{customer.name} - Payments</h1>
+        <h1 className="text-2xl font-bold">
+          {customer.name} - Additional Debits
+        </h1>
         <BackLink href={`/milk/customers/${id}`} linkText="Back To Customer" />
       </div>
 
       <div className="flex gap-2">
-        <Link href={`/milk/customers/${id}/add-payment`}>
-          <Button>Add Payment</Button>
+        <Link href={`/milk/customers/${id}/debits/add-debit`}>
+          <Button>Add Debit</Button>
         </Link>
       </div>
 
       <div className="rounded-md border">
-        {transactions.length > 0 ? (
+        {debits.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -52,17 +54,17 @@ export default async function CustomerTransactionsPage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction._id}>
-                  <TableCell>{formatDatePattern(transaction.date)}</TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell>{transaction.amount.toLocaleString()}</TableCell>
+              {debits.map((debit) => (
+                <TableRow key={debit._id}>
+                  <TableCell>{formatDatePattern(debit.date)}</TableCell>
+                  <TableCell>{debit.description}</TableCell>
+                  <TableCell>{debit.amount.toLocaleString()}</TableCell>
                   <TableCell>
                     <DeleteTransaction
                       customerId={id}
-                      transactionId={transaction._id}
-                      date={formatDatePattern(transaction.date)}
-                      amount={transaction.amount}
+                      transactionId={debit._id}
+                      date={formatDatePattern(debit.date)}
+                      amount={debit.amount}
                     />
                   </TableCell>
                 </TableRow>
@@ -71,10 +73,10 @@ export default async function CustomerTransactionsPage({
           </Table>
         ) : (
           <EmptyState
-            title="No transaction records found"
-            description="Start by adding your first transaction"
-            link={`/milk/customers/${id}/add-payment`}
-            linkText="Add Payment"
+            title="No debit records found"
+            description="Start by adding your first debit record"
+            link={`/milk/customers/${id}/debits/add-debit`}
+            linkText="Add Debit"
           />
         )}
       </div>

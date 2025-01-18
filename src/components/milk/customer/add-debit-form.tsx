@@ -1,3 +1,4 @@
+// components/milk/customer/add-debit-form.tsx
 "use client";
 
 import { useState } from "react";
@@ -16,10 +17,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
 import { Loader2 } from "lucide-react";
-import { addMilkPayment } from "@/lib/actions/milk-customer-actions";
 import StatusAlert from "@/components/ui/status-alert";
+import { addDebitRecord } from "@/lib/actions/milk-customer-actions";
 
 const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -31,7 +31,6 @@ const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
 });
 
-// Define the shape of the form values (before transformation)
 type FormInput = {
   date: string;
   amount: string;
@@ -42,7 +41,7 @@ interface Props {
   customerId: string;
 }
 
-export default function AddPaymentForm({ customerId }: Props) {
+export default function AddDebitForm({ customerId }: Props) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<{
@@ -55,14 +54,14 @@ export default function AddPaymentForm({ customerId }: Props) {
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       amount: "",
-      description: "Milk Payment",
+      description: "Additional Debit",
     },
   });
 
   const onSubmit = async (values: FormInput) => {
     setIsLoading(true);
     try {
-      const result = await addMilkPayment(
+      const result = await addDebitRecord(
         customerId,
         parseFloat(values.amount),
         new Date(values.date),
@@ -72,14 +71,13 @@ export default function AddPaymentForm({ customerId }: Props) {
       if (result.success) {
         setStatus({
           type: "success",
-          message: "Payment added successfully",
+          message: "Debit added successfully",
         });
-        // Redirect to payments page after successful payment
-        router.push(`/milk/customers/${customerId}/payments`);
+        router.push(`/milk/customers/${customerId}/debits`);
       } else {
         setStatus({
           type: "error",
-          message: result.error || "Failed to add payment",
+          message: result.error || "Failed to add debit",
         });
       }
     } catch {
@@ -121,7 +119,7 @@ export default function AddPaymentForm({ customerId }: Props) {
             name="amount"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Amount (Rs )</FormLabel>
+                <FormLabel>Amount (Rs)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -163,10 +161,10 @@ export default function AddPaymentForm({ customerId }: Props) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding Payment...
+                Adding Debit...
               </>
             ) : (
-              "Add Payment"
+              "Add Debit"
             )}
           </Button>
         </div>

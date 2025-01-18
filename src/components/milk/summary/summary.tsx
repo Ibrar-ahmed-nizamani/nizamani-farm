@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import SummaryCards from "@/components/shared/summary-cards";
-
 import { MilkSummaryData, Transaction } from "@/lib/type-definitions";
 import DateSelector from "./date-selector";
 import BackLink from "@/components/ui/back-link";
@@ -20,8 +19,8 @@ import { formatDatePattern } from "@/lib/utils";
 
 export default function MilkSummaryPage({
   expenses,
-  // workerCredits,
   customerRecords,
+  customerDebits,
   years,
   months,
 }: MilkSummaryData) {
@@ -60,19 +59,19 @@ export default function MilkSummaryPage({
       amount: -exp.amount,
       details: "-",
     })),
-    // ...workerCredits.map((credit) => ({
-    //   date: new Date(credit.date),
-    //   type: "expense" as const,
-    //   description: `Worker : ${credit.worker.name}`,
-    //   amount: -credit.amount,
-    //   details: credit.description || "-",
-    // })),
     ...customerRecords.map((record) => ({
       date: new Date(record.date),
       type: "income" as const,
       description: record.customerName,
       amount: record.amount,
       details: `${record.quantity} litres / Rs ${record.price}`,
+    })),
+    ...customerDebits.map((debit) => ({
+      date: new Date(debit.date),
+      type: "income" as const,
+      description: debit.customerName,
+      amount: debit.amount,
+      details: `${debit.description}`,
     })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 

@@ -22,6 +22,15 @@ interface MilkCustomer {
   createdAt: Date;
 }
 
+// interface DebitRecord {
+//   customerId: ObjectId;
+//   date: Date;
+//   amount: number;
+//   description: string;
+//   type: "DEBIT";
+//   createdAt: Date;
+// }
+
 export async function getMilkCustomers() {
   try {
     const client = await clientPromise;
@@ -95,9 +104,13 @@ export async function getMilkCustomer(customerId: string) {
     if (!customer) {
       throw new Error("Customer not found");
     }
+
+    console.log(customer);
     return {
       ...customer,
       name: customer.name,
+      totalDebit: customer.totalDebit,
+      totalPaid: customer.totalPaid,
       defaultQuantity: customer.defaultQuantity,
       defaultPrice: customer.defaultPrice,
       _id: customer._id.toString(),
@@ -266,7 +279,7 @@ export async function addMilkPayment(
       );
 
     revalidatePath(`/milk/customers/${customerId}`);
-    revalidatePath(`/milk/customers/${customerId}/transactions`);
+    revalidatePath(`/milk/customers/${customerId}/payments`);
     return { success: true };
   } catch (error) {
     console.error("Failed to add milk payment:", error);
@@ -321,16 +334,16 @@ export async function getMilkCustomerSummary(
       .sort({ date: -1 })
       .toArray();
 
-    const totalDebit = milkRecords.reduce(
-      (sum, record) => sum + record.amount,
-      0
-    );
-    const totalPaid = transactions.reduce(
-      (sum, transaction) =>
-        sum + (transaction.type === "CREDIT" ? transaction.amount : 0),
-      0
-    );
-    const balance = totalDebit - totalPaid;
+    // const totalDebit = milkRecords.reduce(
+    //   (sum, record) => sum + record.amount,
+    //   0
+    // );
+    // const totalPaid = transactions.reduce(
+    //   (sum, transaction) =>
+    //     sum + (transaction.type === "CREDIT" ? transaction.amount : 0),
+    //   0
+    // );
+    const balance = customer.totalDebit - customer.totalPaid;
 
     return {
       customer,
@@ -353,8 +366,8 @@ export async function getMilkCustomerSummary(
         date: transaction.date,
       })),
       summary: {
-        totalDebit,
-        totalPaid,
+        totalDebit: customer.totalDebit,
+        totalPaid: customer.totalPaid,
         balance,
       },
     };
@@ -471,5 +484,80 @@ export async function deleteMilkTransaction(
   } catch (error) {
     console.error("Failed to delete transaction:", error);
     return { success: false, error: "Failed to delete transaction" };
+  }
+}
+
+export async function addDebitRecord(
+  customerId: string,
+  amount: number,
+  date: Date,
+  description: string = "Additional Debit"
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    await db.collection("milk-transactions").insertOne({
+      customerId: new ObjectId(customerId),
+      amount: amount,
+      date: new Date(date),
+      description,
+      type: "DEBIT",
+      createdAt: new Date(),
+    });
+
+    // Update customer's totalDebit
+    await db
+      .collection("milk-customers")
+      .updateOne(
+        { _id: new ObjectId(customerId) },
+        { $inc: { totalDebit: amount } }
+      );
+
+    revalidatePath(`/milk/customers/${customerId}`);
+    revalidatePath(`/milk/customers/${customerId}/debits`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add debit record:", error);
+    return { success: false, error: "Failed to add debit" };
+  }
+}
+
+export async function getCustomerDebits(customerId: string, year?: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    let dateMatch = {};
+    if (year && year !== "all") {
+      dateMatch = {
+        date: {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31`),
+        },
+      };
+    }
+
+    const transactions = await db
+      .collection("milk-transactions")
+      .find({
+        customerId: new ObjectId(customerId),
+        type: "DEBIT",
+        ...dateMatch,
+      })
+      .sort({ date: -1 })
+      .toArray();
+
+    return transactions.map((transaction) => ({
+      _id: transaction._id.toString(),
+      amount: transaction.amount,
+      description: transaction.description,
+      type: transaction.type,
+      date: transaction.date,
+      customerId: transaction.customerId.toString(),
+    }));
+  } catch (error) {
+    console.error("Failed to fetch customer debits:", error);
+    return [];
   }
 }

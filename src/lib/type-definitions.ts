@@ -88,9 +88,19 @@ export interface Transaction {
   balance?: number;
 }
 
+export interface CustomerDebit {
+  _id: string;
+  customerId: string;
+  date: string;
+  amount: number;
+  description: string;
+  customerName: string;
+}
+
 export interface MilkSummaryData {
   expenses: MilkExpense[];
   // workerCredits: WorkerCredit[];
+  customerDebits: CustomerDebit[];
   customerRecords: CustomerRecord[];
   years: number[];
   months: number[];
