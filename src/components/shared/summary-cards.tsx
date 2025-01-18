@@ -20,9 +20,9 @@ export default function SummaryCards({ cards }: SummaryCardsProps) {
   const formatValue = (type: string, value: number) => {
     if (type === "due") {
       const sign = value > 0 ? "Dr" : "Cr";
-      return `Rs ${Math.abs(value).toLocaleString()} ${sign}`;
+      return `Rs ${Math.abs(value).toFixed(0).toLocaleString()} ${sign}`;
     }
-    return `Rs ${value.toLocaleString()}`;
+    return `Rs ${value.toFixed(0).toLocaleString()}`;
   };
 
   return (

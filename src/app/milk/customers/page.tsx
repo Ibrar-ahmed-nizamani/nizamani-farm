@@ -63,10 +63,14 @@ export default async function MilkCustomersPage() {
               className="grid grid-cols-4 gap-4 p-4 hover:bg-gray-50 border-b last:border-0"
             >
               <div>{customer.name}</div>
-              <div>Rs {customer.totalDebit.toLocaleString()}</div>
-              <div>Rs {customer.totalPaid.toLocaleString()}</div>
+              <div>Rs {customer.totalDebit.toFixed(0).toLocaleString()}</div>
+              <div>Rs {customer.totalPaid.toFixed(0).toLocaleString()}</div>
               <div>
-                Rs {(customer.totalDebit - customer.totalPaid).toLocaleString()}
+                Rs{" "}
+                {(customer.totalDebit - customer.totalPaid)
+                  .toFixed(0)
+                  .toLocaleString()}{" "}
+                {customer.totalDebit - customer.totalPaid > 0 ? "Dr" : "Cr"}
               </div>
             </Link>
           ))}

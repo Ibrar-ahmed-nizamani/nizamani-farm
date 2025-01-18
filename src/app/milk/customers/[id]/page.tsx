@@ -120,7 +120,7 @@ export default async function CustomerPage({
                   <TableCell>{formatDatePattern(record.date)}</TableCell>
                   <TableCell>{record.quantity}</TableCell>
                   <TableCell>{record.price}</TableCell>
-                  <TableCell>{record.amount.toLocaleString()}</TableCell>
+                  <TableCell>{record.amount.toFixed(0)}</TableCell>
 
                   <TableCell>
                     <DeleteMilkRecord

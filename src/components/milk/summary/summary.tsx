@@ -160,11 +160,13 @@ export default function MilkSummaryPage({
               </TableCell>
               <TableCell>{transaction.details}</TableCell>
               <TableCell className="text-right">
-                {transaction.amount > 0 ? `Rs ${transaction.amount}` : "-"}
+                {transaction.amount > 0
+                  ? `Rs ${transaction.amount.toFixed(0)}`
+                  : "-"}
               </TableCell>
               <TableCell className="text-right">
                 {transaction.amount < 0
-                  ? `Rs ${Math.abs(transaction.amount)}`
+                  ? `Rs ${Math.abs(transaction.amount).toFixed(0)}`
                   : "-"}
               </TableCell>
               <TableCell
@@ -172,7 +174,7 @@ export default function MilkSummaryPage({
                   transaction.balance >= 0 ? "text-green-600" : "text-red-600"
                 }`}
               >
-                Rs {Math.abs(transaction.balance)}{" "}
+                Rs {Math.abs(transaction.balance).toFixed(0)}{" "}
                 {transaction.balance > 0 ? "Cr" : "Dr"}
               </TableCell>
             </TableRow>

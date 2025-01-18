@@ -206,6 +206,7 @@ export async function addMilkWorkerTransaction(
       createdAt: new Date(),
     });
 
+    revalidatePath(`/milk/workers`);
     revalidatePath(`/milk/workers/${workerId}`);
     return { success: true };
   } catch (error) {
