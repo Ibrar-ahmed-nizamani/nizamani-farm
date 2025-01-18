@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getMilkCustomerSummary } from "@/lib/actions/milk-customer-actions";
-import { formatDate, monthNumberToName } from "@/lib/utils";
+import { formatDatePattern, monthNumberToName } from "@/lib/utils";
 
 interface CompleteCustomerReportProps {
   customerDetails: {
@@ -154,17 +154,21 @@ export default function CompleteCustomerReport({
             <div class="summary">
               <div class="summary-item">
                 <strong>Total Debit:</strong>
-                <p class="debit">Rs ${customerDetails.totalDebit.toLocaleString()}</p>
+                <p class="debit">Rs ${customerDetails.totalDebit
+                  .toFixed(0)
+                  .toLocaleString()}</p>
               </div>
               <div class="summary-item">
                 <strong>Total Paid:</strong>
-                <p class="credit">Rs ${customerDetails.totalPaid.toLocaleString()}</p>
+                <p class="credit">Rs ${customerDetails.totalPaid
+                  .toFixed(0)
+                  .toLocaleString()}</p>
               </div>
               <div class="summary-item">
                 <strong>Balance:</strong>
                 <p class="${
                   customerDetails.balance >= 0 ? "debit" : "credit"
-                }">Rs ${Math.abs(customerDetails.balance)} ${
+                }">Rs ${Math.abs(customerDetails.balance).toFixed(0)} ${
         customerDetails.balance > 0 ? " Dr" : " Cr"
       }</p>
               </div>
@@ -190,26 +194,26 @@ export default function CompleteCustomerReport({
                   .map(
                     (entry) => `
                   <tr>
-                    <td>${formatDate(
-                      new Date(entry.date).toLocaleDateString("en-GB")
-                    )}</td>
+                    <td>${formatDatePattern(entry.date)}</td>
                     <td>${entry.type === "milk" ? "Milk" : "Payment"}</td>
                     <td>${entry.quantity || "-"}</td>
                     <td>${entry.price || "-"}</td>
                     <td>${entry.description || "-"}</td>
                     <td>${
                       entry.amount < 0
-                        ? Math.abs(entry.amount).toLocaleString()
+                        ? Math.abs(entry.amount).toFixed(0).toLocaleString()
                         : "-"
                     }</td>
                     <td>${
                       entry.amount > 0
-                        ? Math.abs(entry.amount).toLocaleString()
+                        ? Math.abs(entry.amount).toFixed(0).toLocaleString()
                         : "-"
                     }</td>
                     <td class="amount ${
                       entry.runningBalance >= 0 ? "debit" : "credit"
-                    }">Rs ${Math.abs(entry.runningBalance).toLocaleString()} ${
+                    }">Rs ${Math.abs(entry.runningBalance)
+                      .toFixed(0)
+                      .toLocaleString()} ${
                       entry.runningBalance > 0 ? "Dr" : "Cr"
                     }</td>
                   </tr>
@@ -222,7 +226,9 @@ export default function CompleteCustomerReport({
             <div style="text-align: right; margin-top: 20px;">
               <p><strong>Final Balance: Rs ${Math.abs(
                 customerDetails.balance
-              )} ${customerDetails.balance > 0 ? " Dr" : " Cr"}</strong></p>
+              ).toFixed(0)} ${
+        customerDetails.balance > 0 ? " Dr" : " Cr"
+      }</strong></p>
             </div>
           </body>
         </html>

@@ -28,15 +28,6 @@ export function monthNumberToName(month: number): string {
   return months[month - 1];
 }
 
-// formate 11/01/2025 to 11 - 01 - 2025
-export function formatDate(dateString: string): string {
-  // Split the date string by '/'
-  const [day, month, year] = dateString.split("/");
-
-  // Join with ' - ' spacing
-  return `${day} - ${month} - ${year}`;
-}
-
 export function formatDatePattern(inputDate: string) {
   const date = new Date(inputDate);
   const day = String(date.getDate()).padStart(2, "0");
