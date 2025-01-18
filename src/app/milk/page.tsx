@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { DollarSign, FileText, Milk, UserPen, Users } from "lucide-react";
+import {
+  DollarSign,
+  FileText,
+  Milk,
+  NotebookPenIcon,
+  UserPen,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 
 export default async function Page() {
@@ -47,6 +54,17 @@ export default async function Page() {
           >
             <UserPen className="h-6 w-6" />
             <span>Milk Workers</span>
+          </Link>
+        </Button>
+      </div>
+      <div>
+        <Button variant="outline" asChild className="min-w-44 ">
+          <Link
+            href="/milk/traders"
+            className="flex  items-center border-b !justify-start"
+          >
+            <NotebookPenIcon className="h-6 w-6" />
+            <span>Milk Traders</span>
           </Link>
         </Button>
       </div>
