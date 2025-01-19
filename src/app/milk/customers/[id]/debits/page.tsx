@@ -17,6 +17,7 @@ import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
 import { DeleteTransaction } from "@/components/milk/customer/delete-transaction";
 import EmptyState from "@/components/shared/empty-state";
+import { EditDebit } from "@/components/milk/customer/edit-debit";
 
 export default async function CustomerDebitsPage({
   params,
@@ -50,7 +51,7 @@ export default async function CustomerDebitsPage({
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Amount (Rs)</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead className="w-[80px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -59,7 +60,16 @@ export default async function CustomerDebitsPage({
                   <TableCell>{formatDatePattern(debit.date)}</TableCell>
                   <TableCell>{debit.description}</TableCell>
                   <TableCell>{debit.amount.toLocaleString()}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-3 items-center justify-center">
+                    <EditDebit
+                      customerId={id}
+                      payment={{
+                        _id: debit._id,
+                        amount: debit.amount,
+                        date: debit.date.toISOString(),
+                        description: debit.description,
+                      }}
+                    />
                     <DeleteTransaction
                       customerId={id}
                       transactionId={debit._id}

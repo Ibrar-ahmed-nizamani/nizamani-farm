@@ -554,3 +554,119 @@ export async function getCustomerDebits(customerId: string, year?: string) {
     return [];
   }
 }
+
+// Add these functions to your existing milk-customer-actions.ts file
+
+export async function updateMilkDebit(
+  customerId: string,
+  transactionId: string,
+  amount: number,
+  date: Date,
+  description: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // First, get the original transaction to calculate the difference
+    const originalTransaction = await db
+      .collection("milk-transactions")
+      .findOne({
+        _id: new ObjectId(transactionId),
+        customerId: new ObjectId(customerId),
+        type: "DEBIT",
+      });
+
+    if (!originalTransaction) {
+      return { success: false, error: "Transaction not found" };
+    }
+
+    // Calculate the difference in amount
+    const amountDifference = amount - originalTransaction.amount;
+
+    // Update the transaction
+    await db.collection("milk-transactions").updateOne(
+      { _id: new ObjectId(transactionId) },
+      {
+        $set: {
+          amount,
+          date: new Date(date),
+          description,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    // Update customer's totalDebit by adding the difference
+    await db
+      .collection("milk-customers")
+      .updateOne(
+        { _id: new ObjectId(customerId) },
+        { $inc: { totalDebit: amountDifference } }
+      );
+
+    revalidatePath(`/milk/customers/${customerId}`);
+    revalidatePath(`/milk/customers/${customerId}/debits`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update debit:", error);
+    return { success: false, error: "Failed to update debit" };
+  }
+}
+
+export async function updateMilkPayment(
+  customerId: string,
+  transactionId: string,
+  amount: number,
+  date: Date,
+  description: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // First, get the original transaction to calculate the difference
+    const originalTransaction = await db
+      .collection("milk-transactions")
+      .findOne({
+        _id: new ObjectId(transactionId),
+        customerId: new ObjectId(customerId),
+        type: "CREDIT",
+      });
+
+    if (!originalTransaction) {
+      return { success: false, error: "Transaction not found" };
+    }
+
+    // Calculate the difference in amount
+    const amountDifference = amount - originalTransaction.amount;
+
+    // Update the transaction
+    await db.collection("milk-transactions").updateOne(
+      { _id: new ObjectId(transactionId) },
+      {
+        $set: {
+          amount,
+          date: new Date(date),
+          description,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    // Update customer's totalPaid by adding the difference
+    await db
+      .collection("milk-customers")
+      .updateOne(
+        { _id: new ObjectId(customerId) },
+        { $inc: { totalPaid: amountDifference } }
+      );
+
+    revalidatePath(`/milk/customers/${customerId}`);
+    revalidatePath(`/milk/customers/${customerId}/payments`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update payment:", error);
+    return { success: false, error: "Failed to update payment" };
+  }
+}

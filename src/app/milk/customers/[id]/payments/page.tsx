@@ -17,6 +17,7 @@ import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
 import { DeleteTransaction } from "@/components/milk/customer/delete-transaction";
 import EmptyState from "@/components/shared/empty-state";
+import { EditPayment } from "@/components/milk/customer/edit-payment";
 
 export default async function CustomerTransactionsPage({
   params,
@@ -26,7 +27,9 @@ export default async function CustomerTransactionsPage({
   const id = (await params).id;
   const customer = await getMilkCustomer(id);
   const transactions = await getMilkCustomerPayments(id);
-
+  // transactions.map((transaction) => {
+  //   console.log(typeof transaction.amount);
+  // });
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -48,7 +51,7 @@ export default async function CustomerTransactionsPage({
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Amount (Rs)</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead className="w-[80px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -57,7 +60,16 @@ export default async function CustomerTransactionsPage({
                   <TableCell>{formatDatePattern(transaction.date)}</TableCell>
                   <TableCell>{transaction.description}</TableCell>
                   <TableCell>{transaction.amount.toLocaleString()}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-3 items-center justify-center">
+                    <EditPayment
+                      customerId={id}
+                      payment={{
+                        _id: transaction._id,
+                        amount: transaction.amount,
+                        date: transaction.date.toISOString(),
+                        description: transaction.description,
+                      }}
+                    />
                     <DeleteTransaction
                       customerId={id}
                       transactionId={transaction._id}
