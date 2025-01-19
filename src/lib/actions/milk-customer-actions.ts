@@ -22,15 +22,6 @@ interface MilkCustomer {
   createdAt: Date;
 }
 
-// interface DebitRecord {
-//   customerId: ObjectId;
-//   date: Date;
-//   amount: number;
-//   description: string;
-//   type: "DEBIT";
-//   createdAt: Date;
-// }
-
 export async function getMilkCustomers() {
   try {
     const client = await clientPromise;
@@ -377,46 +368,6 @@ export async function getMilkCustomerSummary(
   }
 }
 
-export async function getMilkCustomerTransactions(
-  customerId: string,
-  year?: string
-) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
-
-    let dateMatch = {};
-    if (year && year !== "all") {
-      dateMatch = {
-        date: {
-          $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`),
-        },
-      };
-    }
-
-    const transactions = await db
-      .collection("milk-transactions")
-      .find({
-        customerId: new ObjectId(customerId),
-        ...dateMatch,
-      })
-      .sort({ date: -1 })
-      .toArray();
-    return transactions.map((transaction) => ({
-      _id: transaction._id.toString(),
-      amount: transaction.amount,
-      description: transaction.description,
-      type: transaction.type,
-      date: transaction.date,
-      customerId: transaction.customerId.toString(),
-    }));
-  } catch (error) {
-    console.error("Failed to fetch milk customer transactions:", error);
-    return [];
-  }
-}
-
 export async function getMilkCustomerDates(customerId: string) {
   try {
     const client = await clientPromise;
@@ -520,6 +471,48 @@ export async function addDebitRecord(
   } catch (error) {
     console.error("Failed to add debit record:", error);
     return { success: false, error: "Failed to add debit" };
+  }
+}
+
+export async function getMilkCustomerPayments(
+  customerId: string,
+  year?: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    let dateMatch = {};
+    if (year && year !== "all") {
+      dateMatch = {
+        date: {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31`),
+        },
+      };
+    }
+
+    const transactions = await db
+      .collection("milk-transactions")
+      .find({
+        customerId: new ObjectId(customerId),
+        type: "CREDIT",
+        ...dateMatch,
+      })
+      .sort({ date: -1 })
+      .toArray();
+
+    return transactions.map((transaction) => ({
+      _id: transaction._id.toString(),
+      amount: transaction.amount,
+      description: transaction.description,
+      type: transaction.type,
+      date: transaction.date,
+      customerId: transaction.customerId.toString(),
+    }));
+  } catch (error) {
+    console.error("Failed to fetch milk customer transactions:", error);
+    return [];
   }
 }
 

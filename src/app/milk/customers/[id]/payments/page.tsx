@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import {
   getMilkCustomer,
-  getMilkCustomerTransactions,
+  getMilkCustomerPayments,
 } from "@/lib/actions/milk-customer-actions";
 import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
@@ -25,7 +25,7 @@ export default async function CustomerTransactionsPage({
 }) {
   const id = (await params).id;
   const customer = await getMilkCustomer(id);
-  const transactions = await getMilkCustomerTransactions(id);
+  const transactions = await getMilkCustomerPayments(id);
 
   return (
     <div className="space-y-6">
