@@ -23,6 +23,7 @@ import {
   WorkerYearSelector,
 } from "@/components/milk/worker/selectors";
 import { DeleteTraderTransaction } from "@/components/milk/traders/delete-trader-transaction";
+import { EditTraderTransaction } from "@/components/milk/traders/edit-trader-transaction";
 
 export default async function TraderPage({
   params,
@@ -91,7 +92,7 @@ export default async function TraderPage({
               <TableHead className="text-center">
                 Running Balance (Rs)
               </TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="w-[80px] text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -111,7 +112,17 @@ export default async function TraderPage({
                   {Math.abs(transaction.runningBalance)}
                   {transaction.runningBalance > 0 ? " Cr" : " Dr"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="flex gap-3 items-center justify-center">
+                  <EditTraderTransaction
+                    traderId={id}
+                    transaction={{
+                      _id: transaction._id,
+                      amount: transaction.amount,
+                      date: transaction.date.toISOString(),
+                      description: transaction.description,
+                      type: transaction.type,
+                    }}
+                  />
                   <DeleteTraderTransaction
                     traderId={trader._id}
                     transactionId={transaction._id}

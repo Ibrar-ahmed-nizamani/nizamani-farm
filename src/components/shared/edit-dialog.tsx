@@ -23,14 +23,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
-type FieldType = "text" | "number" | "date" | "textarea";
+type FieldType = "text" | "number" | "date" | "textarea" | "select";
 
 interface Field<TFormValues> {
   name: Path<TFormValues>;
   label: string;
   type: FieldType;
   placeholder?: string;
+  options?: { label: string; value: string }[]; // Add this for select fields
 }
 
 interface EditDialogProps<TSchema extends z.ZodType> {
@@ -94,7 +102,29 @@ export default function EditDialog<TSchema extends z.ZodType>({
                   <FormItem>
                     <FormLabel>{field.label}</FormLabel>
                     <FormControl>
-                      {field.type === "textarea" ? (
+                      {field.type === "select" ? (
+                        <Select
+                          onValueChange={formField.onChange}
+                          defaultValue={formField.value}
+                          disabled={isLoading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={field.placeholder} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {field.options?.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : field.type === "textarea" ? (
                         <Textarea
                           {...formField}
                           disabled={isLoading}

@@ -249,3 +249,52 @@ export async function deleteMilkTraderTransaction(
     return { success: false, error: "Failed to delete transaction" };
   }
 }
+
+export async function updateMilkTraderTransaction(
+  traderId: string,
+  transactionId: string,
+  type: "debit" | "credit",
+  amount: number,
+  date: Date,
+  description: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // First, verify the transaction exists and belongs to the worker
+    const transaction = await db
+      .collection("milk_trader_transactions")
+      .findOne({
+        _id: new ObjectId(transactionId),
+        traderId: new ObjectId(traderId),
+      });
+
+    if (!transaction) {
+      return { success: false, error: "Transaction not found" };
+    }
+
+    // Update the transaction
+    await db.collection("milk_trader_transactions").updateOne(
+      { _id: new ObjectId(transactionId) },
+      {
+        $set: {
+          type,
+          amount,
+          date: new Date(date),
+          description,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    revalidatePath(`/milk/traders/${traderId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update trader transaction:", error);
+    return {
+      success: false,
+      error: "Failed to update transaction",
+    };
+  }
+}

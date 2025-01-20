@@ -21,6 +21,7 @@ import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
 import { DeleteWorkerTransaction } from "@/components/milk/worker/delete-worker-transaction";
+import { EditWorkerTransaction } from "@/components/milk/worker/edit-worker-transaction";
 
 export default async function WorkerPage({
   params,
@@ -89,7 +90,7 @@ export default async function WorkerPage({
               <TableHead className="text-center">
                 Running Balance (Rs)
               </TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="w-[80px] text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -109,7 +110,17 @@ export default async function WorkerPage({
                   {Math.abs(transaction.runningBalance)}
                   {transaction.runningBalance > 0 ? " Cr" : " Dr"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="flex gap-3 items-center justify-center">
+                  <EditWorkerTransaction
+                    workerId={id}
+                    transaction={{
+                      _id: transaction._id,
+                      amount: transaction.amount,
+                      date: transaction.date.toISOString(),
+                      description: transaction.description,
+                      type: transaction.type,
+                    }}
+                  />
                   <DeleteWorkerTransaction
                     workerId={worker._id}
                     transactionId={transaction._id}
