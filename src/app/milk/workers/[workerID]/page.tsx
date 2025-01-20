@@ -22,6 +22,7 @@ import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
 import { DeleteWorkerTransaction } from "@/components/milk/worker/delete-worker-transaction";
 import { EditWorkerTransaction } from "@/components/milk/worker/edit-worker-transaction";
+import SummaryCards from "@/components/shared/summary-cards";
 
 export default async function WorkerPage({
   params,
@@ -35,6 +36,16 @@ export default async function WorkerPage({
   const worker = await getMilkWorker(id);
   const transactions = await getMilkWorkerTransactions(id, year, month);
   const yearsAndMonths = await getMilkWorkerDates(id);
+
+  const debit = transactions.reduce(
+    (acc, curr) => acc + (curr.type === "debit" ? curr.amount : 0),
+    0
+  );
+
+  const credit = transactions.reduce(
+    (acc, curr) => acc + (curr.type === "credit" ? curr.amount : 0),
+    0
+  );
 
   // Calculate total balance
   const balance = transactions.reduce(
@@ -58,13 +69,30 @@ export default async function WorkerPage({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">{worker.name}</h1>
-          <p className="text-muted-foreground">
-            Current Balance: Rs {Math.abs(balance)} {balance < 0 ? "Dr" : "Cr"}
-          </p>
         </div>
 
         <BackLink href="/milk/workers" linkText="Back to Workers" />
       </div>
+
+      <SummaryCards
+        cards={[
+          {
+            label: "Debit",
+            value: debit,
+            type: "expense",
+          },
+          {
+            label: "Credit",
+            value: credit,
+            type: "income",
+          },
+          {
+            label: "Balance",
+            value: balance,
+            type: "balance",
+          },
+        ]}
+      />
 
       <div className="flex items-center justify-between">
         <div className="flex gap-4 items-center">

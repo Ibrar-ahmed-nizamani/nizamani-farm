@@ -24,6 +24,7 @@ import {
 } from "@/components/milk/worker/selectors";
 import { DeleteTraderTransaction } from "@/components/milk/traders/delete-trader-transaction";
 import { EditTraderTransaction } from "@/components/milk/traders/edit-trader-transaction";
+import SummaryCards from "@/components/shared/summary-cards";
 
 export default async function TraderPage({
   params,
@@ -44,6 +45,16 @@ export default async function TraderPage({
     0
   );
 
+  const debit = transactions.reduce(
+    (acc, curr) => acc + (curr.type === "debit" ? curr.amount : 0),
+    0
+  );
+
+  const credit = transactions.reduce(
+    (acc, curr) => acc + (curr.type === "credit" ? curr.amount : 0),
+    0
+  );
+
   // Calculate running balance for each transaction
   let runningBalance = 0;
   const transactionsWithBalance = transactions.map((transaction) => {
@@ -60,13 +71,30 @@ export default async function TraderPage({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">{trader.name}</h1>
-          <p className="text-muted-foreground">
-            Current Balance: Rs {Math.abs(balance)} {balance < 0 ? "Dr" : "Cr"}
-          </p>
         </div>
 
         <BackLink href="/milk/traders" linkText="Back to Traders" />
       </div>
+
+      <SummaryCards
+        cards={[
+          {
+            label: "Debit",
+            value: debit,
+            type: "expense",
+          },
+          {
+            label: "Credit",
+            value: credit,
+            type: "income",
+          },
+          {
+            label: "Balance",
+            value: balance,
+            type: "balance",
+          },
+        ]}
+      />
 
       <div className="flex items-center justify-between">
         <div className="flex gap-4 items-center">
