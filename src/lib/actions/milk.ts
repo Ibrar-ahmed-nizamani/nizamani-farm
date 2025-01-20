@@ -159,3 +159,68 @@ export async function deleteMilkRecord(id: string) {
     return { success: false, error: "Failed to delete milk record" };
   }
 }
+// In milk.ts
+
+export async function updateMilkRecord(
+  recordId: string,
+  {
+    date,
+    amMilk,
+    pmMilk,
+  }: {
+    date: Date;
+    amMilk: number;
+    pmMilk: number;
+  }
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Create start and end of day dates for checking duplicates
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Check if another record exists for this date (excluding the current record)
+    const existingRecord = await db.collection("milk").findOne({
+      _id: { $ne: new ObjectId(recordId) }, // Exclude current record
+      date: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    });
+
+    if (existingRecord) {
+      return {
+        success: false,
+        error: "Another milk record already exists for this date",
+      };
+    }
+
+    // Update the record
+    const result = await db.collection("milk").updateOne(
+      { _id: new ObjectId(recordId) },
+      {
+        $set: {
+          date: new Date(date),
+          amMilk,
+          pmMilk,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (!result.matchedCount) {
+      return { success: false, error: "Record not found" };
+    }
+
+    revalidatePath("/milk");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update milk record:", error);
+    return { success: false, error: "Failed to update milk record" };
+  }
+}

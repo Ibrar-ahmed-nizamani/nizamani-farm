@@ -12,11 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteMilkDialog from "./delete-milk-dialog";
-import {  formatDatePattern } from "@/lib/utils";
+import { formatDatePattern } from "@/lib/utils";
+import { EditMilkRecord } from "./edit-milk-record";
 
 interface MilkRecord {
   _id: string;
-  date: string;
+  date: Date;
   amMilk: number;
   pmMilk: number;
 }
@@ -44,7 +45,7 @@ export default function MilkTable({ milkData }: MilkTableProps) {
               <TableHead>AM Milk (L)</TableHead>
               <TableHead>PM Milk (L)</TableHead>
               <TableHead>Total (L)</TableHead>
-              <TableHead className="w-[100px]">Action</TableHead>
+              <TableHead className="w-[100px] text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -56,7 +57,15 @@ export default function MilkTable({ milkData }: MilkTableProps) {
                 <TableCell className=" font-medium">
                   {(record.amMilk + record.pmMilk).toFixed(1)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="flex gap-3 items-center justify-center">
+                  <EditMilkRecord
+                    record={{
+                      amMilk: record.amMilk,
+                      pmMilk: record.pmMilk,
+                      date: record.date.toISOString(),
+                    }}
+                    recordId={record._id}
+                  />
                   <Button
                     variant="ghost"
                     size="sm"
