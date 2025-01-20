@@ -670,3 +670,60 @@ export async function updateMilkPayment(
     return { success: false, error: "Failed to update payment" };
   }
 }
+
+// Add this to milk-customer-actions.ts
+
+export async function updateMilkRecord(
+  customerId: string,
+  recordId: string,
+  quantity: number,
+  price: number,
+  date: Date
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // First, get the original record to calculate the difference
+    const originalRecord = await db.collection("milk-records").findOne({
+      _id: new ObjectId(recordId),
+      customerId: new ObjectId(customerId),
+    });
+
+    if (!originalRecord) {
+      return { success: false, error: "Record not found" };
+    }
+
+    // Calculate the new amount and the difference
+    const newAmount = quantity * price;
+    const amountDifference = newAmount - originalRecord.amount;
+
+    // Update the record
+    await db.collection("milk-records").updateOne(
+      { _id: new ObjectId(recordId) },
+      {
+        $set: {
+          quantity,
+          price,
+          amount: newAmount,
+          date: new Date(date),
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    // Update customer's totalDebit by adding the difference
+    await db
+      .collection("milk-customers")
+      .updateOne(
+        { _id: new ObjectId(customerId) },
+        { $inc: { totalDebit: amountDifference } }
+      );
+
+    revalidatePath(`/milk/customers/${customerId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update milk record:", error);
+    return { success: false, error: "Failed to update milk record" };
+  }
+}

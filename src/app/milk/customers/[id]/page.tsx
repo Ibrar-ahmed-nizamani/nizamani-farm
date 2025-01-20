@@ -25,6 +25,7 @@ import SummaryCards from "@/components/shared/summary-cards";
 import { formatDatePattern } from "@/lib/utils";
 import BackLink from "@/components/ui/back-link";
 import EmptyState from "@/components/shared/empty-state";
+import { EditMilkRecord } from "@/components/milk/customer/edit-customer-milk-record";
 
 export default async function CustomerPage({
   params,
@@ -115,7 +116,7 @@ export default async function CustomerPage({
                 <TableHead>Quantity (L)</TableHead>
                 <TableHead>Price (Rs)</TableHead>
                 <TableHead>Amount (Rs)</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead className="w-[80px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,7 +127,16 @@ export default async function CustomerPage({
                   <TableCell>{record.price}</TableCell>
                   <TableCell>{record.amount.toFixed(0)}</TableCell>
 
-                  <TableCell>
+                  <TableCell className="flex gap-3 items-center justify-center">
+                    <EditMilkRecord
+                      customerId={id}
+                      record={{
+                        _id: record._id,
+                        date: record.date.toISOString(),
+                        price: record.price,
+                        quantity: record.quantity,
+                      }}
+                    />
                     <DeleteMilkRecord
                       customerId={id}
                       recordId={record._id}
