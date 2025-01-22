@@ -23,6 +23,7 @@ import { formatDatePattern } from "@/lib/utils";
 import { DeleteWorkerTransaction } from "@/components/milk/worker/delete-worker-transaction";
 import { EditWorkerTransaction } from "@/components/milk/worker/edit-worker-transaction";
 import SummaryCards from "@/components/shared/summary-cards";
+import PrintTransactionReport from "@/components/shared/print-transaction-report";
 
 export default async function WorkerPage({
   params,
@@ -99,7 +100,19 @@ export default async function WorkerPage({
           <WorkerYearSelector records={yearsAndMonths} />
           <WorkerMonthSelector records={yearsAndMonths} />
         </div>
-        <div>
+        <div className="flex items-center gap-4">
+          <PrintTransactionReport
+            title="Trader Transaction Report"
+            personName={worker.name}
+            transactions={transactionsWithBalance}
+            year={year}
+            month={month}
+            summaryData={{
+              totalDebit: debit,
+              totalCredit: credit,
+              balance: balance,
+            }}
+          />
           <Button asChild>
             <Link href={`/milk/workers/${worker._id}/add-worker-transaction`}>
               Add Transaction

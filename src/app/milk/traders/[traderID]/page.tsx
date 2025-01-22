@@ -25,6 +25,7 @@ import {
 import { DeleteTraderTransaction } from "@/components/milk/traders/delete-trader-transaction";
 import { EditTraderTransaction } from "@/components/milk/traders/edit-trader-transaction";
 import SummaryCards from "@/components/shared/summary-cards";
+import PrintTransactionReport from "@/components/shared/print-transaction-report";
 
 export default async function TraderPage({
   params,
@@ -101,7 +102,19 @@ export default async function TraderPage({
           <WorkerYearSelector records={yearsAndMonths} />
           <WorkerMonthSelector records={yearsAndMonths} />
         </div>
-        <div>
+        <div className="flex items-center gap-4">
+          <PrintTransactionReport
+            title="Trader Transaction Report"
+            personName={trader.name}
+            transactions={transactionsWithBalance}
+            year={year}
+            month={month}
+            summaryData={{
+              totalDebit: debit,
+              totalCredit: credit,
+              balance: balance,
+            }}
+          />
           <Button asChild>
             <Link href={`/milk/traders/${id}/add-transaction`}>
               Add Transaction
