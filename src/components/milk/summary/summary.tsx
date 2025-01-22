@@ -16,6 +16,7 @@ import { MilkSummaryData, Transaction } from "@/lib/type-definitions";
 import DateSelector from "./date-selector";
 import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
+import PrintMilkSummary from "./print-summary";
 
 export default function MilkSummaryPage({
   expenses,
@@ -104,15 +105,24 @@ export default function MilkSummaryPage({
           <BackLink href="/milk" linkText="Back to Milk Page" />
         </div>
       </div>
-      <DateSelector
-        years={years}
-        months={months}
-        selectedYear={searchParams.get("year") || undefined}
-        selectedMonth={searchParams.get("month") || undefined}
-        onYearChange={handleYearChange}
-        onMonthChange={handleMonthChange}
-      />
-
+      <div className="flex gap-4 items-center">
+        <DateSelector
+          years={years}
+          months={months}
+          selectedYear={searchParams.get("year") || undefined}
+          selectedMonth={searchParams.get("month") || undefined}
+          onYearChange={handleYearChange}
+          onMonthChange={handleMonthChange}
+        />
+        <PrintMilkSummary
+          transactions={transactionsWithBalance}
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+          totalBalance={totalBalance}
+          selectedYear={searchParams.get("year") || undefined}
+          selectedMonth={searchParams.get("month") || undefined}
+        />
+      </div>
       <SummaryCards
         cards={[
           {
