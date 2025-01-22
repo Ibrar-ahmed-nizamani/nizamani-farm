@@ -67,7 +67,7 @@ export default async function MilkCustomersPage() {
               <div>Rs {customer.totalPaid.toFixed(0).toLocaleString()}</div>
               <div>
                 Rs{" "}
-                {(customer.totalDebit - customer.totalPaid)
+                {Math.abs(customer.totalDebit - customer.totalPaid)
                   .toFixed(0)
                   .toLocaleString()}{" "}
                 {customer.totalDebit - customer.totalPaid > 0 ? "Dr" : "Cr"}

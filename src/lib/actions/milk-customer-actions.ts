@@ -234,6 +234,7 @@ export async function deleteMilkRecord(customerId: string, recordId: string) {
         { $inc: { totalDebit: -record.amount } }
       );
 
+    revalidatePath(`/milk/customers`);
     revalidatePath(`/milk/customers/${customerId}`);
     return { success: true };
   } catch (error) {
@@ -269,6 +270,7 @@ export async function addMilkPayment(
         { $inc: { totalPaid: amount } }
       );
 
+    revalidatePath(`/milk/customers`);
     revalidatePath(`/milk/customers/${customerId}`);
     revalidatePath(`/milk/customers/${customerId}/payments`);
     return { success: true };
@@ -464,7 +466,7 @@ export async function addDebitRecord(
         { _id: new ObjectId(customerId) },
         { $inc: { totalDebit: amount } }
       );
-
+    revalidatePath(`/milk/customers`);
     revalidatePath(`/milk/customers/${customerId}`);
     revalidatePath(`/milk/customers/${customerId}/debits`);
     return { success: true };
@@ -605,6 +607,7 @@ export async function updateMilkDebit(
         { $inc: { totalDebit: amountDifference } }
       );
 
+    revalidatePath(`/milk/customers`);
     revalidatePath(`/milk/customers/${customerId}`);
     revalidatePath(`/milk/customers/${customerId}/debits`);
     return { success: true };
@@ -662,6 +665,7 @@ export async function updateMilkPayment(
         { $inc: { totalPaid: amountDifference } }
       );
 
+    revalidatePath(`/milk/customers`);
     revalidatePath(`/milk/customers/${customerId}`);
     revalidatePath(`/milk/customers/${customerId}/payments`);
     return { success: true };
@@ -720,6 +724,7 @@ export async function updateMilkRecord(
         { $inc: { totalDebit: amountDifference } }
       );
 
+    revalidatePath(`/milk/customers`);
     revalidatePath(`/milk/customers/${customerId}`);
     return { success: true };
   } catch (error) {
