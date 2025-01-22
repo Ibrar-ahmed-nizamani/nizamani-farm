@@ -13,6 +13,7 @@ import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteMilkExpenseDialog from "./delete-expense-dialog";
 import { formatDatePattern } from "@/lib/utils";
+import { EditExpense } from "./edit-expense";
 
 interface MilkExpense {
   _id: string;
@@ -24,10 +25,17 @@ interface MilkExpense {
   };
 }
 
+interface ExpenseType {
+  _id: string;
+  name: string;
+}
+
 export default function MilkExpensesTable({
   expenses,
+  expenseTypes,
 }: {
   expenses: MilkExpense[];
+  expenseTypes: ExpenseType[];
 }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string>("");
@@ -46,7 +54,7 @@ export default function MilkExpensesTable({
               <TableHead>Date</TableHead>
               <TableHead>Expense Type</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead className="w-[100px]">Action</TableHead>
+              <TableHead className="w-[100px] text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -56,6 +64,16 @@ export default function MilkExpensesTable({
                 <TableCell>{expense.type.name}</TableCell>
                 <TableCell>Rs {expense.amount.toLocaleString()}</TableCell>
                 <TableCell>
+                  <EditExpense
+                    expense={{
+                      _id: expense._id,
+                      date: expense.date,
+                      typeId: expense.type._id,
+                      amount: expense.amount,
+                      type: expense.type,
+                    }}
+                    expenseTypes={expenseTypes}
+                  />
                   <Button
                     variant="ghost"
                     size="sm"

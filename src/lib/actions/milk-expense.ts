@@ -46,7 +46,7 @@ export async function getMilkExpenses(year?: string, month?: string) {
     return expenses.map((expense) => ({
       ...expense,
       amount: expense.amount,
-      date:expense.date,
+      date: expense.date,
       _id: expense._id.toString(),
       typeId: expense.typeId.toString(),
       type: {
@@ -187,5 +187,41 @@ export async function deleteMilkExpense(id: string) {
   } catch (error) {
     console.error("Failed to delete milk expense:", error);
     return { success: false, error: "Failed to delete expense" };
+  }
+}
+
+export async function updateMilkExpense(
+  expenseId: string,
+  {
+    typeId,
+    amount,
+    date,
+  }: {
+    typeId: string;
+    amount: number;
+    date: Date;
+  }
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    await db.collection("milk_expenses").updateOne(
+      { _id: new ObjectId(expenseId) },
+      {
+        $set: {
+          typeId: new ObjectId(typeId),
+          amount,
+          date: new Date(date),
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    revalidatePath("/milk/expenses");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update milk expense:", error);
+    return { success: false, error: "Failed to update expense" };
   }
 }

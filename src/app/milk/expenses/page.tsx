@@ -1,5 +1,6 @@
 import {
   getMilkExpenses,
+  getMilkExpenseTypes,
   getMilkExpenseYearsAndMonths,
 } from "@/lib/actions/milk-expense";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export default async function MilkExpensesPage({ searchParams }: PageProps) {
   const year = (await searchParams).year;
   const month = (await searchParams).month;
 
+  const expenseTypes = await getMilkExpenseTypes();
   const yearsAndMonths = await getMilkExpenseYearsAndMonths();
   const expenses = await getMilkExpenses(year, month);
   const years = yearsAndMonths.map((yearsAndMonths) => yearsAndMonths.year);
@@ -59,7 +61,7 @@ export default async function MilkExpensesPage({ searchParams }: PageProps) {
           linkText="Add Expense"
         />
       ) : (
-        <MilkExpensesTable expenses={expenses} />
+        <MilkExpensesTable expenses={expenses} expenseTypes={expenseTypes} />
       )}
     </div>
   );
