@@ -47,6 +47,7 @@ const DateSelector = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Years</SelectItem>
+          <SelectItem value="today">Today</SelectItem>
           {years.map((year) => (
             <SelectItem key={year} value={year.toString()}>
               {year}
@@ -55,7 +56,7 @@ const DateSelector = ({
         </SelectContent>
       </Select>
 
-      {selectedYear && months && (
+      {!isNaN(Number(selectedYear)) && months && (
         <Select value={selectedMonth || "all"} onValueChange={onMonthChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select Month" />

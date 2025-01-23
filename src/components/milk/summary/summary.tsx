@@ -17,6 +17,7 @@ import DateSelector from "./date-selector";
 import BackLink from "@/components/ui/back-link";
 import { formatDatePattern } from "@/lib/utils";
 import PrintMilkSummary from "./print-summary";
+import { Button } from "@/components/ui/button";
 
 export default function MilkSummaryPage({
   expenses,
@@ -31,7 +32,14 @@ export default function MilkSummaryPage({
 
   const handleYearChange = (year: string) => {
     const params = new URLSearchParams(searchParams);
-    if (year === "all") {
+    params.delete("date");
+    if (year === "today") {
+      params.delete("year");
+      params.delete("month");
+      params.set("date", "today");
+    }
+
+    if (year === "all" || year === "today") {
       params.delete("year");
       params.delete("month");
     } else {
@@ -43,6 +51,7 @@ export default function MilkSummaryPage({
 
   const handleMonthChange = (month: string) => {
     const params = new URLSearchParams(searchParams);
+    params.delete("date");
     if (month === "all") {
       params.delete("month");
     } else {
@@ -105,21 +114,27 @@ export default function MilkSummaryPage({
           <BackLink href="/milk" linkText="Back to Milk Page" />
         </div>
       </div>
-      <div className="flex gap-4 items-center">
-        <DateSelector
-          years={years}
-          months={months}
-          selectedYear={searchParams.get("year") || undefined}
-          selectedMonth={searchParams.get("month") || undefined}
-          onYearChange={handleYearChange}
-          onMonthChange={handleMonthChange}
-        />
+      <div className="flex gap-4 items-center justify-between">
+        <div className="flex items-center gap-4">
+          <DateSelector
+            years={years}
+            months={months}
+            selectedYear={
+              searchParams.get("year") || searchParams.get("date") || undefined
+            }
+            selectedMonth={searchParams.get("month") || undefined}
+            onYearChange={handleYearChange}
+            onMonthChange={handleMonthChange}
+          />
+        </div>
         <PrintMilkSummary
           transactions={transactionsWithBalance}
           totalIncome={totalIncome}
           totalExpense={totalExpense}
           totalBalance={totalBalance}
-          selectedYear={searchParams.get("year") || undefined}
+          selectedYear={
+            searchParams.get("year") || searchParams.get("date") || undefined
+          }
           selectedMonth={searchParams.get("month") || undefined}
         />
       </div>

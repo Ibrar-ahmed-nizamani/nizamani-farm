@@ -4,13 +4,31 @@
 import clientPromise from "@/lib/mongodb";
 import { MongoDBFilter } from "../type-definitions";
 
-export async function getMilkSummaryData(year?: string, month?: string) {
+export async function getMilkSummaryData(
+  year?: string,
+  month?: string,
+  date?: string
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
     // Build date filter
     const dateFilter: MongoDBFilter = {};
+
+    if (date === "today") {
+      // Create today's date filter
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      dateFilter.date = {
+        $gte: today,
+        $lt: tomorrow,
+      };
+    }
+
     if (year) {
       const startDate = month
         ? new Date(`${year}-${month}-01`)

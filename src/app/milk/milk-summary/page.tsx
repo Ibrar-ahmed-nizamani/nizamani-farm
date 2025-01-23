@@ -12,9 +12,8 @@ export default async function Page({
 }: {
   searchParams: Promise<{ [key: string]: string | undefined }>;
 }) {
-  const { year, month } = await searchParams;
-  const data = await getMilkSummaryData(year, month);
-
+  const { year, month, date } = await searchParams;
+  const data = await getMilkSummaryData(year, month, date);
   const yearsAndMonths = await getMilkSummaryYearsAndMonths();
 
   const years = yearsAndMonths.map((yearsAndMonths) => yearsAndMonths.year);
@@ -27,7 +26,6 @@ export default async function Page({
       expenses={data.expenses}
       customerRecords={data.customerRecords}
       customerDebits={data.customerDebits}
-      // workerCredits={data.workerCredits}
       years={years}
       months={availableMonths}
     />

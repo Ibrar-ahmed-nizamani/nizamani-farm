@@ -1,6 +1,7 @@
 // page.tsx (traders list page)
 import AddTraderForm from "@/components/milk/traders/add-trader-form";
 import EmptyState from "@/components/shared/empty-state";
+import CustomSearch from "@/components/shared/search";
 import BackLink from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,11 @@ export default async function TradersPage() {
       </div>
 
       <AddTraderForm />
+      <CustomSearch
+        data={traders}
+        baseUrl="/milk/traders"
+        placeholder="Search trader..."
+      />
       {traders.length > 0 ? (
         <Table className="border">
           <TableHeader>

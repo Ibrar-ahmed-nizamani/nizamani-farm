@@ -24,7 +24,7 @@ export default function PrintMilkSummary({
   selectedMonth,
 }: PrintMilkSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
-
+  console.log(selectedYear);
   const handlePrint = async () => {
     try {
       setIsLoading(true);
@@ -102,7 +102,13 @@ export default function PrintMilkSummary({
           <body>
             <div class="header">
               <h1>Milk Summary Report</h1>
-              <p>Period: ${selectedYear ? selectedYear : "All Years"}${
+              <p>Period: ${
+                selectedYear === "today"
+                  ? "Today"
+                  : selectedYear
+                  ? selectedYear
+                  : "All Years"
+              }${
         selectedMonth ? ` - ${monthNumberToName(Number(selectedMonth))}` : ""
       }</p>
             </div>

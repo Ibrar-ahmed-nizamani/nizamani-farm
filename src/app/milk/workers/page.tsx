@@ -1,5 +1,6 @@
 import AddWorkerForm from "@/components/milk/worker/add-worker-form";
 import EmptyState from "@/components/shared/empty-state";
+import CustomSearch from "@/components/shared/search";
 import BackLink from "@/components/ui/back-link";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,11 @@ export default async function WorkersPage() {
       </div>
 
       <AddWorkerForm />
+      <CustomSearch
+        data={workers}
+        baseUrl="/milk/workers"
+        placeholder="Search worker..."
+      />
       {workers.length > 0 ? (
         <Table className="border">
           <TableHeader>

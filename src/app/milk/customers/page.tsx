@@ -1,6 +1,7 @@
 // app/milk/customers/page.tsx
 import AddCustomerForm from "@/components/milk/customer/add-customer";
 import EmptyState from "@/components/shared/empty-state";
+import CustomSearch from "@/components/shared/search";
 import SummaryCards from "@/components/shared/summary-cards";
 import BackLink from "@/components/ui/back-link";
 import { getMilkCustomers } from "@/lib/actions/milk-customer-actions";
@@ -25,6 +26,7 @@ export default async function MilkCustomersPage() {
         <h1 className="text-2xl font-bold">Milk Customers</h1>
         <BackLink href="/milk" linkText="Back to Milk Page" />
       </div>
+
       {customers.length > 0 ? (
         <SummaryCards
           cards={[
@@ -48,6 +50,11 @@ export default async function MilkCustomersPage() {
       ) : null}
 
       <AddCustomerForm />
+      <CustomSearch
+        data={customers}
+        baseUrl="/milk/customers"
+        placeholder="Search customer..."
+      />
       {customers.length > 0 ? (
         <div className="border rounded-lg">
           <div className="grid grid-cols-4 gap-4 p-4 font-medium border-b">
