@@ -8,13 +8,15 @@ export default async function TractorPage() {
   const tractorsData = await getTractors();
   return (
     <section>
-      <div className="space-x-6">
-        <Button asChild size="lg">
-          <Link href="/tractor/add-tractor">Add Tractor</Link>
-        </Button>
-        <Button asChild size="lg" variant="outline">
-          <Link href="/tractor/equipment-rates"> Change Equipment Rates</Link>
-        </Button>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-5">
+          <Button asChild size="lg">
+            <Link href="/tractor/add-tractor">Add Tractor</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/tractor/equipment-rates"> Change Equipment Rates</Link>
+          </Button>
+        </div>
         <Button asChild size="lg" variant="outline">
           <Link href="/tractor/tractor-workers"> Tractor Workers</Link>
         </Button>

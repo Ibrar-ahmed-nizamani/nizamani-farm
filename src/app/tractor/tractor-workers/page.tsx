@@ -1,4 +1,3 @@
-import AddWorkerForm from "@/components/milk/worker/add-worker-form";
 import EmptyState from "@/components/shared/empty-state";
 import CustomSearch from "@/components/shared/search";
 import AddTractorEmployeeForm from "@/components/tractor/tractor-worker/add-tractor-worker";
@@ -28,7 +27,7 @@ export default async function TractorWorkerPage() {
       <AddTractorEmployeeForm />
       <CustomSearch
         data={workers}
-        baseUrl="/tractor/workers"
+        baseUrl="/tractor/tractor-workers"
         placeholder="Search worker..."
       />
       {workers.length > 0 ? (
