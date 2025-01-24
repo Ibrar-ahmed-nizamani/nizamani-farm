@@ -24,9 +24,10 @@ export default function YearSelector({ years }: YearSelectorProps) {
       params.delete("month"); // Reset month when changing to all years
     } else {
       params.set("year", year);
-      if (!searchParams.get("month")) {
-        params.delete("month"); // Reset month when changing year
-      }
+      params.delete("month"); // Reset month when changing year
+      // if (!searchParams.get("month")) {
+      //   params.delete("month"); // Reset month when changing year
+      // }
     }
     router.push(`/milk/expenses?${params.toString()}`);
   };
@@ -39,7 +40,7 @@ export default function YearSelector({ years }: YearSelectorProps) {
       <SelectTrigger className="w-[180px]">
         <SelectValue placeholder="Select Year" />
       </SelectTrigger>
-      <SelectContent >
+      <SelectContent>
         <SelectItem value="all">All Years</SelectItem>
         {years.map((year) => (
           <SelectItem key={year} value={year.toString()}>

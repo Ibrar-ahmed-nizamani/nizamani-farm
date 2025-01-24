@@ -12,6 +12,8 @@ import MonthSelector from "@/components/milk/expenses/month-selector";
 import MilkExpensesSummary from "@/components/milk/expenses/expenses-summary";
 import MilkExpensesTable from "@/components/milk/expenses/expenses-table";
 import BackLink from "@/components/ui/back-link";
+import PrintMilkExpensesReport from "@/components/milk/expenses/milk-expense-report";
+import { generateMilkExpensesSummary } from "@/lib/utils";
 
 interface PageProps {
   searchParams: Promise<{ year?: string; month?: string }>;
@@ -24,6 +26,9 @@ export default async function MilkExpensesPage({ searchParams }: PageProps) {
   const expenseTypes = await getMilkExpenseTypes();
   const yearsAndMonths = await getMilkExpenseYearsAndMonths();
   const expenses = await getMilkExpenses(year, month);
+
+  const summaryData = generateMilkExpensesSummary(expenses);
+
   const years = yearsAndMonths.map((yearsAndMonths) => yearsAndMonths.year);
   const availableMonths = year
     ? yearsAndMonths.find((ym) => ym.year.toString() === year)?.months || []
@@ -45,12 +50,20 @@ export default async function MilkExpensesPage({ searchParams }: PageProps) {
             <MonthSelector availableMonths={availableMonths} />
           )}
         </div>
-        <Link href="/milk/expenses/add">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Expense
-          </Button>
-        </Link>
+        <div className="flex gap-4 items-center">
+          <PrintMilkExpensesReport
+            expenses={expenses}
+            year={year}
+            month={month}
+            summaryData={summaryData}
+          />
+          <Link href="/milk/expenses/add">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Expense
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {expenses.length === 0 ? (
