@@ -15,6 +15,9 @@ export default async function TractorPage() {
         <Button asChild size="lg" variant="outline">
           <Link href="/tractor/equipment-rates"> Change Equipment Rates</Link>
         </Button>
+        <Button asChild size="lg" variant="outline">
+          <Link href="/tractor/tractor-workers"> Tractor Workers</Link>
+        </Button>
       </div>
       {tractorsData.length > 0 ? (
         <div className="my-8">
