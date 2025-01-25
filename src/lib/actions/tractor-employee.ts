@@ -71,7 +71,7 @@ export async function addTractorEmployee(name: string) {
       updatedAt: new Date(),
     });
 
-    revalidatePath("/tractor/employees");
+    revalidatePath("/tractor/tractor-workers");
     return { success: true };
   } catch (error) {
     console.error("Failed to add tractor employee:", error);
@@ -204,8 +204,8 @@ export async function addTractorEmployeeTransaction(
       createdAt: new Date(),
     });
 
-    revalidatePath(`/tractor/employees`);
-    revalidatePath(`/tractor/employees/${employeeId}`);
+    revalidatePath(`/tractor/tractor-workers`);
+    revalidatePath(`/tractor/tractor-workers/${employeeId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to add tractor employee transaction:", error);
@@ -239,7 +239,7 @@ export async function deleteTractorEmployeeTransaction(
       _id: new ObjectId(transactionId),
     });
 
-    revalidatePath(`/tractor/employees/${employeeId}`);
+    revalidatePath(`/tractor/tractor-workers/${employeeId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to delete tractor employee transaction:", error);
@@ -283,7 +283,7 @@ export async function updateTractorEmployeeTransaction(
       }
     );
 
-    revalidatePath(`/tractor/employees/${employeeId}`);
+    revalidatePath(`/tractor/tractor-workers/${employeeId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to update tractor employee transaction:", error);
