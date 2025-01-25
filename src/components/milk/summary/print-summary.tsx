@@ -24,10 +24,14 @@ export default function PrintMilkSummary({
   selectedMonth,
 }: PrintMilkSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
-  console.log(selectedYear);
+
   const handlePrint = async () => {
     try {
       setIsLoading(true);
+
+      // const sortedTransactions = [...transactions].sort(
+      //   (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      // );
 
       const printContent = `
         <html>

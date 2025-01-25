@@ -40,6 +40,10 @@ export default function PrintTransactionReport({
     try {
       setIsLoading(true);
 
+      const sortedTransactions = [...transactions].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
       const printContent = `
         <html>
           <head>
@@ -153,7 +157,7 @@ export default function PrintTransactionReport({
                 </tr>
               </thead>
               <tbody>
-                ${transactions
+                ${sortedTransactions
                   .map(
                     (entry) => `
                   <tr>

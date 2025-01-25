@@ -20,6 +20,7 @@ import SummaryCards from "@/components/shared/summary-cards";
 import YearSelector from "@/components/tractor/year-selector";
 import BackButton from "@/components/shared/back-button";
 import CustomerWorksReport from "@/components/accounting/customer/customer-works-report";
+import { formatDatePattern } from "@/lib/utils";
 
 export default async function CustomerSummary({
   params,
@@ -109,7 +110,7 @@ export default async function CustomerSummary({
               <TableHead>Equipment & Hours</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="w-[100px] text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,9 +136,7 @@ export default async function CustomerSummary({
                   ) || "No equipment data"}
                 </TableCell>
                 <TableCell>Rs {work.totalAmount}</TableCell>
-                <TableCell>
-                  {new Date(work.date).toLocaleDateString("en-GB")}
-                </TableCell>
+                <TableCell>{formatDatePattern(work.date)}</TableCell>
                 <TableCell>
                   <Button asChild variant="outline">
                     <Link

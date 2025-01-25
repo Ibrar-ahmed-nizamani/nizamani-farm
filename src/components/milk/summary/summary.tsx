@@ -82,7 +82,7 @@ export default function MilkSummaryPage({
       amount: debit.amount,
       details: `${debit.description}`,
     })),
-  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+  ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   // Calculate running balance
   let runningBalance = 0;

@@ -5,6 +5,7 @@ import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getCustomerWorks } from "@/lib/actions/work";
 import { getCustomerTransactions } from "@/lib/actions/transaction";
+import { formatDatePattern } from "@/lib/utils";
 
 interface CompleteReportProps {
   customerName: string;
@@ -229,7 +230,7 @@ export default function CustomerCompleteReport({
                   .map(
                     (entry) => `
                   <tr>
-                    <td>${new Date(entry.date).toLocaleDateString("en-GB")}</td>
+                    <td>${formatDatePattern(entry.date)}</td>
                     
                     <td>${entry.description}</td>
                     <td>${entry.tractorDetails || "-"}</td>

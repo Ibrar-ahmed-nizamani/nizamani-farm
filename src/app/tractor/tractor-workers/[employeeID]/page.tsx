@@ -54,15 +54,24 @@ export default async function TractorEmployeePage({
     0
   );
 
+  const ascendingSortedTransactions = transactions.sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
+
+  // Calculate running balance for each transaction
   let runningBalance = 0;
-  const transactionsWithBalance = transactions.map((transaction) => {
-    runningBalance +=
-      transaction.type === "credit" ? transaction.amount : -transaction.amount;
-    return {
-      ...transaction,
-      runningBalance,
-    };
-  });
+  const transactionsWithBalance = ascendingSortedTransactions.map(
+    (transaction) => {
+      runningBalance +=
+        transaction.type === "credit"
+          ? transaction.amount
+          : -transaction.amount;
+      return {
+        ...transaction,
+        runningBalance,
+      };
+    }
+  );
 
   return (
     <div className="space-y-6">

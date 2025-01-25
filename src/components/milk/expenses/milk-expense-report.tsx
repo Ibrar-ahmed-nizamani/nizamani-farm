@@ -36,6 +36,11 @@ export default function PrintMilkExpensesReport({
     try {
       setIsLoading(true);
 
+      // Sort expenses by date in ascending order
+      const sortedExpenses = [...expenses].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
       const printContent = `
         <html>
           <head>
@@ -128,7 +133,7 @@ export default function PrintMilkExpensesReport({
                 </tr>
               </thead>
               <tbody>
-                ${expenses
+                ${sortedExpenses
                   .map(
                     (expense) => `
                   <tr>
