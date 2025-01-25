@@ -72,8 +72,8 @@ export default async function TractorDetailPage({
           },
           {
             label: "Net Revenue",
-            value: tractorDetails.revenue,
-            type: "balance",
+            value: -tractorDetails.revenue,
+            type: "due",
           },
         ]}
       />

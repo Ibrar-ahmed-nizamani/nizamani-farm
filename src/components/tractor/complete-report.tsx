@@ -79,7 +79,7 @@ export default function CompleteReport({
           })
         ),
       ]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .map((entry) => {
           // Calculate running total
           runningTotal += (entry.income || 0) - (entry.expense || 0);
