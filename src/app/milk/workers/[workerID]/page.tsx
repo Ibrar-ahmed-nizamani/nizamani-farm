@@ -97,8 +97,8 @@ export default async function WorkerPage({
           },
           {
             label: "Balance",
-            value: balance,
-            type: "balance",
+            value: -balance,
+            type: "due",
           },
         ]}
       />

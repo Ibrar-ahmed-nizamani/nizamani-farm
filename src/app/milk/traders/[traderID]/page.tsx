@@ -99,8 +99,8 @@ export default async function TraderPage({
           },
           {
             label: "Balance",
-            value: balance,
-            type: "balance",
+            value: -balance,
+            type: "due",
           },
         ]}
       />

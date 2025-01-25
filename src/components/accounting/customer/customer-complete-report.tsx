@@ -84,7 +84,7 @@ export default function CustomerCompleteReport({
             })
           ),
       ]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .map((entry) => {
           runningBalance += entry.netAmount;
           return {

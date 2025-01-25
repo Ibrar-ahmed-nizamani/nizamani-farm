@@ -97,7 +97,7 @@ export default async function TractorEmployeePage({
           },
           {
             label: "Balance",
-            value: balance,
+            value: -balance,
             type: "balance",
           },
         ]}
