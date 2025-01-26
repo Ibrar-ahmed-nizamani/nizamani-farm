@@ -27,6 +27,7 @@ interface CombinedEntry {
   expense?: number;
   netAmount: number;
   equipmentDetails?: string;
+  workDetails?: string;
   customerName?: string;
   runningTotal: number;
 }
@@ -64,6 +65,7 @@ export default function CompleteReport({
                   `${eq.name}: ${eq.hours}hrs - Rs${eq.amount}`
               )
               .join(", "),
+            workDetails: work.detail,
             customerName: work.customerName,
             runningTotal: 0,
           })
@@ -206,6 +208,7 @@ export default function CompleteReport({
                   <th>Description</th>
                   <th>Customer</th>
                   <th>Equipment Details</th>
+                  <th>Work Details</th>
                   <th class="amount">Income</th>
                   <th class="amount">Expense</th>
                   <th class="amount">Net Balance</th>
@@ -221,6 +224,7 @@ export default function CompleteReport({
                     <td>${entry.description}</td>
                     <td>${entry.customerName || "-"}</td>
                     <td>${entry.equipmentDetails || "-"}</td>
+                    <td>${entry.workDetails || "-"}</td>
                     <td class="amount">${
                       entry.income ? `Rs ${entry.income.toLocaleString()}` : "-"
                     }</td>

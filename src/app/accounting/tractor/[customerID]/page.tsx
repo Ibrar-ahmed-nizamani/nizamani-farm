@@ -108,9 +108,10 @@ export default async function CustomerSummary({
             <TableRow>
               <TableHead>Tractor</TableHead>
               <TableHead>Equipment & Hours</TableHead>
+              <TableHead>Work Detail</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead className="w-[100px] text-center">Action</TableHead>
+              <TableHead className="w-[60px] text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,14 +136,15 @@ export default async function CustomerSummary({
                     )
                   ) || "No equipment data"}
                 </TableCell>
+                <TableCell>{work.detail ? work.detail : "N/A"}</TableCell>
                 <TableCell>Rs {work.totalAmount}</TableCell>
                 <TableCell>{formatDatePattern(work.date)}</TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <Button asChild variant="outline">
                     <Link
                       href={`/tractor/${work.tractorId}/edit-work/${work._id}`}
                     >
-                      <Edit2 className="h-3 w-3 mr-1" /> Edit Work
+                      <Edit2 className="h-4 w-4" />
                     </Link>
                   </Button>
                 </TableCell>

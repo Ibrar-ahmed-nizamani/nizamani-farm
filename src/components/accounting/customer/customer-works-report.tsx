@@ -100,6 +100,7 @@ export default function CustomerWorksReport({
                   <th>Date</th>
                   <th>Tractor</th>
                   <th>Equipment & Hours</th>
+                  <th>Work Detail</th>
                   <th>Driver</th>
                   <th class="amount">Amount</th>
                 </tr>
@@ -130,6 +131,7 @@ export default function CustomerWorksReport({
                         )
                         .join("<br/>")}
                     </td>
+                    <td>${work.detail}</td>
                     <td>${work.driverName || "N/A"}</td>
                     <td class="amount">Rs ${work.totalAmount.toLocaleString()}</td>
                   </tr>

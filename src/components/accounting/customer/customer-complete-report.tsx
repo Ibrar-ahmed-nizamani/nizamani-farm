@@ -22,6 +22,7 @@ interface CombinedEntry {
   netAmount: number;
   equipmentDetails?: string;
   tractorDetails?: string;
+  detail?: string;
   runningBalance: number;
 }
 
@@ -51,6 +52,7 @@ export default function CustomerCompleteReport({
             description: "-",
             debit: work.totalAmount,
             netAmount: work.totalAmount,
+            detail: work.detail,
             equipmentDetails: work.equipments
               .map(
                 (eq: { name: string; hours: number; amount: number }) =>
@@ -220,6 +222,7 @@ export default function CustomerCompleteReport({
                   <th>Payment Detail</th>
                   <th>Tractor Details</th>
                   <th>Equipment Details</th>
+                  <th>Work Details</th>
                   <th class="amount">Debit</th>
                   <th class="amount">Credit</th>
                   <th class="amount">Balance</th>
@@ -235,6 +238,7 @@ export default function CustomerCompleteReport({
                     <td>${entry.description}</td>
                     <td>${entry.tractorDetails || "-"}</td>
                     <td>${entry.equipmentDetails || "-"}</td>
+                    <td>${entry.detail || "-"}</td>
                     <td class="amount">${
                       entry.debit ? `Rs ${entry.debit.toLocaleString()}` : "-"
                     }</td>

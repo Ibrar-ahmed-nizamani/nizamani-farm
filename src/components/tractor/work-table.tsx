@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Eye, Trash2 } from "lucide-react";
+import { Pen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -38,10 +38,6 @@ export default function TractorWorkTable({
   const searchParams = useSearchParams();
   const [deleteWorkId, setDeleteWorkId] = useState<string | null>(null);
 
-  works.map((work) => {
-    console.log(work);
-  });
-
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams);
     params.set("page", page.toString());
@@ -56,9 +52,10 @@ export default function TractorWorkTable({
             <TableHead>No.</TableHead>
             <TableHead>Customer</TableHead>
             <TableHead>Category & Hours</TableHead>
+            <TableHead>Work Details</TableHead>
             <TableHead>Total Amount</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -81,6 +78,7 @@ export default function TractorWorkTable({
                   </div>
                 ))}
               </TableCell>
+              <TableCell>{work.detail ? work.detail : "N/A"}</TableCell>
               <TableCell>
                 <span className="text-green-600">
                   {work.totalAmount.toFixed(2)}
@@ -90,8 +88,7 @@ export default function TractorWorkTable({
               <TableCell className="text-right space-x-2">
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/tractor/${tractorId}/edit-work/${work.id}`}>
-                    <Eye className="h-4 w-4" />
-                    <span>Detail</span>
+                    <Pen className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button

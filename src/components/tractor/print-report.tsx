@@ -149,6 +149,7 @@ export default function PrintReport({
                   <th>Date</th>
                   <th>Customer</th>
                   <th>Equipment Details</th>
+                  <th>Work Details</th>
                   <th class="amount">Amount</th>
                 </tr>
               </thead>
@@ -174,6 +175,7 @@ export default function PrintReport({
                         )
                         .join("")}
                     </td>
+                    <td>${work.detail}</td>
                     <td class="amount">Rs ${work.totalAmount.toLocaleString()}</td>
                   </tr>
                 `

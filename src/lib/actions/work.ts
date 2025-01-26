@@ -18,7 +18,6 @@ interface Equipment {
   ratePerHour: number;
   amount: number;
 }
-
 export async function submitTractorWork(
   prevState: unknown,
   formData: FormData
@@ -30,8 +29,8 @@ export async function submitTractorWork(
     const customerName = (formData.get("customerName") as string)
       .toLowerCase()
       .trim();
-    // const dieselExpense = parseFloat(formData.get("dieselExpense") as string);
     const dateStr = formData.get("date") as string;
+    const detail = formData.get("detail") as string; // Get detail field
 
     if (!dateStr) {
       return { success: false, message: "Date is required" };
@@ -81,13 +80,13 @@ export async function submitTractorWork(
 
     const totalAmount = equipments.reduce((sum, eq) => sum + eq.amount, 0);
 
-    console.log("Date before inserting in work result" + date);
     // Insert work record
     const workResult = await db.collection("works").insertOne({
       customerId: customer._id,
       tractorId: new ObjectId(tractorId),
       customerName,
       date,
+      detail, // Add detail field
       driverName,
       equipments,
       totalAmount,
@@ -155,6 +154,7 @@ export async function getCustomerWorks(customerId: string, year?: string) {
       tractorId: work.tractorId.toString(),
       customerName: work.customerName,
       date: work.date.toISOString(),
+      detail: work.detail ? work.detail : "N/A",
       driverName: work.driverName,
       equipments: work.equipments.map((eq: Equipment) => ({
         name: eq.name,
@@ -251,6 +251,7 @@ export async function getTractorWorks(
         tractorId: work.tractorId.toString(),
         customerName: work.customerName,
         date: work.date.toISOString(),
+        detail: work.detail,
         driverName: work.driverName,
         equipments: work.equipments,
         totalAmount: work.totalAmount,
@@ -365,6 +366,7 @@ export async function getWorkById(workId: string) {
       customerId: work.customerId.toString(),
       customerName: work.customerName,
       date: work.date,
+      detail: work.detail ? work.detail : "N/A",
       driverName: work.driverName,
       equipments: work.equipments,
       totalAmount: work.totalAmount,
@@ -374,7 +376,6 @@ export async function getWorkById(workId: string) {
     throw new Error("Failed to fetch work");
   }
 }
-
 export async function editTractorWork(
   workId: string,
   prevState: unknown,
@@ -398,6 +399,7 @@ export async function editTractorWork(
       .toLowerCase()
       .trim();
     const dateStr = formData.get("date") as string;
+    const detail = formData.get("detail") as string; // Get detail field
     if (!dateStr) {
       return { success: false, message: "Date is required" };
     }
@@ -481,6 +483,7 @@ export async function editTractorWork(
           customerId: customer._id,
           customerName,
           date,
+          detail, // Add detail field
           driverName,
           equipments,
           totalAmount,
@@ -540,6 +543,7 @@ export async function getAllTractorWorks(tractorId: string, year?: string) {
       customerId: work.customerId.toString(),
       customerName: work.customerName,
       date: work.date,
+      detail: work.detail ? work.detail : "N/A",
       equipments: work.equipments,
       totalAmount: work.totalAmount,
       driverName: work.driverName,

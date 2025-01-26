@@ -42,6 +42,7 @@ const workFormSchema = z
     date: z.date({
       required_error: "Date is required",
     }),
+    detail: z.string().min(1, "Detail is required"), // Add detail field
     driverName: z.string().min(1, "Driver name is required"),
     cultivatorHours: z.number().min(0),
     rajaHours: z.number().min(0),
@@ -72,6 +73,7 @@ interface WorkFormData {
   id: string;
   customerName: string;
   date: string;
+  detail: string; // Add detail field
   driverName: string;
   equipments: {
     name: string;
@@ -126,6 +128,7 @@ export function AddTractorWorkForm({
       ? {
           customerName: initialData.customerName,
           date: new Date(initialData.date),
+          detail: initialData.detail, // Initialize detail field
           driverName: initialData.driverName,
           cultivatorHours:
             initialData.equipments.find((e) => e.name === "Cultivator")
@@ -141,6 +144,7 @@ export function AddTractorWorkForm({
         }
       : {
           customerName: "",
+          detail: "", // Initialize detail field
           driverName: "",
           cultivatorHours: 0,
           rajaHours: 0,
@@ -171,6 +175,7 @@ export function AddTractorWorkForm({
     formData.append("tractorId", tractorID);
     formData.append("customerName", data.customerName);
     formData.append("date", format(data.date, "yyyy-MM-dd"));
+    formData.append("detail", data.detail); // Add detail field
     formData.append("driverName", data.driverName);
 
     // Add equipment data
@@ -289,6 +294,20 @@ export function AddTractorWorkForm({
                   />
                 </PopoverContent>
               </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="detail"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Detail</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Enter work details" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -12,6 +12,7 @@ export interface TractorWork {
   customerId: string;
   tractorId: string;
   customerName: string;
+  detail: string | undefined;
   date: string;
   driverName: string;
   equipments: {
