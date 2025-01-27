@@ -1,4 +1,5 @@
-import React from "react";
+// components/milk/summary/date-selector.tsx
+import React, { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -6,14 +7,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar"; // Import the calendar component
+import { Button } from "@/components/ui/button"; // Import the button component
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"; // Import popover for the calendar
+import { format } from "date-fns"; // For formatting the selected date
 
 interface DateSelectorProps {
   years: number[];
   months?: number[];
   selectedYear?: string;
   selectedMonth?: string;
+  selectedDate?: Date; // Add selectedDate prop
   onYearChange: (year: string) => void;
   onMonthChange: (month: string) => void;
+  onDateChange: (date: Date | undefined) => void; // Add onDateChange prop
 }
 
 const monthNames = {
@@ -36,9 +47,18 @@ const DateSelector = ({
   months,
   selectedYear,
   selectedMonth,
+  selectedDate, // Add selectedDate
   onYearChange,
   onMonthChange,
+  onDateChange, // Add onDateChange
 }: DateSelectorProps) => {
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false); // State to control calendar visibility
+
+  const handleDateSelect = (date: Date | undefined) => {
+    onDateChange(date); // Call the onDateChange handler
+    setIsCalendarOpen(false); // Close the calendar after selecting a date
+  };
+
   return (
     <div className="flex gap-4">
       <Select value={selectedYear || "all"} onValueChange={onYearChange}>
@@ -47,7 +67,6 @@ const DateSelector = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Years</SelectItem>
-          <SelectItem value="today">Today</SelectItem>
           {years.map((year) => (
             <SelectItem key={year} value={year.toString()}>
               {year}
@@ -71,6 +90,23 @@ const DateSelector = ({
           </SelectContent>
         </Select>
       )}
+
+      {/* Add Date Picker */}
+      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline">
+            {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect} // Use the custom handler
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

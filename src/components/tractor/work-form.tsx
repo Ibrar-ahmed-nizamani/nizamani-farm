@@ -1,10 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,7 +41,7 @@ const workFormSchema = z
     date: z.date({
       required_error: "Date is required",
     }),
-    detail: z.string().min(1, "Detail is required"), // Add detail field
+    detail: z.string().min(1, "Detail is required"),
     driverName: z.string().min(1, "Driver name is required"),
     cultivatorHours: z.number().min(0),
     rajaHours: z.number().min(0),
@@ -52,7 +51,6 @@ const workFormSchema = z
   })
   .refine(
     (data) => {
-      // At least one equipment must have hours > 0
       return (
         data.cultivatorHours > 0 ||
         data.rajaHours > 0 ||
@@ -63,7 +61,7 @@ const workFormSchema = z
     },
     {
       message: "At least one equipment must be added",
-      path: ["cultivatorHours"], // This will show the error under cultivatorHours field
+      path: ["cultivatorHours"],
     }
   );
 
@@ -73,7 +71,7 @@ interface WorkFormData {
   id: string;
   customerName: string;
   date: string;
-  detail: string; // Add detail field
+  detail: string;
   driverName: string;
   equipments: {
     name: string;
@@ -112,7 +110,6 @@ export function AddTractorWorkForm({
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
-  // Define equipment rates
   const EQUIPMENT_RATES = {
     cultivator: cultivatorRate,
     raja: rajaRate,
@@ -121,14 +118,13 @@ export function AddTractorWorkForm({
     blade: bladeRate,
   };
 
-  // Initialize the form
   const form = useForm<WorkFormValues>({
     resolver: zodResolver(workFormSchema),
     defaultValues: initialData
       ? {
           customerName: initialData.customerName,
           date: new Date(initialData.date),
-          detail: initialData.detail, // Initialize detail field
+          detail: initialData.detail,
           driverName: initialData.driverName,
           cultivatorHours:
             initialData.equipments.find((e) => e.name === "Cultivator")
@@ -144,7 +140,7 @@ export function AddTractorWorkForm({
         }
       : {
           customerName: "",
-          detail: "", // Initialize detail field
+          detail: "",
           driverName: "",
           cultivatorHours: 0,
           rajaHours: 0,
@@ -154,10 +150,25 @@ export function AddTractorWorkForm({
         },
   });
 
-  // Calculate amounts based on hours
   const calculateAmount = (hours: number, rate: number) => hours * rate;
 
-  // Fetch customers on mount
+  const watchFields = useWatch({
+    control: form.control,
+    name: [
+      "cultivatorHours",
+      "rajaHours",
+      "gobalHours",
+      "laserHours",
+      "bladeHours",
+    ],
+  });
+
+  const totalAmount = Object.entries(EQUIPMENT_RATES).reduce(
+    (total, [, rate], index) =>
+      total + calculateAmount(Number(watchFields[index]), rate),
+    0
+  );
+
   useEffect(() => {
     const fetchCustomers = async () => {
       const customersList = await getAllCustomers();
@@ -175,10 +186,9 @@ export function AddTractorWorkForm({
     formData.append("tractorId", tractorID);
     formData.append("customerName", data.customerName);
     formData.append("date", format(data.date, "yyyy-MM-dd"));
-    formData.append("detail", data.detail); // Add detail field
+    formData.append("detail", data.detail);
     formData.append("driverName", data.driverName);
 
-    // Add equipment data
     Object.entries(EQUIPMENT_RATES).forEach(([equipment, rate]) => {
       const hours = Number(data[`${equipment}Hours` as keyof WorkFormValues]);
       if (hours > 0) {
@@ -269,7 +279,7 @@ export function AddTractorWorkForm({
                     <Button
                       variant={"outline"}
                       className={cn(
-                        " pl-3 text-left font-normal",
+                        "pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
                     >
@@ -350,20 +360,7 @@ export function AddTractorWorkForm({
         ))}
 
         <div className="text-lg font-semibold">
-          Total Amount:{" "}
-          <span>
-            {Object.entries(EQUIPMENT_RATES).reduce(
-              (total, [equipment, rate]) =>
-                total +
-                calculateAmount(
-                  Number(
-                    form.getValues(`${equipment}Hours` as keyof WorkFormValues)
-                  ),
-                  rate
-                ),
-              0
-            )}
-          </span>
+          Total Amount: <span>{totalAmount}</span>
         </div>
 
         {error && <p className="text-red-600">{error}</p>}

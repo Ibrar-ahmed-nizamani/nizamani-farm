@@ -1,7 +1,5 @@
 // app/milk/summary/page.tsx
-
 import MilkSummaryPage from "@/components/milk/summary/summary";
-
 import {
   getMilkSummaryData,
   getMilkSummaryYearsAndMonths,

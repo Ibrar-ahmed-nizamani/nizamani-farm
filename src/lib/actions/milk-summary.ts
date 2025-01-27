@@ -3,7 +3,6 @@
 
 import clientPromise from "@/lib/mongodb";
 import { MongoDBFilter } from "../type-definitions";
-
 export async function getMilkSummaryData(
   year?: string,
   month?: string,
@@ -27,9 +26,18 @@ export async function getMilkSummaryData(
         $gte: today,
         $lt: tomorrow,
       };
-    }
+    } else if (date !== "today" && date) {
+      // Handle custom date selection
+      const selectedDate = new Date(date);
+      selectedDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(selectedDate);
+      nextDay.setDate(nextDay.getDate() + 1);
 
-    if (year) {
+      dateFilter.date = {
+        $gte: selectedDate,
+        $lt: nextDay,
+      };
+    } else if (year) {
       const startDate = month
         ? new Date(`${year}-${month}-01`)
         : new Date(`${year}-01-01`);

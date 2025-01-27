@@ -1,6 +1,4 @@
-// components/milk/summary.tsx
 "use client";
-
 import React from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
@@ -57,6 +55,19 @@ export default function MilkSummaryPage({
       params.set("month", month);
     }
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (date) {
+      params.set("date", date.toISOString());
+      params.delete("month");
+      params.delete("year");
+    } else {
+      params.delete("date");
+    }
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   // Combine and format all transactions
@@ -118,12 +129,16 @@ export default function MilkSummaryPage({
           <DateSelector
             years={years}
             months={months}
-            selectedYear={
-              searchParams.get("year") || searchParams.get("date") || undefined
-            }
+            selectedYear={searchParams.get("year") || undefined}
             selectedMonth={searchParams.get("month") || undefined}
+            selectedDate={
+              searchParams.get("date")
+                ? new Date(searchParams.get("date")!)
+                : undefined
+            }
             onYearChange={handleYearChange}
             onMonthChange={handleMonthChange}
+            onDateChange={handleDateChange}
           />
         </div>
         <PrintMilkSummary
