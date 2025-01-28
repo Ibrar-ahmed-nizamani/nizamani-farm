@@ -85,7 +85,7 @@ export default function TractorWorkTable({
                 </span>
               </TableCell>
               <TableCell>{formatDatePattern(work.date)}</TableCell>
-              <TableCell className="text-right space-x-2">
+              <TableCell className="flex gap-1 items-center ">
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/tractor/${tractorId}/edit-work/${work.id}`}>
                     <Pen className="h-4 w-4" />

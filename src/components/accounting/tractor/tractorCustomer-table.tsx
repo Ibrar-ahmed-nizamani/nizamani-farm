@@ -14,6 +14,7 @@ import { getAllCustomers } from "@/lib/actions/customer";
 import EmptyTractorData from "@/components/shared/empty-tractor-data";
 import SummaryCards from "@/components/shared/summary-cards";
 import AddTractorCustomerForm from "../customer/add-customer-form";
+import CustomSearch from "@/components/shared/search";
 
 export default async function TractorCustomerTable() {
   const customers = await getAllCustomers();
@@ -38,6 +39,11 @@ export default async function TractorCustomerTable() {
         ]}
       />
       <AddTractorCustomerForm />
+      <CustomSearch
+        baseUrl="/accounting/tractor"
+        data={customers}
+        placeholder="Search customer..."
+      />
       {customers.length === 0 ? (
         <EmptyTractorData title="Customer" />
       ) : (
