@@ -1,4 +1,3 @@
-// add-trader-form.tsx
 "use client";
 
 import { useState } from "react";
@@ -16,14 +15,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { addMilkTrader } from "@/lib/actions/milk-trader";
 import StatusAlert from "@/components/ui/status-alert";
+import { addTractorCustomer } from "@/lib/actions/customer";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").trim(),
 });
 
-export default function AddTraderForm() {
+export default function AddTractorCustomerForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<{
     type: "success" | "error" | null;
@@ -49,17 +48,17 @@ export default function AddTraderForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      const result = await addMilkTrader(values.name);
+      const result = await addTractorCustomer(values.name);
       if (result.success) {
         setStatus({
           type: "success",
-          message: "Trader added successfully",
+          message: "Customer added successfully",
         });
         form.reset();
       } else {
         setStatus({
           type: "error",
-          message: result.error || "Failed to add trader",
+          message: result.error || "Failed to add Customer",
         });
       }
     } catch {
@@ -88,11 +87,11 @@ export default function AddTraderForm() {
             name="name"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Trader Name</FormLabel>
+                <FormLabel>Customer Name</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Enter trader name"
+                    placeholder="Enter customer name"
                     disabled={isLoading}
                   />
                 </FormControl>
@@ -108,7 +107,7 @@ export default function AddTraderForm() {
                 Adding...
               </>
             ) : (
-              "Add Trader"
+              "Add Customer"
             )}
           </Button>
         </div>

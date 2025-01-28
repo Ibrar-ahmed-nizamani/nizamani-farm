@@ -13,6 +13,7 @@ import Link from "next/link";
 import { getAllCustomers } from "@/lib/actions/customer";
 import EmptyTractorData from "@/components/shared/empty-tractor-data";
 import SummaryCards from "@/components/shared/summary-cards";
+import AddTractorCustomerForm from "../customer/add-customer-form";
 
 export default async function TractorCustomerTable() {
   const customers = await getAllCustomers();
@@ -36,6 +37,7 @@ export default async function TractorCustomerTable() {
           { label: "Balance", value: totalRemaining, type: "due" },
         ]}
       />
+      <AddTractorCustomerForm />
       {customers.length === 0 ? (
         <EmptyTractorData title="Customer" />
       ) : (
@@ -54,7 +56,7 @@ export default async function TractorCustomerTable() {
             {customers.map((customer, index) => (
               <TableRow key={index}>
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{customer.name.toUpperCase()}</TableCell>
+                <TableCell>{customer.name}</TableCell>
                 <TableCell className="text-green-600">
                   Rs {customer.totalPaid}
                 </TableCell>

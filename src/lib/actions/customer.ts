@@ -2,6 +2,7 @@
 
 import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
+import { revalidatePath } from "next/cache";
 
 export async function getCustomerSummary(customerId: string, year?: string) {
   try {
@@ -114,6 +115,41 @@ export async function getAllCustomers() {
   } catch (error) {
     console.error("Failed to fetch customers:", error);
     throw new Error("Failed to fetch customers");
+  }
+}
+
+export async function addTractorCustomer(name: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Check if trader with same name exists
+    const existingCustomer = await db
+      .collection("customers")
+      .findOne({ name: { $regex: new RegExp(`^${name}$`, "i") } });
+
+    if (existingCustomer) {
+      return {
+        success: false,
+        error: "A customer with this name already exists",
+      };
+    }
+
+    await db.collection("customers").insertOne({
+      name,
+      totalDebit: 0,
+      totalPaid: 0,
+      createdAt: new Date(),
+    });
+
+    revalidatePath("/accounting/tractor");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add tractor Customer:", error);
+    return {
+      success: false,
+      error: "Failed to add tractor Customer",
+    };
   }
 }
 

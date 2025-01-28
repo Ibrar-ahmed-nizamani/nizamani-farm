@@ -21,7 +21,7 @@ import { addMilkCustomer } from "@/lib/actions/milk-customer-actions";
 import StatusAlert from "@/components/ui/status-alert";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters").trim(),
 });
 
 export default function AddCustomerForm() {
