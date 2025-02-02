@@ -155,3 +155,55 @@ export async function getTransactionAvailableYears(customerId: string) {
     return [];
   }
 }
+
+export async function updateTransaction(
+  transactionId: string,
+  customerId: string,
+  updatedData: { amount: number; description: string; date: Date }
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the original transaction to calculate the difference in amount
+    const originalTransaction = await db
+      .collection("transactions")
+      .findOne({ _id: new ObjectId(transactionId) });
+
+    if (!originalTransaction) {
+      throw new Error("Transaction not found");
+    }
+
+    // Update the transaction
+    await db.collection("transactions").updateOne(
+      { _id: new ObjectId(transactionId) },
+      {
+        $set: {
+          amount: updatedData.amount,
+          description: updatedData.description,
+          date: updatedData.date,
+        },
+      }
+    );
+
+    // Calculate the difference in amount and update the customer's totalPaid
+    const amountDifference = updatedData.amount - originalTransaction.amount;
+    if (originalTransaction.type === "CREDIT") {
+      await db
+        .collection("customers")
+        .updateOne(
+          { _id: new ObjectId(customerId) },
+          { $inc: { totalPaid: amountDifference } }
+        );
+    }
+
+    revalidatePath(`/accounting/tractor`);
+    revalidatePath(`/accounting/tractor/${customerId}`);
+    revalidatePath(`/accounting/tractor/${customerId}/transaction`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update transaction:", error);
+    return { success: false, error: "Failed to update transaction" };
+  }
+}

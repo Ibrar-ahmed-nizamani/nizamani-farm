@@ -13,6 +13,7 @@ import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteTransactionDialog from "./delete-transaction";
 import { formatDatePattern } from "@/lib/utils";
+import { EditTransaction } from "./edit-tractor-customer-transaction";
 
 interface Transaction {
   _id: string;
@@ -48,7 +49,7 @@ export default function TransactionsTable({
             <TableHead>Payment</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Action</TableHead>
+            <TableHead className="text-center w-20">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -59,7 +60,12 @@ export default function TransactionsTable({
                 <TableCell>Rs {transaction.amount.toLocaleString()}</TableCell>
                 <TableCell>{transaction.description || "N/A"}</TableCell>
                 <TableCell>{formatDatePattern(transaction.date)}</TableCell>
-                <TableCell>
+                <TableCell className="flex space-x-1 items-center ">
+                  <EditTransaction
+                    transactionId={transaction._id}
+                    customerId={customerId}
+                    transaction={transaction}
+                  />
                   <Button
                     variant="ghost"
                     size="sm"

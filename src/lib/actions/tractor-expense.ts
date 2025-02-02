@@ -26,6 +26,7 @@ export async function addTractorExpense(
       createdAt: new Date(),
     });
 
+    revalidatePath(`/tractor/${tractorId}`);
     revalidatePath(`/tractor/${tractorId}/expenses`);
   } catch (error) {
     console.error("Failed to add expense:", error);
@@ -69,6 +70,7 @@ export async function deleteTractorExpense(
       .collection("tractorExpenses")
       .deleteOne({ _id: new ObjectId(expenseId) });
 
+    revalidatePath(`/tractor/${tractorId}`);
     revalidatePath(`/tractor/${tractorId}/expenses`);
     return { success: true, message: "Expense deleted successfully" };
   } catch (error) {
@@ -126,5 +128,35 @@ export async function getExpenseYears(tractorId: string) {
   } catch (error) {
     console.error("Failed to fetch expense years:", error);
     return [];
+  }
+}
+
+export async function updateTractorExpense(
+  expenseId: string,
+  tractorId: string,
+  updatedData: { amount: number; description: string; date: Date }
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Update the expense
+    await db.collection("tractorExpenses").updateOne(
+      { _id: new ObjectId(expenseId) },
+      {
+        $set: {
+          amount: updatedData.amount,
+          description: updatedData.description,
+          date: updatedData.date,
+        },
+      }
+    );
+
+    revalidatePath(`/tractor/${tractorId}`);
+    revalidatePath(`/tractor/${tractorId}/expenses`);
+    return { success: true, message: "Expense updated successfully" };
+  } catch (error) {
+    console.error("Failed to update expense:", error);
+    return { success: false, message: "Failed to update expense" };
   }
 }

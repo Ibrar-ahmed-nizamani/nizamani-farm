@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import DeleteExpenseDialog from "./delete-expense";
 import { formatDatePattern } from "@/lib/utils";
+import { EditExpense } from "./edit-tractor-expense";
 
 interface ExpensesTableProps {
   expenses: {
@@ -39,7 +40,7 @@ export default function ExpensesTable({
             <TableHead>Description</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
+            <TableHead className="w-20 text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -48,7 +49,12 @@ export default function ExpensesTable({
               <TableCell>{expense.description}</TableCell>
               <TableCell>Rs {expense.amount.toLocaleString()}</TableCell>
               <TableCell>{formatDatePattern(expense.date)}</TableCell>
-              <TableCell>
+              <TableCell className="flex items-center gap-1">
+                <EditExpense
+                  expenseId={expense._id.toString()}
+                  tractorId={tractorId}
+                  expense={expense}
+                />
                 <Button
                   variant="ghost"
                   size="sm"
