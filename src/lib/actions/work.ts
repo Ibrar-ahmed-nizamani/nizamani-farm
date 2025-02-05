@@ -452,7 +452,7 @@ export async function editTractorWork(
         const amount = parseFloat(formData.get(`${name}Amount`) as string) || 0;
 
         return {
-          name: name.charAt(0).toUpperCase() + name.slice(1),
+          name: name.toLowerCase(),
           hours,
           ratePerHour,
           amount,
