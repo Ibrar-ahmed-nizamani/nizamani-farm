@@ -75,13 +75,12 @@ export async function submitTractorWork(
         const amount = parseFloat(formData.get(`${name}Amount`) as string) || 0;
 
         return {
-          name,
+          name: name.toLowerCase(),
           hours,
           ratePerHour,
           amount,
         };
       });
-
     if (equipments.length === 0) {
       return {
         success: false,

@@ -40,6 +40,20 @@ interface Equipment {
   rate: number;
 }
 
+interface ValuesType {
+  customerName: string;
+  date: Date;
+  detail: string;
+  driverName: string;
+  [key: `${string}Hours`]: number;
+}
+
+interface DefaultValues {
+  customerName: string;
+  detail: string;
+  driverName: string;
+  [key: string]: string | number;
+}
 // Dynamic schema creation based on equipment
 const createWorkFormSchema = (equipmentRates: Equipment[]) => {
   const baseSchema = {
@@ -116,7 +130,7 @@ export function AddTractorWorkForm({
   // Create dynamic default values
   const createDefaultValues = () => {
     if (initialData) {
-      const values: any = {
+      const values: ValuesType = {
         customerName: initialData.customerName,
         date: new Date(initialData.date),
         detail: initialData.detail,
@@ -135,7 +149,7 @@ export function AddTractorWorkForm({
       return values;
     }
 
-    const defaultValues: any = {
+    const defaultValues: DefaultValues = {
       customerName: "",
       detail: "",
       driverName: "",
