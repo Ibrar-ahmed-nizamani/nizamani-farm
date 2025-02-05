@@ -327,16 +327,23 @@ export async function getMilkCustomerSummary(
       .sort({ date: -1 })
       .toArray();
 
-    // const totalDebit = milkRecords.reduce(
-    //   (sum, record) => sum + record.amount,
-    //   0
-    // );
-    // const totalPaid = transactions.reduce(
-    //   (sum, transaction) =>
-    //     sum + (transaction.type === "CREDIT" ? transaction.amount : 0),
-    //   0
-    // );
-    const balance = customer.totalDebit - customer.totalPaid;
+    const milkDebit = milkRecords.reduce(
+      (sum, record) => sum + record.amount,
+      0
+    );
+
+    const otherDebit = transactions.reduce(
+      (sum, transaction) =>
+        sum + (transaction.type === "DEBIT" ? transaction.amount : 0),
+      0
+    );
+
+    const totalPaid = transactions.reduce(
+      (sum, transaction) =>
+        sum + (transaction.type === "CREDIT" ? transaction.amount : 0),
+      0
+    );
+    const balance = milkDebit + otherDebit - totalPaid;
 
     return {
       customer,
@@ -359,8 +366,8 @@ export async function getMilkCustomerSummary(
         date: transaction.date,
       })),
       summary: {
-        totalDebit: customer.totalDebit,
-        totalPaid: customer.totalPaid,
+        totalDebit: milkDebit + otherDebit,
+        totalPaid: totalPaid,
         balance,
       },
     };
