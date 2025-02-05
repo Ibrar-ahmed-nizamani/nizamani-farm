@@ -16,7 +16,7 @@ import {
 import { TractorWork } from "@/lib/type-definitions";
 import DeleteWorkDialog from "./delete-work";
 import Link from "next/link";
-import { formatDatePattern } from "@/lib/utils";
+import { capitalizeFirstLetter, formatDatePattern } from "@/lib/utils";
 
 interface TractorWorkTableProps {
   works: TractorWork[];
@@ -73,8 +73,10 @@ export default function TractorWorkTable({
               <TableCell>
                 {work.equipments.map((equipment, index) => (
                   <div key={index} className="flex gap-8 mb-2">
-                    <span className="w-16">{equipment.name}</span> -
-                    <span>{equipment.hours} hours</span>
+                    <span className="w-16">
+                      {capitalizeFirstLetter(equipment.name)}
+                    </span>{" "}
+                    -<span>{equipment.hours} hours</span>
                   </div>
                 ))}
               </TableCell>

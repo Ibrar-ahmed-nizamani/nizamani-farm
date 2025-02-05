@@ -20,7 +20,7 @@ import SummaryCards from "@/components/shared/summary-cards";
 import YearSelector from "@/components/tractor/year-selector";
 import BackButton from "@/components/shared/back-button";
 import CustomerWorksReport from "@/components/accounting/customer/customer-works-report";
-import { formatDatePattern } from "@/lib/utils";
+import { capitalizeFirstLetter, formatDatePattern } from "@/lib/utils";
 
 export default async function CustomerSummary({
   params,
@@ -130,8 +130,10 @@ export default async function CustomerSummary({
                       idx: number
                     ) => (
                       <div key={idx} className="flex gap-8 mb-2">
-                        <span className="w-16">{equipment.name}</span> -
-                        <span>{equipment.hours} hours</span>
+                        <span className="w-16">
+                          {capitalizeFirstLetter(equipment.name)}
+                        </span>{" "}
+                        -<span>{equipment.hours} hours</span>
                       </div>
                     )
                   ) || "No equipment data"}

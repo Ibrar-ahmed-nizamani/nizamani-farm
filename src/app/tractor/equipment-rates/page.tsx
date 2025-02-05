@@ -12,12 +12,6 @@ export default async function EquipmentRatesPage() {
       <div className="flex justify-between">
         <h1 className="text-xl font-bold">Equipment Rates Settings</h1>
         <div className="flex gap-4">
-          <Link href="/tractor/equipment-rates/add-equipment">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Equipment
-            </Button>
-          </Link>
           <BackButton />
         </div>
       </div>

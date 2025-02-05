@@ -66,10 +66,7 @@ export default function AddEquipmentForm() {
           message: "Equipment added successfully",
         });
         form.reset();
-        // Redirect after short delay
-        setTimeout(() => {
-          router.push("/tractor/equipment-rates");
-        }, 1000);
+        router.push("/tractor");
       } else {
         setStatus({
           type: "error",

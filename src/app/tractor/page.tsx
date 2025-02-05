@@ -2,6 +2,7 @@ import EmptyTractorData from "@/components/shared/empty-tractor-data";
 import { TractorItem } from "@/components/tractor/tractor-item";
 import { Button } from "@/components/ui/button";
 import { getTractors } from "@/lib/actions/tractor";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 
 export default async function TractorPage() {
@@ -13,6 +14,13 @@ export default async function TractorPage() {
           <Button asChild size="lg">
             <Link href="/tractor/add-tractor">Add Tractor</Link>
           </Button>
+
+          <Link href="/tractor/equipment-rates/add-equipment">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Equipment
+            </Button>
+          </Link>
           <Button asChild size="lg" variant="outline">
             <Link href="/tractor/equipment-rates"> Change Equipment Rates</Link>
           </Button>
