@@ -14,12 +14,6 @@ export default async function AddTractorWorkPage({
   const tractorDetails = await getTractorDetails(tractorID);
   const equipmentRates = await getEquipmentRates();
 
-  const cultivatorRate = equipmentRates[0].rate;
-  const rajaRate = equipmentRates[1].rate;
-  const gobalRate = equipmentRates[2].rate;
-  const laserRate = equipmentRates[3].rate;
-  const bladeRate = equipmentRates[4].rate;
-
   return (
     <section className="space-y-4">
       <div className="mb-3 flex justify-between items-center">
@@ -36,17 +30,13 @@ export default async function AddTractorWorkPage({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Add Tractor Work</h3>
         <Button asChild size="lg" variant="outline">
-          <Link href="/tractor/equipment-rates"> Change Equipment Rates</Link>
+          <Link href="/tractor/equipment-rates">Change Equipment Rates</Link>
         </Button>
       </div>
 
       <AddTractorWorkForm
         tractorID={tractorID}
-        bladeRate={bladeRate}
-        cultivatorRate={cultivatorRate}
-        gobalRate={gobalRate}
-        laserRate={laserRate}
-        rajaRate={rajaRate}
+        equipmentRates={equipmentRates}
       />
     </section>
   );

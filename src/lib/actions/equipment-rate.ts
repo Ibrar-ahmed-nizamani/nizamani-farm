@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import clientPromise from "@/lib/mongodb";
 
 const DEFAULT_EQUIPMENT = [
-  { name: "Cultivator", rate: 1500 },
-  { name: "Raja", rate: 1500 },
-  { name: "Gobal", rate: 1500 },
-  { name: "Laser", rate: 2000 },
-  { name: "Blade", rate: 1500 },
+  { name: "cultivator", rate: 1500 },
+  { name: "raja", rate: 1500 },
+  { name: "gobal", rate: 1500 },
+  { name: "laser", rate: 2000 },
+  { name: "blade", rate: 1500 },
 ];
 
 export async function initializeEquipmentRates() {
@@ -74,5 +74,37 @@ export async function updateEquipmentRate(
   } catch (error) {
     console.error("Failed to update equipment rate:", error);
     return { success: false, error: "Failed to update equipment rate" };
+  }
+}
+
+export async function addEquipment(name: string, rate: number) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Check if equipment with same name exists
+    const existing = await db.collection("equipment_rates").findOne({ name });
+    console.log(existing);
+    if (existing) {
+      return {
+        success: false,
+        error: "Equipment with this name already exists",
+      };
+    }
+
+    // Insert new equipment
+    await db.collection("equipment_rates").insertOne({
+      name: name.toLowerCase(),
+      rate,
+    });
+
+    revalidatePath("/tractor/equipment-rates");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add equipment:", error);
+    return {
+      success: false,
+      error: "Failed to add equipment",
+    };
   }
 }

@@ -12,11 +12,13 @@ export default async function EditWorkPage({
 }) {
   const tractorID = (await params).tractorID;
   const workId = (await params).workId;
-  const [work, tractorDetails, rates] = await Promise.all([
+  const [work, tractorDetails, equipmentRates] = await Promise.all([
     getWorkById(workId),
     getTractorDetails(tractorID),
     getEquipmentRates(),
   ]);
+  console.log(work);
+  // console.log(equipmentRates);
 
   return (
     <div>
@@ -30,15 +32,12 @@ export default async function EditWorkPage({
         <BackButton />
       </div>
       <h1 className="text-2xl font-bold mb-6">Edit Work</h1>
+
       <AddTractorWorkForm
-        tractorID={tractorID}
         initialData={work}
         isEditing={true}
-        cultivatorRate={rates.find((r) => r.name === "Cultivator")?.rate || 0}
-        bladeRate={rates.find((r) => r.name === "Blade")?.rate || 0}
-        laserRate={rates.find((r) => r.name === "Laser")?.rate || 0}
-        gobalRate={rates.find((r) => r.name === "Gobal")?.rate || 0}
-        rajaRate={rates.find((r) => r.name === "Raja")?.rate || 0}
+        tractorID={tractorID}
+        equipmentRates={equipmentRates}
       />
     </div>
   );

@@ -17,6 +17,7 @@ import {
 import { updateEquipmentRate } from "@/lib/actions/equipment-rate";
 import { useRouter } from "next/navigation";
 import StatusAlert from "../ui/status-alert";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 interface EquipmentRate {
   _id: string;
@@ -128,7 +129,7 @@ export default function EquipmentRatesForm({
               name={equipment._id}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{equipment.name}</FormLabel>
+                  <FormLabel>{capitalizeFirstLetter(equipment.name)}</FormLabel>
                   <div className="flex items-center gap-4">
                     <div className="text-sm text-muted-foreground w-40">
                       Current Rate: Rs {equipment.rate.toLocaleString()}

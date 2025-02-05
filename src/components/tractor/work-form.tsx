@@ -31,41 +31,52 @@ import {
 import { EquipmentInput } from "./equipment-input";
 import { submitTractorWork, editTractorWork } from "@/lib/actions/work";
 import { getAllCustomers } from "@/lib/actions/customer";
-import { cn } from "@/lib/utils";
+import { capitalizeFirstLetter, cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-// Define the validation schema
-const workFormSchema = z
-  .object({
+interface Equipment {
+  _id: string;
+  name: string;
+  rate: number;
+}
+
+// Dynamic schema creation based on equipment
+const createWorkFormSchema = (equipmentRates: Equipment[]) => {
+  const baseSchema = {
     customerName: z.string().min(1, "Customer name is required"),
     date: z.date({
       required_error: "Date is required",
     }),
     detail: z.string().min(1, "Detail is required"),
     driverName: z.string().min(1, "Driver name is required"),
-    cultivatorHours: z.number().min(0),
-    rajaHours: z.number().min(0),
-    gobalHours: z.number().min(0),
-    laserHours: z.number().min(0),
-    bladeHours: z.number().min(0),
-  })
-  .refine(
-    (data) => {
-      return (
-        data.cultivatorHours > 0 ||
-        data.rajaHours > 0 ||
-        data.gobalHours > 0 ||
-        data.laserHours > 0 ||
-        data.bladeHours > 0
-      );
-    },
-    {
-      message: "At least one equipment must be added",
-      path: ["cultivatorHours"],
-    }
-  );
+  };
 
-type WorkFormValues = z.infer<typeof workFormSchema>;
+  const equipmentFields: { [key: string]: z.ZodNumber } = {};
+  equipmentRates.forEach((equipment) => {
+    equipmentFields[`${equipment.name.toLowerCase()}Hours`] = z.number().min(0);
+  });
+
+  return z
+    .object({
+      ...baseSchema,
+      ...equipmentFields,
+    })
+    .refine(
+      (data) => {
+        return Object.keys(data).some((key) => {
+          if (key.endsWith("Hours")) {
+            const value = data[key as keyof typeof data];
+            return typeof value === "number" && value > 0;
+          }
+          return false;
+        });
+      },
+      {
+        message: "At least one equipment must be added",
+        path: ["cultivatorHours"],
+      }
+    );
+};
 
 interface WorkFormData {
   id: string;
@@ -83,21 +94,13 @@ interface WorkFormData {
 
 interface AddTractorWorkFormProps {
   tractorID: string;
-  cultivatorRate: number;
-  bladeRate: number;
-  laserRate: number;
-  gobalRate: number;
-  rajaRate: number;
+  equipmentRates: Equipment[];
   initialData?: WorkFormData;
   isEditing?: boolean;
 }
 
 export function AddTractorWorkForm({
-  bladeRate,
-  cultivatorRate,
-  gobalRate,
-  laserRate,
-  rajaRate,
+  equipmentRates,
   tractorID,
   initialData,
   isEditing,
@@ -110,62 +113,63 @@ export function AddTractorWorkForm({
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
-  const EQUIPMENT_RATES = {
-    cultivator: cultivatorRate,
-    raja: rajaRate,
-    gobal: gobalRate,
-    laser: laserRate,
-    blade: bladeRate,
+  // Create dynamic default values
+  const createDefaultValues = () => {
+    if (initialData) {
+      const values: any = {
+        customerName: initialData.customerName,
+        date: new Date(initialData.date),
+        detail: initialData.detail,
+        driverName: initialData.driverName,
+      };
+
+      equipmentRates.forEach((equipment) => {
+        console.log(initialData.equipments);
+        const equipmentData = initialData.equipments.find(
+          (e) => e.name === equipment.name
+        );
+        values[`${equipment.name.toLowerCase()}Hours`] =
+          equipmentData?.hours || 0;
+      });
+
+      return values;
+    }
+
+    const defaultValues: any = {
+      customerName: "",
+      detail: "",
+      driverName: "",
+    };
+
+    equipmentRates.forEach((equipment) => {
+      defaultValues[`${equipment.name.toLowerCase()}Hours`] = 0;
+    });
+
+    return defaultValues;
   };
+
+  const workFormSchema = createWorkFormSchema(equipmentRates);
+  type WorkFormValues = z.infer<typeof workFormSchema>;
 
   const form = useForm<WorkFormValues>({
     resolver: zodResolver(workFormSchema),
-    defaultValues: initialData
-      ? {
-          customerName: initialData.customerName,
-          date: new Date(initialData.date),
-          detail: initialData.detail,
-          driverName: initialData.driverName,
-          cultivatorHours:
-            initialData.equipments.find((e) => e.name === "Cultivator")
-              ?.hours || 0,
-          rajaHours:
-            initialData.equipments.find((e) => e.name === "Raja")?.hours || 0,
-          gobalHours:
-            initialData.equipments.find((e) => e.name === "Gobal")?.hours || 0,
-          laserHours:
-            initialData.equipments.find((e) => e.name === "Laser")?.hours || 0,
-          bladeHours:
-            initialData.equipments.find((e) => e.name === "Blade")?.hours || 0,
-        }
-      : {
-          customerName: "",
-          detail: "",
-          driverName: "",
-          cultivatorHours: 0,
-          rajaHours: 0,
-          gobalHours: 0,
-          laserHours: 0,
-          bladeHours: 0,
-        },
+    defaultValues: createDefaultValues(),
   });
 
   const calculateAmount = (hours: number, rate: number) => hours * rate;
 
-  const watchFields = useWatch({
+  // Watch all equipment hours fields
+  const watchFields = useWatch<WorkFormValues>({
     control: form.control,
-    name: [
-      "cultivatorHours",
-      "rajaHours",
-      "gobalHours",
-      "laserHours",
-      "bladeHours",
-    ],
+    name: equipmentRates.map(
+      (equipment) =>
+        `${equipment.name.toLowerCase()}Hours` as keyof WorkFormValues
+    ),
   });
 
-  const totalAmount = Object.entries(EQUIPMENT_RATES).reduce(
-    (total, [, rate], index) =>
-      total + calculateAmount(Number(watchFields[index]), rate),
+  const totalAmount = equipmentRates.reduce(
+    (total, equipment, index) =>
+      total + calculateAmount(Number(watchFields[index]), equipment.rate),
     0
   );
 
@@ -189,14 +193,22 @@ export function AddTractorWorkForm({
     formData.append("detail", data.detail);
     formData.append("driverName", data.driverName);
 
-    Object.entries(EQUIPMENT_RATES).forEach(([equipment, rate]) => {
-      const hours = Number(data[`${equipment}Hours` as keyof WorkFormValues]);
+    equipmentRates.forEach((equipment) => {
+      const hours = Number(
+        data[`${equipment.name.toLowerCase()}Hours` as keyof WorkFormValues]
+      );
       if (hours > 0) {
-        formData.append(`${equipment}Hours`, hours.toString());
-        formData.append(`${equipment}RatePerHour`, rate.toString());
         formData.append(
-          `${equipment}Amount`,
-          calculateAmount(hours, rate).toString()
+          `${equipment.name.toLowerCase()}Hours`,
+          hours.toString()
+        );
+        formData.append(
+          `${equipment.name.toLowerCase()}RatePerHour`,
+          equipment.rate.toString()
+        );
+        formData.append(
+          `${equipment.name.toLowerCase()}Amount`,
+          calculateAmount(hours, equipment.rate).toString()
         );
       }
     });
@@ -339,18 +351,20 @@ export function AddTractorWorkForm({
 
         <div className="text-lg font-semibold">Equipments</div>
 
-        {Object.entries(EQUIPMENT_RATES).map(([equipment, rate]) => (
+        {equipmentRates.map((equipment) => (
           <FormField
-            key={equipment}
+            key={equipment._id}
             control={form.control}
-            name={`${equipment}Hours` as keyof WorkFormValues}
+            name={
+              `${equipment.name.toLowerCase()}Hours` as keyof WorkFormValues
+            }
             render={({ field }) => (
               <FormItem>
                 <EquipmentInput
-                  name={equipment.charAt(0).toUpperCase() + equipment.slice(1)}
-                  ratePerHour={rate}
+                  name={capitalizeFirstLetter(equipment.name)}
+                  ratePerHour={equipment.rate}
                   hours={Number(field.value)}
-                  amount={calculateAmount(Number(field.value), rate)}
+                  amount={calculateAmount(Number(field.value), equipment.rate)}
                   onHoursChange={(hours) => field.onChange(hours)}
                 />
                 <FormMessage />

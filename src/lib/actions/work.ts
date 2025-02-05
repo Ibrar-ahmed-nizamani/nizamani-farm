@@ -26,21 +26,22 @@ export async function submitTractorWork(
   try {
     const client = await clientPromise;
     const db = client.db("farm");
+
     const customerName = (formData.get("customerName") as string)
       .toLowerCase()
       .trim();
     const dateStr = formData.get("date") as string;
-    const detail = formData.get("detail") as string; // Get detail field
+    const detail = formData.get("detail") as string;
+    const driverName = formData.get("driverName") as string;
 
     if (!dateStr) {
       return { success: false, message: "Date is required" };
     }
-    const date = new Date(dateStr);
 
+    const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
       return { success: false, message: "Invalid date format" };
     }
-    const driverName = formData.get("driverName") as string;
 
     // Get or create customer
     let customer = await db
@@ -56,20 +57,30 @@ export async function submitTractorWork(
       customer = { _id: customerResult.insertedId };
     }
 
-    // Calculate equipment amounts from form data
-    const equipments = ["Cultivator", "Raja", "Gobal", "Laser", "Blade"]
-      .map((name) => ({
-        name,
-        hours:
-          parseFloat(formData.get(`${name.toLowerCase()}Hours`) as string) || 0,
-        ratePerHour: parseFloat(
-          formData.get(`${name.toLowerCase()}RatePerHour`) as string
-        ),
-        amount:
-          parseFloat(formData.get(`${name.toLowerCase()}Amount`) as string) ||
-          0,
-      }))
-      .filter((eq) => eq.hours > 0);
+    // Get all form entries
+    const entries = Array.from(formData.entries());
+
+    // Extract equipment entries
+    const equipments = entries
+      .filter(
+        ([key]) =>
+          key.endsWith("Hours") && parseFloat(formData.get(key) as string) > 0
+      )
+      .map(([key]) => {
+        const name = key.replace("Hours", "");
+        const hours = parseFloat(formData.get(`${name}Hours`) as string) || 0;
+        const ratePerHour = parseFloat(
+          formData.get(`${name}RatePerHour`) as string
+        );
+        const amount = parseFloat(formData.get(`${name}Amount`) as string) || 0;
+
+        return {
+          name,
+          hours,
+          ratePerHour,
+          amount,
+        };
+      });
 
     if (equipments.length === 0) {
       return {
@@ -80,20 +91,20 @@ export async function submitTractorWork(
 
     const totalAmount = equipments.reduce((sum, eq) => sum + eq.amount, 0);
 
-    // Insert work record
+    // Create work record
     const workResult = await db.collection("works").insertOne({
       customerId: customer._id,
       tractorId: new ObjectId(tractorId),
       customerName,
       date,
-      detail, // Add detail field
+      detail,
       driverName,
       equipments,
       totalAmount,
       createdAt: new Date(),
     });
 
-    // Create transaction for the work
+    // Create transaction record
     await db.collection("transactions").insertOne({
       customerId: customer._id,
       workId: workResult.insertedId,
@@ -103,13 +114,14 @@ export async function submitTractorWork(
       createdAt: new Date(),
     });
 
-    // Update customer's totalDebit
+    // Update customer's total debit
     await db
       .collection("customers")
       .updateOne({ _id: customer._id }, { $inc: { totalDebit: totalAmount } });
 
     revalidatePath("/accounting/tractor");
     revalidatePath(`/accounting/tractor/${customer._id}`);
+    revalidatePath(`/tractor/${tractorId}`);
     return { success: true, message: "Work submitted successfully" };
   } catch (error) {
     console.error("Failed to submit work:", error);
@@ -376,6 +388,7 @@ export async function getWorkById(workId: string) {
     throw new Error("Failed to fetch work");
   }
 }
+
 export async function editTractorWork(
   workId: string,
   prevState: unknown,
@@ -390,7 +403,6 @@ export async function editTractorWork(
     const originalWork = await db
       .collection("works")
       .findOne({ _id: new ObjectId(workId) });
-
     if (!originalWork) {
       return { success: false, message: "Work not found" };
     }
@@ -399,15 +411,17 @@ export async function editTractorWork(
       .toLowerCase()
       .trim();
     const dateStr = formData.get("date") as string;
-    const detail = formData.get("detail") as string; // Get detail field
+    const detail = formData.get("detail") as string;
+    const driverName = formData.get("driverName") as string;
+
     if (!dateStr) {
       return { success: false, message: "Date is required" };
     }
+
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
       return { success: false, message: "Invalid date format" };
     }
-    const driverName = formData.get("driverName") as string;
 
     // Get or create customer
     let customer = await db
@@ -423,20 +437,28 @@ export async function editTractorWork(
       customer = { _id: customerResult.insertedId };
     }
 
-    // Calculate equipment amounts from form data
-    const equipments = ["Cultivator", "Raja", "Gobal", "Laser", "Blade"]
-      .map((name) => ({
-        name,
-        hours:
-          parseFloat(formData.get(`${name.toLowerCase()}Hours`) as string) || 0,
-        ratePerHour: parseFloat(
-          formData.get(`${name.toLowerCase()}RatePerHour`) as string
-        ),
-        amount:
-          parseFloat(formData.get(`${name.toLowerCase()}Amount`) as string) ||
-          0,
-      }))
-      .filter((eq) => eq.hours > 0);
+    // Get all form entries and extract equipment data
+    const entries = Array.from(formData.entries());
+    const equipments = entries
+      .filter(
+        ([key]) =>
+          key.endsWith("Hours") && parseFloat(formData.get(key) as string) > 0
+      )
+      .map(([key]) => {
+        const name = key.replace("Hours", "");
+        const hours = parseFloat(formData.get(`${name}Hours`) as string) || 0;
+        const ratePerHour = parseFloat(
+          formData.get(`${name}RatePerHour`) as string
+        );
+        const amount = parseFloat(formData.get(`${name}Amount`) as string) || 0;
+
+        return {
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          hours,
+          ratePerHour,
+          amount,
+        };
+      });
 
     if (equipments.length === 0) {
       return {
@@ -449,7 +471,6 @@ export async function editTractorWork(
 
     // Handle customer debit updates
     if (originalWork.customerId.toString() !== customer._id.toString()) {
-      // If customer changed, subtract amount from old customer and add to new customer
       await db
         .collection("customers")
         .updateOne(
@@ -463,7 +484,6 @@ export async function editTractorWork(
           { $inc: { totalDebit: totalAmount } }
         );
     } else {
-      // Same customer, just update the difference
       const debitDifference = totalAmount - originalWork.totalAmount;
       if (debitDifference !== 0) {
         await db
@@ -483,7 +503,7 @@ export async function editTractorWork(
           customerId: customer._id,
           customerName,
           date,
-          detail, // Add detail field
+          detail,
           driverName,
           equipments,
           totalAmount,
