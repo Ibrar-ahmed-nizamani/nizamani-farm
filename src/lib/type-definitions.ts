@@ -143,3 +143,51 @@ export class BackupError extends Error {
     this.name = "BackupError";
   }
 }
+
+// Farm Fields with farmer
+// types/farming.ts
+export interface Field {
+  _id: string;
+  name: string;
+  totalArea: number;
+  remainingArea: number; // Added Remaining area
+  createdAt: Date;
+}
+
+export interface FieldFarmer {
+  _id: string;
+  fieldId: string;
+  farmerId: string;
+  shareType: "1/3" | "1/2" | "1/4"; // Changed share type to include 1/3, 1/2, 1/4
+  allocatedArea: number;
+  startDate: Date;
+  endDate?: Date;
+  createdAt: Date;
+}
+
+export interface FieldExpense {
+  _id: string;
+  fieldId: string;
+  amount: number;
+  description: string;
+  type: string; // Added type of expense
+  date: Date;
+  createdAt: Date;
+}
+
+export interface Farmer {
+  _id: string;
+  name: string;
+  createdAt: Date;
+}
+
+export interface FarmerTransaction {
+  _id: string;
+  farmerId: string;
+  fieldId: string;
+  type: "DEBIT" | "CREDIT";
+  amount: number;
+  description: string;
+  date: Date;
+  createdAt: Date;
+}
