@@ -79,20 +79,60 @@ export async function deleteTractorExpense(
   }
 }
 
-export async function getAllTractorExpenses(tractorId: string, year?: string) {
+export async function getAllTractorExpenses(
+  tractorId: string,
+  filters?: {
+    year?: string;
+    month?: string;
+    startDate?: string;
+    endDate?: string;
+  }
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const query: { tractorId: ObjectId; date?: { $gte: Date; $lte: Date } } = {
+    const query: { tractorId: ObjectId; date?: any } = {
       tractorId: new ObjectId(tractorId),
     };
 
-    if (year && year !== "all") {
-      query.date = {
-        $gte: new Date(`${year}-01-01`),
-        $lte: new Date(`${year}-12-31`),
-      };
+    // Apply date filters
+    if (filters) {
+      const { year, month, startDate, endDate } = filters;
+
+      if (startDate || endDate) {
+        // Use date range if explicit start/end dates are provided
+        query.date = {};
+
+        if (startDate) {
+          query.date.$gte = new Date(startDate);
+        }
+
+        if (endDate) {
+          query.date.$lte = new Date(endDate);
+        }
+      } else if (year && year !== "all") {
+        // If year is specified but no explicit date range
+        if (month && month !== "all") {
+          // If both year and month are specified
+          const monthInt = parseInt(month);
+          const yearInt = parseInt(year);
+
+          const startOfMonth = new Date(yearInt, monthInt - 1, 1);
+          const endOfMonth = new Date(yearInt, monthInt, 0);
+
+          query.date = {
+            $gte: startOfMonth,
+            $lte: endOfMonth,
+          };
+        } else {
+          // If only year is specified
+          query.date = {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          };
+        }
+      }
     }
 
     const expenses = await db
@@ -158,5 +198,47 @@ export async function updateTractorExpense(
   } catch (error) {
     console.error("Failed to update expense:", error);
     return { success: false, message: "Failed to update expense" };
+  }
+}
+
+export async function getExpenseAvailableMonths(tractorId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const expenses = await db
+      .collection("tractorExpenses")
+      .find({ tractorId: new ObjectId(tractorId) })
+      .toArray();
+
+    // Extract unique month/year combinations
+    const months = expenses.map((expense) => {
+      const date = new Date(expense.date);
+      return {
+        month: date.getMonth() + 1, // JS months are 0-indexed
+        year: date.getFullYear(),
+      };
+    });
+
+    // Create a unique set of month/year combinations
+    const uniqueMonths = Array.from(
+      new Set(
+        months.map((m) => `${m.year}-${m.month.toString().padStart(2, "0")}`)
+      )
+    )
+      .map((dateStr) => {
+        const [year, month] = dateStr.split("-").map(Number);
+        return { month, year };
+      })
+      .sort((a, b) => {
+        // Sort by year (descending) then by month (descending)
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+      });
+
+    return uniqueMonths;
+  } catch (error) {
+    console.error("Failed to fetch expense months:", error);
+    return [];
   }
 }

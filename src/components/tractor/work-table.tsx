@@ -20,17 +20,17 @@ import { capitalizeFirstLetter, formatDatePattern } from "@/lib/utils";
 
 interface TractorWorkTableProps {
   works: TractorWork[];
-  pagination: {
-    total: number;
-    pages: number;
-    currentPage: number;
-  };
+  // pagination: {
+  //   total: number;
+  //   pages: number;
+  //   currentPage: number;
+  // };
   tractorId: string;
 }
 
 export default function TractorWorkTable({
   works,
-  pagination,
+  // pagination,
   tractorId,
 }: TractorWorkTableProps) {
   const router = useRouter();
@@ -116,7 +116,7 @@ export default function TractorWorkTable({
         />
       )}
 
-      <div className="flex justify-center gap-2 mt-4">
+      {/* <div className="flex justify-center gap-2 mt-4">
         {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
           (page) => (
             <Button
@@ -128,7 +128,7 @@ export default function TractorWorkTable({
             </Button>
           )
         )}
-      </div>
+      </div> */}
     </div>
   );
 }
