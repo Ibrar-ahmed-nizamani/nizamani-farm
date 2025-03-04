@@ -197,6 +197,9 @@ export default function CompleteReport({
               .amount {
                 text-align: right;
               }
+                .max-width{
+                    max-width: 330px;
+                }
               .income { color: green; }
               .expense { color: red; }
               .equipment-details {
@@ -262,7 +265,7 @@ export default function CompleteReport({
                     <td>${entry.type}</td>
                     <td>${entry.description}</td>
                     <td>${entry.customerName || "-"}</td>
-                    <td>${entry.equipmentDetails || "-"}</td>
+                    <td class="max-width">${entry.equipmentDetails || "-"}</td>
                     <td>${entry.workDetails || "-"}</td>
                     <td class="amount">${
                       entry.income ? `Rs ${entry.income.toLocaleString()}` : "-"
