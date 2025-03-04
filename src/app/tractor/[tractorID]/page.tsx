@@ -119,7 +119,7 @@ export default async function TractorDetailPage({
           </Link>
         </div>
         <div>
-          {/* <PrintReport
+          <PrintReport
             tractorId={tractorID}
             tractorDetails={{
               ...tractorDetails,
@@ -127,8 +127,8 @@ export default async function TractorDetailPage({
               month: selectedMonth,
               startDate: startDate,
               endDate: endDate,
-            }} */}
-          {/* /> */}
+            }}
+          />
         </div>
       </div>
       {works.length === 0 ? (

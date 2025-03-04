@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getAllTractorWorks } from "@/lib/actions/work";
+import { formatDatePattern } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface PrintReportProps {
   tractorDetails: {
@@ -13,6 +15,9 @@ interface PrintReportProps {
     totalExpenses: number;
     revenue: number;
     year: string;
+    month?: string;
+    startDate?: string;
+    endDate?: string;
   };
   tractorId: string;
 }
@@ -23,12 +28,56 @@ export default function PrintReport({
 }: PrintReportProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  // Function to generate date range description for the report header
+  const getDateRangeDescription = () => {
+    if (tractorDetails.startDate && tractorDetails.endDate) {
+      return `${format(tractorDetails.startDate, "PPP")} to ${format(
+        tractorDetails.endDate,
+        "PPP"
+      )}`;
+    } else if (tractorDetails.startDate) {
+      return `From ${formatDatePattern(tractorDetails.startDate)}`;
+    } else if (tractorDetails.endDate) {
+      return `Until ${formatDatePattern(tractorDetails.endDate)}`;
+    } else if (
+      tractorDetails.year !== "all" &&
+      tractorDetails.month &&
+      tractorDetails.month !== "all"
+    ) {
+      const monthDate = new Date(
+        parseInt(tractorDetails.year),
+        parseInt(tractorDetails.month) - 1,
+        1
+      );
+      return `${monthDate.toLocaleString("default", {
+        month: "long",
+      })} ${tractorDetails.year}`;
+    } else if (tractorDetails.year !== "all") {
+      return `Year ${tractorDetails.year}`;
+    } else {
+      return "All Time";
+    }
+  };
+
   const handlePrint = async () => {
     try {
       setIsLoading(true);
 
-      // Directly call the server action
-      const works = await getAllTractorWorks(tractorId, tractorDetails.year);
+      // Call the server action with all filter parameters
+      const works = await getAllTractorWorks(tractorId, {
+        year: tractorDetails.year,
+        month: tractorDetails.month,
+        startDate: tractorDetails.startDate,
+        endDate: tractorDetails.endDate,
+      });
+
+      // Sort works in descending order by date
+      const sortedWorks = [...works].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      const dateRangeDescription = getDateRangeDescription();
+
       const printContent = `
         <html>
           <head>
@@ -116,11 +165,7 @@ export default function PrintReport({
               <h1>${tractorDetails.tractorName} - ${
         tractorDetails.tractorModel
       }</h1>
-              <p>Report for: ${
-                tractorDetails.year === "all"
-                  ? "All Years"
-                  : tractorDetails.year
-              }</p>
+              <p>Report for: ${dateRangeDescription}</p>
             </div>
 
             <div class="summary">
@@ -154,13 +199,13 @@ export default function PrintReport({
                 </tr>
               </thead>
               <tbody>
-                ${works
+                ${sortedWorks
                   .map(
                     (work, index) => `
                   <tr>
-                    <td class="serial-no">${works.length - index}</td>
-                    <td>${new Date(work.date).toLocaleDateString("en-GB")}</td>
-                    <td>${work.customerName.toUpperCase()}</td>
+                    <td class="serial-no">${index + 1}</td>
+                    <td>${formatDatePattern(work.date)}</td>
+                    <td>${work.customerName}</td>
                     <td>
                       ${work.equipments
                         .map(
@@ -189,7 +234,7 @@ export default function PrintReport({
               <table style="width: 100%;">
                 <tr class="total-row">
                   <td colspan="4" style="text-align: right;">Total Amount:</td>
-                  <td class="amount" style="width: 150px;">Rs ${works
+                  <td class="amount" style="width: 150px;">Rs ${sortedWorks
                     .reduce((sum, work) => sum + work.totalAmount, 0)
                     .toLocaleString()}</td>
                 </tr>

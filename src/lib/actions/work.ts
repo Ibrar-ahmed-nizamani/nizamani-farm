@@ -73,20 +73,29 @@ function buildDateFilter(filterOptions: DateFilterOptions) {
   return undefined;
 }
 
-// Get available months with data for a tractor
+// Get available months with data for a tractor (from both works and expenses)
 export async function getTractorAvailableMonths(tractorId: string) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const works = await db
-      .collection("works")
-      .find({ tractorId: new ObjectId(tractorId) })
-      .project({ date: 1 })
-      .toArray();
+    // Fetch dates from both works and expenses collections
+    const [works, expenses] = await Promise.all([
+      db
+        .collection("works")
+        .find({ tractorId: new ObjectId(tractorId) })
+        .project({ date: 1 })
+        .toArray(),
+      db
+        .collection("tractorExpenses")
+        .find({ tractorId: new ObjectId(tractorId) })
+        .project({ date: 1 })
+        .toArray(),
+    ]);
 
     const monthsMap = new Map();
 
+    // Process work dates
     works.forEach((work) => {
       const date = new Date(work.date);
       const year = date.getFullYear();
@@ -97,13 +106,27 @@ export async function getTractorAvailableMonths(tractorId: string) {
       monthsMap.set(key, { year, month, label: monthName });
     });
 
-    return Array.from(monthsMap.values());
+    // Process expense dates
+    expenses.forEach((expense) => {
+      const date = new Date(expense.date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const monthName = date.toLocaleString("default", { month: "long" });
+
+      const key = `${year}-${month}`;
+      monthsMap.set(key, { year, month, label: monthName });
+    });
+
+    // Convert the map to an array and sort by year (descending) and month (descending)
+    return Array.from(monthsMap.values()).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return a.month - b.month;
+    });
   } catch (error) {
     console.error("Failed to fetch tractor available months:", error);
     return [];
   }
 }
-
 export async function submitTractorWork(
   prevState: unknown,
   formData: FormData
