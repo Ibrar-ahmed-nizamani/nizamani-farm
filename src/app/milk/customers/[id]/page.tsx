@@ -1,7 +1,7 @@
 // app/milk/customers/[id]/page.tsx
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-
 import {
   Table,
   TableBody,
@@ -17,33 +17,72 @@ import {
 } from "@/lib/actions/milk-customer-actions";
 import { DeleteMilkRecord } from "@/components/milk/customer/delete-customer-milk";
 import CompleteCustomerReport from "@/components/milk/customer/complete-milk-customer-report";
-import {
-  MonthSelector,
-  YearSelector,
-} from "@/components/milk/customer/selectors";
 import SummaryCards from "@/components/shared/summary-cards";
 import { formatDatePattern } from "@/lib/utils";
 import BackLink from "@/components/ui/back-link";
 import EmptyState from "@/components/shared/empty-state";
 import { EditMilkRecord } from "@/components/milk/customer/edit-customer-milk-record";
+import DateRangeSelector from "@/components/shared/date-range-selector";
 
 export default async function CustomerPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{
+    year?: string;
+    month?: string;
+    startDate?: string;
+    endDate?: string;
+  }>;
 }) {
   const id = (await params).id;
-  const { year, month } = await searchParams;
+  const { year, month, startDate, endDate } = await searchParams;
 
   const { customer, milkRecords, summary } = await getMilkCustomerSummary(
     id,
     year,
-    month
+    month,
+    startDate,
+    endDate
   );
 
   const { milkRecords: yearsAndMonths } = await getMilkCustomerDates(id);
+
+  // Extract available years from milk records
+  const availableYears = Array.from(
+    new Set(yearsAndMonths.map((record) => record.date.getFullYear()))
+  ).sort((a, b) => b - a);
+
+  // Extract available months for each year
+  // When using reduce, we need to explicitly define the type of the accumulator
+  const availableMonths = yearsAndMonths.reduce<
+    Array<{ year: number; month: number; label: string }>
+  >((acc, record) => {
+    const year = record.date.getFullYear();
+    const month = record.date.getMonth() + 1; // JavaScript months are 0-indexed
+    const monthName = new Date(year, month - 1).toLocaleString("default", {
+      month: "long",
+    });
+
+    const monthEntry = {
+      year,
+      month,
+      label: monthName,
+    };
+
+    // Check if this month already exists in the accumulator
+    const exists = acc.some((m) => m.year === year && m.month === month);
+    if (!exists) {
+      acc.push(monthEntry);
+    }
+
+    return acc.sort(
+      (a, b) =>
+        new Date(a.year, a.month - 1).getTime() -
+        new Date(b.year, b.month - 1).getTime()
+    );
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -52,12 +91,8 @@ export default async function CustomerPage({
         <BackLink href="/milk/customers" linkText="Back to Customers" />
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex gap-4 items-center">
-          <YearSelector records={yearsAndMonths} />
-          <MonthSelector records={yearsAndMonths} />
-        </div>
-        <div className="flex gap-4">
+      <div className="space-y-4">
+        <div className="flex gap-4 justify-end">
           <CompleteCustomerReport
             customerDetails={{
               customerName: customer.name,
@@ -68,6 +103,8 @@ export default async function CustomerPage({
             customerId={id}
             year={year || "all"}
             month={month}
+            startDate={startDate}
+            endDate={endDate}
           />
           <Link href={`/milk/customers/${id}/debits`}>
             <Button variant="destructive">Debits</Button>
@@ -75,12 +112,13 @@ export default async function CustomerPage({
           <Link href={`/milk/customers/${id}/payments`}>
             <Button variant="default">Payments</Button>
           </Link>
-
-          {/* <Link href={`/milk/customers/${id}/payments/add-payment`}>
-            <Button>Add Payment</Button>
-          </Link> */}
         </div>
       </div>
+
+      <DateRangeSelector
+        availableYears={availableYears}
+        availableMonths={availableMonths}
+      />
 
       <SummaryCards
         cards={[
