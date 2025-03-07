@@ -74,11 +74,6 @@ export default async function TractorCustomerSummary({
         </div>
 
         <div className="space-y-4">
-          <DateRangeSelector
-            availableYears={availableYears}
-            availableMonths={availableMonths}
-          />
-
           <div className="flex items-center justify-end">
             <div className="flex items-center space-x-4">
               <CustomerCompleteReport
@@ -100,6 +95,10 @@ export default async function TractorCustomerSummary({
             </div>
           </div>
         </div>
+        <DateRangeSelector
+          availableYears={availableYears}
+          availableMonths={availableMonths}
+        />
 
         <SummaryCards
           cards={[
