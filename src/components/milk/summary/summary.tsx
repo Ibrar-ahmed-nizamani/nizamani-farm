@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import SummaryCards from "@/components/shared/summary-cards";
 import { MilkSummaryData, Transaction } from "@/lib/type-definitions";
-import DateSelector from "./date-selector";
 import BackLink from "@/components/ui/back-link";
 import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 import PrintMilkSummary from "./print-summary";

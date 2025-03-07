@@ -2,7 +2,6 @@
 "use server";
 
 import clientPromise from "@/lib/mongodb";
-import { MongoDBFilter } from "../type-definitions";
 
 interface DateFilterOptions {
   year?: string;

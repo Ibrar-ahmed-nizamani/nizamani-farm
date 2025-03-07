@@ -325,14 +325,6 @@ export async function getCustomerWorks(
   }
 }
 
-interface MatchCondition {
-  tractorId: ObjectId;
-  date?: {
-    $gte: Date;
-    $lte: Date;
-  };
-}
-
 export async function getTractorWorks(
   tractorId: string,
   filterOptions: DateFilterOptions = {}
