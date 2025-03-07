@@ -5,12 +5,15 @@ import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getCustomerWorks } from "@/lib/actions/work";
 import { getCustomerTransactions } from "@/lib/actions/transaction";
-import { formatDatePattern } from "@/lib/utils";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 
 interface CompleteReportProps {
   customerName: string;
   customerId: string;
   year: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface CombinedEntry {
@@ -30,6 +33,9 @@ export default function CustomerCompleteReport({
   customerName,
   customerId,
   year,
+  month,
+  startDate,
+  endDate,
 }: CompleteReportProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,11 +43,13 @@ export default function CustomerCompleteReport({
     try {
       setIsLoading(true);
 
-      // Fetch works and transactions
+      // Fetch works and transactions with proper filtering
       const [works, transactions] = await Promise.all([
-        getCustomerWorks(customerId, year),
-        getCustomerTransactions(customerId, year),
+        getCustomerWorks(customerId, year, month, startDate, endDate),
+        getCustomerTransactions(customerId, year, month, startDate, endDate),
       ]);
+
+      // Rest of the function remains the same...
 
       let runningBalance = 0;
       const combinedEntries: CombinedEntry[] = [
@@ -192,7 +200,12 @@ export default function CustomerCompleteReport({
           <body>
             <div class="header">
               <h1>${customerName}</h1>
-              <p>Complete Report for: ${year === "all" ? "All Years" : year}</p>
+              <p>Complete Report for: ${getDateRangeDescription({
+                selectedYear: year,
+                endDate,
+                selectedMonth: month,
+                startDate,
+              })}</p>
             </div>
 
             <div class="summary">

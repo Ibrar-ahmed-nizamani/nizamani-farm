@@ -50,22 +50,46 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
   }
   redirect(`/accounting/tractor/${customerId}/transaction`);
 }
-
 export async function getCustomerTransactions(
   customerId: string,
-  year?: string
+  year?: string,
+  month?: string,
+  startDate?: string,
+  endDate?: string
 ) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
     const query: TransactionQuery = { customerId: new ObjectId(customerId) };
-    if (year && year !== "all") {
+
+    if (startDate && endDate) {
+      // Use date range filtering if provided
       query.date = {
-        $gte: new Date(`${year}-01-01`),
-        $lte: new Date(`${year}-12-31`),
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       };
+    } else if (year && year !== "all") {
+      if (month && month !== "all") {
+        // Both year and month filtering
+        const monthNum = parseInt(month);
+        const lastDay = new Date(parseInt(year), monthNum, 0).getDate();
+        query.date = {
+          $gte: new Date(`${year}-${monthNum.toString().padStart(2, "0")}-01`),
+          $lte: new Date(
+            `${year}-${monthNum.toString().padStart(2, "0")}-${lastDay}`
+          ),
+        };
+      } else {
+        // Only year filtering
+        query.date = {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31`),
+        };
+      }
     }
+
+    // Rest of the function remains the same...
 
     const transactions = await db
       .collection("transactions")

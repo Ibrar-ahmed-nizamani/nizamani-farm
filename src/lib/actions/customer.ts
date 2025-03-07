@@ -4,21 +4,55 @@ import { ObjectId } from "mongodb";
 import clientPromise from "@/lib/mongodb";
 import { revalidatePath } from "next/cache";
 
-export async function getCustomerSummary(customerId: string, year?: string) {
+export async function getCustomerSummary(
+  customerId: string,
+  year?: string,
+  month?: string,
+  startDate?: string,
+  endDate?: string
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
     let dateMatch = {};
-    if (year && year !== "all") {
-      const startDate = new Date(`${year}-01-01`);
-      const endDate = new Date(`${year}-12-31`);
+    if (startDate && endDate) {
+      // Date range filtering takes precedence
       dateMatch = {
         date: {
-          $gte: startDate,
-          $lte: endDate,
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
         },
       };
+    } else if (year && year !== "all") {
+      if (month && month !== "all") {
+        // Both year and month filtering
+        const monthNum = parseInt(month);
+        const lastDay = new Date(parseInt(year), monthNum, 0).getDate(); // Get last day of the month
+        const startDate = new Date(
+          `${year}-${monthNum.toString().padStart(2, "0")}-01`
+        );
+        const endDate = new Date(
+          `${year}-${monthNum.toString().padStart(2, "0")}-${lastDay}`
+        );
+
+        dateMatch = {
+          date: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        };
+      } else {
+        // Only year filtering
+        const startDate = new Date(`${year}-01-01`);
+        const endDate = new Date(`${year}-12-31`);
+        dateMatch = {
+          date: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        };
+      }
     }
 
     const customer = await db
@@ -93,6 +127,108 @@ export async function getCustomerSummary(customerId: string, year?: string) {
   }
 }
 
+export async function getCustomerAvailableYears(customerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get unique years from both works and transactions
+    const [workYears, transactionYears] = await Promise.all([
+      db
+        .collection("works")
+        .distinct("date", { customerId: new ObjectId(customerId) }),
+      db
+        .collection("transactions")
+        .distinct("date", { customerId: new ObjectId(customerId) }),
+    ]);
+
+    // Combine years from both collections and get unique years
+    const allDates = [...workYears, ...transactionYears];
+    const uniqueYears = Array.from(
+      new Set(allDates.map((date) => new Date(date).getFullYear()))
+    ).sort((a, b) => b - a); // Sort years in descending order
+
+    return uniqueYears;
+  } catch (error) {
+    console.error("Failed to fetch customer years:", error);
+    return [];
+  }
+}
+
+export async function getCustomerAvailableMonths(customerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get all dates from works and transactions
+    const [workDates, transactionDates] = await Promise.all([
+      db
+        .collection("works")
+        .find(
+          { customerId: new ObjectId(customerId) },
+          { projection: { date: 1 } }
+        )
+        .toArray(),
+      db
+        .collection("transactions")
+        .find(
+          { customerId: new ObjectId(customerId) },
+          { projection: { date: 1 } }
+        )
+        .toArray(),
+    ]);
+
+    // Combine dates from both collections
+    const allDates = [
+      ...workDates.map((work) => new Date(work.date)),
+      ...transactionDates.map((transaction) => new Date(transaction.date)),
+    ];
+
+    // Create a map of year-month combinations
+    const monthMap = new Map();
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    allDates.forEach((date) => {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const key = `${year}-${month}`;
+
+      if (!monthMap.has(key)) {
+        monthMap.set(key, {
+          year,
+          month: month + 1, // Convert to 1-based month
+          label: monthNames[month],
+        });
+      }
+    });
+
+    // Convert the map to an array and sort by year and month
+    const availableMonths = Array.from(monthMap.values()).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return a.month - b.month;
+    });
+
+    return availableMonths;
+  } catch (error) {
+    console.error("Failed to fetch customer months:", error);
+    return [];
+  }
+}
+
+// The rest of the functions remain the same
 export async function getAllCustomers() {
   try {
     const client = await clientPromise;
@@ -172,33 +308,5 @@ export async function getCustomerName(customerId: string) {
   } catch (error) {
     console.error("Failed to fetch customer detail:", error);
     throw new Error("Failed to fetch customer detail");
-  }
-}
-
-export async function getCustomerAvailableYears(customerId: string) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
-
-    // Get unique years from both works and transactions
-    const [workYears, transactionYears] = await Promise.all([
-      db
-        .collection("works")
-        .distinct("date", { customerId: new ObjectId(customerId) }),
-      db
-        .collection("transactions")
-        .distinct("date", { customerId: new ObjectId(customerId) }),
-    ]);
-
-    // Combine years from both collections and get unique years
-    const allDates = [...workYears, ...transactionYears];
-    const uniqueYears = Array.from(
-      new Set(allDates.map((date) => new Date(date).getFullYear()))
-    ).sort((a, b) => b - a); // Sort years in descending order
-
-    return uniqueYears;
-  } catch (error) {
-    console.error("Failed to fetch customer years:", error);
-    return [];
   }
 }
