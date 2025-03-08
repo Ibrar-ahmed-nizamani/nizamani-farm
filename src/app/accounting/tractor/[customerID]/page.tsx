@@ -52,7 +52,6 @@ export default async function TractorCustomerSummary({
     getCustomerAvailableYears(customerId),
     getCustomerAvailableMonths(customerId),
   ]);
-
   const customerName =
     customerSummary?.customer?.name?.charAt(0).toUpperCase() +
     customerSummary?.customer?.name?.slice(1);

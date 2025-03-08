@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 interface TransactionQuery {
   customerId: ObjectId;
+  workId: { $exists: false };
   date?: {
     $gte: Date;
     $lte: Date;
@@ -22,6 +23,7 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
     const amount = parseFloat(formData.get("amount") as string);
     const date = new Date(formData.get("date") as string);
     const description = formData.get("description") as string;
+    const type = formData.get("type") as string; // Added type field (CREDIT or DEBIT)
 
     // Insert transaction
     await db.collection("transactions").insertOne({
@@ -29,17 +31,26 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
       amount,
       date,
       description,
-      type: "CREDIT",
+      type, // Use the submitted type value
       createdAt: new Date(),
     });
 
-    // Update customer's totalPaid
-    await db
-      .collection("customers")
-      .updateOne(
-        { _id: new ObjectId(customerId) },
-        { $inc: { totalPaid: amount } }
-      );
+    // Update customer's totalPaid or totalDebit based on transaction type
+    if (type === "CREDIT") {
+      await db
+        .collection("customers")
+        .updateOne(
+          { _id: new ObjectId(customerId) },
+          { $inc: { totalPaid: amount } }
+        );
+    } else if (type === "DEBIT") {
+      await db
+        .collection("customers")
+        .updateOne(
+          { _id: new ObjectId(customerId) },
+          { $inc: { totalDebit: amount } }
+        );
+    }
 
     revalidatePath(`/accounting/tractor`);
     revalidatePath(`/accounting/tractor/${customerId}`);
@@ -49,69 +60,6 @@ export async function addTransaction(prevState: unknown, formData: FormData) {
     return { success: false, message: "Failed to add transaction" };
   }
   redirect(`/accounting/tractor/${customerId}/transaction`);
-}
-export async function getCustomerTransactions(
-  customerId: string,
-  year?: string,
-  month?: string,
-  startDate?: string,
-  endDate?: string
-) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
-
-    const query: TransactionQuery = { customerId: new ObjectId(customerId) };
-
-    if (startDate && endDate) {
-      // Use date range filtering if provided
-      query.date = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
-    } else if (year && year !== "all") {
-      if (month && month !== "all") {
-        // Both year and month filtering
-        const monthNum = parseInt(month);
-        const lastDay = new Date(parseInt(year), monthNum, 0).getDate();
-        query.date = {
-          $gte: new Date(`${year}-${monthNum.toString().padStart(2, "0")}-01`),
-          $lte: new Date(
-            `${year}-${monthNum.toString().padStart(2, "0")}-${lastDay}`
-          ),
-        };
-      } else {
-        // Only year filtering
-        query.date = {
-          $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`),
-        };
-      }
-    }
-
-    // Rest of the function remains the same...
-
-    const transactions = await db
-      .collection("transactions")
-      .find(query)
-      .sort({ date: -1 })
-      .toArray();
-    // Serialize the transactions data
-    return transactions.map((transaction) => ({
-      _id: transaction._id.toString(),
-      customerId: transaction.customerId.toString(),
-      amount: transaction.amount,
-      date: transaction.date.toISOString(),
-      description: transaction.description,
-      type: transaction.type,
-      createdAt: transaction.createdAt?.toISOString(),
-      updatedAt: transaction.updatedAt?.toISOString(),
-      customerName: transaction.customerName,
-    }));
-  } catch (error) {
-    console.error("Failed to fetch transactions:", error);
-    return [];
-  }
 }
 
 export async function deleteTransaction(
@@ -136,13 +84,20 @@ export async function deleteTransaction(
       .collection("transactions")
       .deleteOne({ _id: new ObjectId(transactionId) });
 
-    // Update customer's totalPaid
+    // Update customer's totalPaid or totalDebit based on transaction type
     if (transaction.type === "CREDIT") {
       await db
         .collection("customers")
         .updateOne(
           { _id: new ObjectId(customerId) },
           { $inc: { totalPaid: -transaction.amount } }
+        );
+    } else if (transaction.type === "DEBIT") {
+      await db
+        .collection("customers")
+        .updateOne(
+          { _id: new ObjectId(customerId) },
+          { $inc: { totalDebit: -transaction.amount } }
         );
     }
 
@@ -157,33 +112,15 @@ export async function deleteTransaction(
   }
 }
 
-export async function getTransactionAvailableYears(customerId: string) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
-
-    // Get unique years from CREDIT transactions only
-    const dates = await db.collection("transactions").distinct("date", {
-      customerId: new ObjectId(customerId),
-      type: "CREDIT",
-    });
-
-    // Convert dates to years and sort
-    const uniqueYears = Array.from(
-      new Set(dates.map((date) => new Date(date).getFullYear()))
-    ).sort((a, b) => b - a); // Sort years in descending order
-
-    return uniqueYears;
-  } catch (error) {
-    console.error("Failed to fetch transaction years:", error);
-    return [];
-  }
-}
-
 export async function updateTransaction(
   transactionId: string,
   customerId: string,
-  updatedData: { amount: number; description: string; date: Date }
+  updatedData: {
+    amount: number;
+    description: string;
+    date: Date;
+    type: string; // Added type for update
+  }
 ) {
   try {
     const client = await clientPromise;
@@ -206,19 +143,65 @@ export async function updateTransaction(
           amount: updatedData.amount,
           description: updatedData.description,
           date: updatedData.date,
+          type: updatedData.type, // Update transaction type
         },
       }
     );
 
-    // Calculate the difference in amount and update the customer's totalPaid
-    const amountDifference = updatedData.amount - originalTransaction.amount;
-    if (originalTransaction.type === "CREDIT") {
-      await db
-        .collection("customers")
-        .updateOne(
-          { _id: new ObjectId(customerId) },
-          { $inc: { totalPaid: amountDifference } }
-        );
+    // Handle customer totalPaid and totalDebit updates based on transaction type changes
+    if (originalTransaction.type === updatedData.type) {
+      // Same type, just update the amount difference
+      const amountDifference = updatedData.amount - originalTransaction.amount;
+      if (originalTransaction.type === "CREDIT") {
+        await db
+          .collection("customers")
+          .updateOne(
+            { _id: new ObjectId(customerId) },
+            { $inc: { totalPaid: amountDifference } }
+          );
+      } else if (originalTransaction.type === "DEBIT") {
+        await db
+          .collection("customers")
+          .updateOne(
+            { _id: new ObjectId(customerId) },
+            { $inc: { totalDebit: amountDifference } }
+          );
+      }
+    } else {
+      // Type changed (CREDIT to DEBIT or DEBIT to CREDIT)
+      // Remove the effect of the original transaction
+      if (originalTransaction.type === "CREDIT") {
+        await db
+          .collection("customers")
+          .updateOne(
+            { _id: new ObjectId(customerId) },
+            { $inc: { totalPaid: -originalTransaction.amount } }
+          );
+      } else if (originalTransaction.type === "DEBIT") {
+        await db
+          .collection("customers")
+          .updateOne(
+            { _id: new ObjectId(customerId) },
+            { $inc: { totalDebit: -originalTransaction.amount } }
+          );
+      }
+
+      // Add the effect of the new transaction
+      if (updatedData.type === "CREDIT") {
+        await db
+          .collection("customers")
+          .updateOne(
+            { _id: new ObjectId(customerId) },
+            { $inc: { totalPaid: updatedData.amount } }
+          );
+      } else if (updatedData.type === "DEBIT") {
+        await db
+          .collection("customers")
+          .updateOne(
+            { _id: new ObjectId(customerId) },
+            { $inc: { totalDebit: updatedData.amount } }
+          );
+      }
     }
 
     revalidatePath(`/accounting/tractor`);
@@ -229,5 +212,103 @@ export async function updateTransaction(
   } catch (error) {
     console.error("Failed to update transaction:", error);
     return { success: false, error: "Failed to update transaction" };
+  }
+}
+export async function getCustomerTransactions(
+  customerId: string,
+  year?: string,
+  month?: string,
+  startDate?: string,
+  endDate?: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const query: TransactionQuery = {
+      customerId: new ObjectId(customerId),
+      workId: { $exists: false },
+    };
+
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    } else if (year && year !== "all") {
+      const startYear = parseInt(year);
+      if (month && month !== "all") {
+        const startMonth = parseInt(month) - 1; // Convert to 0-based month
+        const endMonth = startMonth + 1;
+        query.date = {
+          $gte: new Date(startYear, startMonth, 1),
+          $lte: new Date(startYear, endMonth, 0), // Last day of the month
+        };
+      } else {
+        query.date = {
+          $gte: new Date(startYear, 0, 1),
+          $lte: new Date(startYear, 11, 31),
+        };
+      }
+    }
+
+    const transactions = await db
+      .collection("transactions")
+      .find(query)
+      .sort({ date: -1 })
+      .toArray();
+
+    return transactions.map((transaction) => ({
+      _id: transaction._id.toString(),
+      customerId: transaction.customerId.toString(),
+      amount: transaction.amount,
+      date: transaction.date.toISOString(),
+      description: transaction.description,
+      type: transaction.type,
+      createdAt: transaction.createdAt?.toISOString(),
+      updatedAt: transaction.updatedAt?.toISOString(),
+      customerName: transaction.customerName,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch transactions:", error);
+    return [];
+  }
+}
+
+export async function getTransactionAvailableYears(customerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get unique years from all transactions, not just CREDIT
+    const dates = await db.collection("transactions").distinct("date", {
+      customerId: new ObjectId(customerId),
+    });
+
+    // Convert dates to years and sort
+    const uniqueYears = Array.from(
+      new Set(dates.map((date) => new Date(date).getFullYear()))
+    ).sort((a, b) => b - a); // Sort years in descending order
+
+    return uniqueYears;
+  } catch (error) {
+    console.error("Failed to fetch transaction years:", error);
+    return [];
+  }
+}
+
+export async function getCustomerTransactionDates(customerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const dates = await db.collection("transactions").distinct("date", {
+      customerId: new ObjectId(customerId),
+    });
+
+    return dates.map((date) => new Date(date));
+  } catch (error) {
+    console.error("Failed to fetch transaction dates:", error);
+    return [];
   }
 }
