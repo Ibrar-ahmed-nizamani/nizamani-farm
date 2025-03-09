@@ -114,7 +114,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { addTransaction } from "@/lib/actions/transaction";
-import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   date: z.string().min(1, "Date is required"),
@@ -140,7 +139,6 @@ interface Props {
 }
 
 export default function CustomerTransactionForm({ customerId }: Props) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -172,7 +170,7 @@ export default function CustomerTransactionForm({ customerId }: Props) {
       if (result && !result.success) {
         setError(result.message || "Failed to add transaction");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred while adding the transaction");
     } finally {
       setIsLoading(false);
