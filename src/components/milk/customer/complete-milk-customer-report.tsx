@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getMilkCustomerSummary } from "@/lib/actions/milk-customer-actions";
-import {
-  formatDatePattern,
-  getDateRangeDescription,
-  monthNumberToName,
-} from "@/lib/utils";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 
 interface CompleteCustomerReportProps {
   customerDetails: {
