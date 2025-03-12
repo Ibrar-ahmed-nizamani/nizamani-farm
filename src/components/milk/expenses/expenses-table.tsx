@@ -19,6 +19,7 @@ interface MilkExpense {
   _id: string;
   amount: number;
   date: string;
+  description?: string;
   type: {
     _id: string;
     name: string;
@@ -53,6 +54,7 @@ export default function MilkExpensesTable({
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Expense Type</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead className="w-[100px] text-center">Action</TableHead>
             </TableRow>
@@ -62,6 +64,9 @@ export default function MilkExpensesTable({
               <TableRow key={expense._id}>
                 <TableCell>{formatDatePattern(expense.date)}</TableCell>
                 <TableCell>{expense.type.name}</TableCell>
+                <TableCell>
+                  {expense.description ? expense.description : "-"}
+                </TableCell>
                 <TableCell>Rs {expense.amount.toLocaleString()}</TableCell>
                 <TableCell>
                   <EditExpense
@@ -70,6 +75,7 @@ export default function MilkExpensesTable({
                       date: expense.date,
                       typeId: expense.type._id,
                       amount: expense.amount,
+                      description: expense.description || "",
                       type: expense.type,
                     }}
                     expenseTypes={expenseTypes}

@@ -12,6 +12,7 @@ const editExpenseSchema = z.object({
   date: z.string().min(1, "Date is required"),
   typeId: z.string().min(1, "Expense type is required"),
   amount: z.coerce.number().positive("Must be a valid positive number"),
+  description: z.string().optional(),
 });
 
 type EditExpenseFormData = z.infer<typeof editExpenseSchema>;
@@ -26,6 +27,7 @@ interface Expense {
   date: string;
   typeId: string;
   amount: number;
+  description?: string;
   type: ExpenseType;
 }
 
@@ -42,13 +44,14 @@ export function EditExpense({ expense, expenseTypes }: EditExpenseProps) {
       typeId: values.typeId,
       amount: values.amount,
       date: new Date(values.date),
+      description: values.description,
     });
   };
 
   const fields: Array<{
     name: Path<EditExpenseFormData>;
     label: string;
-    type: "text" | "number" | "date" | "select";
+    type: "text" | "number" | "date" | "select" | "textarea";
     placeholder?: string;
     options?: { label: string; value: string }[];
   }> = [
@@ -74,12 +77,19 @@ export function EditExpense({ expense, expenseTypes }: EditExpenseProps) {
       type: "number",
       placeholder: "Enter amount",
     },
+    {
+      name: "description",
+      label: "Description (Optional)",
+      type: "textarea",
+      placeholder: "Enter expense details",
+    },
   ];
 
   const initialData: EditExpenseFormData = {
     date: new Date(expense.date).toISOString().split("T")[0],
     typeId: expense.typeId,
     amount: expense.amount,
+    description: expense.description || "",
   };
 
   return (

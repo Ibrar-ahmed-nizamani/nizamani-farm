@@ -9,6 +9,7 @@ interface MilkExpense {
   _id: string;
   amount: number;
   date: string | Date;
+  description?: string;
   type: {
     name: string;
   };
@@ -96,6 +97,10 @@ export default function PrintMilkExpensesReport({
               .amount {
                 text-align: right;
               }
+              .description {
+                max-width: 250px;
+                word-wrap: break-word;
+              }
               .type-summary {
                 margin-top: 20px;
               }
@@ -129,6 +134,7 @@ export default function PrintMilkExpensesReport({
                 <tr>
                   <th>Date</th>
                   <th>Expense Type</th>
+                  <th class="description">Description</th>
                   <th class="amount">Amount</th>
                 </tr>
               </thead>
@@ -139,6 +145,7 @@ export default function PrintMilkExpensesReport({
                   <tr>
                     <td>${formatDatePattern(expense.date)}</td>
                     <td>${expense.type.name}</td>
+                    <td class="description">${expense.description || "-"}</td>
                     <td class="amount">Rs ${expense.amount.toLocaleString()}</td>
                   </tr>
                 `

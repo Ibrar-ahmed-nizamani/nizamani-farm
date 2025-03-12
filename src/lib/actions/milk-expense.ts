@@ -47,6 +47,7 @@ export async function getMilkExpenses(year?: string, month?: string) {
       ...expense,
       amount: expense.amount,
       date: expense.date,
+      description: expense.description || "",
       _id: expense._id.toString(),
       typeId: expense.typeId.toString(),
       type: {
@@ -149,10 +150,12 @@ export async function addMilkExpense({
   typeId,
   amount,
   date,
+  description,
 }: {
   typeId: string;
   amount: number;
   date: Date;
+  description?: string;
 }) {
   try {
     const client = await clientPromise;
@@ -162,6 +165,7 @@ export async function addMilkExpense({
       typeId: new ObjectId(typeId),
       amount,
       date: new Date(date),
+      description: description || "",
       createdAt: new Date(),
     });
 
@@ -196,10 +200,12 @@ export async function updateMilkExpense(
     typeId,
     amount,
     date,
+    description,
   }: {
     typeId: string;
     amount: number;
     date: Date;
+    description?: string;
   }
 ) {
   try {
@@ -213,6 +219,7 @@ export async function updateMilkExpense(
           typeId: new ObjectId(typeId),
           amount,
           date: new Date(date),
+          description: description || "",
           updatedAt: new Date(),
         },
       }
