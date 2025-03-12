@@ -53,7 +53,9 @@ export default function CompleteCustomerReport({
       const { milkRecords, transactions } = await getMilkCustomerSummary(
         customerId,
         year,
-        month
+        month,
+        startDate,
+        endDate
       );
 
       // Combine and sort milk records and transactions by date
@@ -181,10 +183,7 @@ export default function CompleteCustomerReport({
                 endDate,
                 selectedYear: year,
                 selectedMonth: month,
-              })}</p>
-              <p>Period: ${year === "all" ? "All Time" : year}${
-        month ? ` - ${monthNumberToName(Number(month))}` : ""
-      }</p>
+              })}
             </div>
 
             <div class="summary">
