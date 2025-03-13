@@ -36,7 +36,7 @@ export default async function MilkCustomersPage() {
               type: "expense",
             },
             {
-              label: "Total Paid",
+              label: "Total Credit",
               value: totalPaid,
               type: "income",
             },
@@ -60,7 +60,7 @@ export default async function MilkCustomersPage() {
           <div className="grid grid-cols-4 gap-4 p-4 font-medium border-b">
             <div>Name</div>
             <div>Debit</div>
-            <div>Paid</div>
+            <div>Credit</div>
             <div>Balance</div>
           </div>
           {customers.map((customer) => (
