@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,24 +11,20 @@ import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { getField } from "@/lib/actions/field";
 import { getFieldShareExpenses } from "@/lib/actions/share-settings";
 import AddExpenseForm from "@/components/fields/share-setting/add-expense-percent-form";
 import EditExpenseModal from "@/components/fields/share-setting/edit-expense-percent";
 
 export default async function ShareSettingsPage({
-  params,
+  // params,
   searchParams,
 }: {
-  params: Promise<{ fieldId: string }>;
+  // params: Promise<{ fieldId: string }>;
   searchParams: Promise<{ shareType?: string }>;
 }) {
-  const { fieldId } = await params;
   const shareType = (await searchParams).shareType || "QUARTER"; // Default to QUARTER (1/4)
 
-  const field = await getField(fieldId);
-  const expenses = await getFieldShareExpenses(fieldId, shareType);
-
+  const expenses = await getFieldShareExpenses(shareType);
   const shareLabel =
     shareType === "HALF"
       ? "1/2 (50%)"
@@ -44,13 +39,13 @@ export default async function ShareSettingsPage({
           <h1 className="text-2xl font-bold">Share Settings</h1>
           <p className="text-muted-foreground text-lg">{shareLabel}</p>
         </div>
-        <BackLink href={`/fields/${fieldId}`} linkText="Back to Field" />
+        <BackLink href={`/fields`} linkText="Back to Field" />
       </div>
 
       <Tabs defaultValue={shareType} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <Link
-            href={`/fields/${fieldId}/share-setting?shareType=QUARTER`}
+            href={`/fields/share-setting?shareType=QUARTER`}
             className="w-full"
           >
             <TabsTrigger value="QUARTER" className="w-full">
@@ -58,7 +53,7 @@ export default async function ShareSettingsPage({
             </TabsTrigger>
           </Link>
           <Link
-            href={`/fields/${fieldId}/share-setting?shareType=HALF`}
+            href={`/fields/share-setting?shareType=HALF`}
             className="w-full"
           >
             <TabsTrigger value="HALF" className="w-full">
@@ -66,7 +61,7 @@ export default async function ShareSettingsPage({
             </TabsTrigger>
           </Link>
           <Link
-            href={`/fields/${fieldId}/share-setting?shareType=THIRD`}
+            href={`/fields/share-setting?shareType=THIRD`}
             className="w-full"
           >
             <TabsTrigger value="THIRD" className="w-full">
@@ -82,7 +77,7 @@ export default async function ShareSettingsPage({
               <p className="text-muted-foreground mb-4">
                 Define expenses for farmers with {shareLabel} share
               </p>
-              <AddExpenseForm fieldId={fieldId} shareType={shareType} />
+              <AddExpenseForm shareType={shareType} />
             </div>
 
             <div className="space-y-4">
@@ -105,10 +100,7 @@ export default async function ShareSettingsPage({
                           {expense.farmerExpenseSharePercentage}%
                         </TableCell>
                         <TableCell className="text-right">
-                          <EditExpenseModal
-                            expense={expense}
-                            fieldId={fieldId}
-                          />
+                          <EditExpenseModal expense={expense} />
                         </TableCell>
                       </TableRow>
                     ))}

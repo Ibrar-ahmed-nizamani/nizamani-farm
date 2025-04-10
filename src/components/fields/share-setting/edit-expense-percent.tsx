@@ -51,13 +51,9 @@ interface ExpenseData {
 
 interface EditExpenseModalProps {
   expense: ExpenseData;
-  fieldId: string;
 }
 
-export default function EditExpenseModal({
-  expense,
-  fieldId,
-}: EditExpenseModalProps) {
+export default function EditExpenseModal({ expense }: EditExpenseModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,7 +78,8 @@ export default function EditExpenseModal({
       //   });
       setIsOpen(false);
       router.refresh();
-    } catch (error) {
+    } catch {
+      console.error("Failed to update expense:");
       //   toast({
       //     title: "Error",
       //     description: "Failed to update expense. Please try again.",
@@ -104,7 +101,8 @@ export default function EditExpenseModal({
       //   });
       setIsOpen(false);
       router.refresh();
-    } catch (error) {
+    } catch {
+      console.error("Failed to delete expense:");
       //   toast({
       //     title: "Error",
       //     description: "Failed to delete expense. Please try again.",
@@ -124,7 +122,7 @@ export default function EditExpenseModal({
         <DialogHeader>
           <DialogTitle>Edit Expense</DialogTitle>
           <DialogDescription>
-            Update the expense details. Click save when you're done.
+            Update the expense details. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

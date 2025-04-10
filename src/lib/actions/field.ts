@@ -4,7 +4,6 @@
 import { revalidatePath } from "next/cache";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { Field, FieldFarmer, FieldExpense } from "@/lib/type-definitions";
 
 export async function addField(name: string, totalArea: number) {
   try {
@@ -80,6 +79,8 @@ export async function getFields() {
 
     return fields.map((field) => ({
       ...field,
+      name: field.name,
+      totalArea: field.totalArea,
       _id: field._id.toString(),
     }));
   } catch (error) {
@@ -103,6 +104,7 @@ export async function getField(id: string) {
 
     return {
       ...field,
+      name: field.name,
       _id: field._id.toString(),
     };
   } catch (error) {
@@ -235,46 +237,58 @@ export async function getFieldSummary(fieldId: string) {
 }
 
 // This is an update to the existing addFieldExpense function in lib/actions/field.ts
-
 export async function addFieldExpense(
   fieldId: string,
-  amount: number,
-  description: string,
-  date: Date,
-  expenseTypeId?: string
+  farmerId: string,
+  data: {
+    type: "expense" | "income";
+    expenseType?: string;
+    amount: number;
+    date: Date;
+    description: string;
+    farmerShare: number;
+  }
 ) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    // Verify field exists
-    const field = await db
-      .collection("fields")
-      .findOne({ _id: new ObjectId(fieldId) });
-
-    if (!field) {
-      return {
-        success: false,
-        error: "Field not found",
-      };
+    // Get expense type details if provided
+    let expenseTypeDetails = null;
+    if (data.type === "expense" && data.expenseType) {
+      expenseTypeDetails = await db
+        .collection("share_settings")
+        .findOne({ _id: new ObjectId(data.expenseType) });
     }
 
+    // Insert the field expense record
     await db.collection("field_expenses").insertOne({
       fieldId: new ObjectId(fieldId),
-      amount,
-      description,
-      expenseTypeId, // Add expense type ID to the document
-      date: new Date(date),
+      farmerId: new ObjectId(farmerId),
+      type: data.type,
+      expenseType:
+        data.type === "expense"
+          ? expenseTypeDetails
+            ? expenseTypeDetails.name
+            : undefined
+          : undefined,
+      expenseTypeId:
+        data.type === "expense"
+          ? data.expenseType
+            ? new ObjectId(data.expenseType)
+            : undefined
+          : undefined,
+      amount: data.amount,
+      date: new Date(data.date),
+      description: data.description,
+      farmerShare: data.farmerShare,
       createdAt: new Date(),
     });
 
-    revalidatePath(`/fields/${fieldId}`);
+    revalidatePath(`/fields/${fieldId}/farmers/${farmerId}`);
     return { success: true };
   } catch (error) {
     console.error("Failed to add field expense:", error);
-    return {
-      success: false,
-      error: "Failed to add expense",
-    };
+    throw new Error("Failed to add field expense");
   }
 }

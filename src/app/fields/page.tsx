@@ -11,21 +11,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getFields } from "@/lib/actions/field";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Settings } from "lucide-react";
 import Link from "next/link";
 
 export default async function FieldsPage() {
   const fields = await getFields();
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Fields</h1>
-        <Link href="/fields/add">
-          <Button>
-            <PlusIcon className="size-4" /> Add Field
-          </Button>
-        </Link>
+        <div className="flex space-x-4 items-center">
+          <Link href={`/fields/share-setting`}>
+            <Button variant="outline">
+              <Settings className="size-4" /> Share Settings
+            </Button>
+          </Link>
+          <Link href="/fields/add">
+            <Button>
+              <PlusIcon className="size-4" /> Add Field
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <CustomSearch

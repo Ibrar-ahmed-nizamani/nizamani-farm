@@ -5,11 +5,7 @@ import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
 // Existing functions like getField and getFieldFarmers should be here
-
-export async function getFieldShareExpenses(
-  fieldId: string,
-  shareType: string
-) {
+export async function getFieldShareExpenses(shareType: string) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -17,7 +13,6 @@ export async function getFieldShareExpenses(
     const expenses = await db
       .collection("share_settings")
       .find({
-        fieldId: new ObjectId(fieldId),
         shareType: shareType,
       })
       .sort({ name: 1 })
@@ -25,6 +20,10 @@ export async function getFieldShareExpenses(
 
     return expenses.map((expense) => ({
       ...expense,
+      fieldId: expense.fieldId ? expense.fieldId.toString() : undefined,
+      name: expense.name,
+      farmerExpenseSharePercentage: expense.farmerExpenseSharePercentage,
+      shareType: expense.shareType,
       _id: expense._id.toString(),
     }));
   } catch (error) {
@@ -33,27 +32,35 @@ export async function getFieldShareExpenses(
   }
 }
 
-export async function addFarmerShareExpense(
-  fieldId: string,
-  data: {
-    name: string;
-    farmerExpenseSharePercentage: number;
-    shareType: string;
-  }
-) {
+export async function addFarmerShareExpense(data: {
+  name: string;
+  farmerExpenseSharePercentage: number;
+  shareType: string;
+  fieldId?: string; // Made fieldId optional
+}) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    await db.collection("share_settings").insertOne({
-      fieldId: new ObjectId(fieldId),
+    const insertData = {
       name: data.name,
       farmerExpenseSharePercentage: data.farmerExpenseSharePercentage,
       shareType: data.shareType,
       createdAt: new Date(),
-    });
+    };
 
-    revalidatePath(`/fields/${fieldId}/share-setting`);
+    // Only add fieldId if it's provided
+    if (data.fieldId) {
+      insertData.fieldId = new ObjectId(data.fieldId);
+    }
+
+    await db.collection("share_settings").insertOne(insertData);
+
+    // Only revalidate if fieldId is provided
+    if (data.fieldId) {
+      revalidatePath(`/fields/${data.fieldId}/share-setting`);
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Failed to add field expense:", error);

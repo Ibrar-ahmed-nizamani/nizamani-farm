@@ -13,8 +13,8 @@ import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
 import { getField, getFieldFarmers } from "@/lib/actions/field";
-import AddFarmerForm from "@/components/fields/add-farmer";
-import { PlusIcon, Settings } from "lucide-react";
+import { PlusIcon } from "lucide-react";
+import { convertShareTypes } from "@/lib/utils";
 
 export default async function FieldPage({
   params,
@@ -25,7 +25,6 @@ export default async function FieldPage({
 
   const field = await getField(fieldId);
   const farmers = await getFieldFarmers(fieldId);
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -42,11 +41,6 @@ export default async function FieldPage({
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Farmers</h2>
           <div className="flex space-x-4">
-            <Link href={`/fields/${field._id}/share-setting`}>
-              <Button variant="outline">
-                <Settings className="size-4" /> Share Settings
-              </Button>
-            </Link>
             <Link href={`/fields/${field._id}/add-farmer`}>
               <Button>
                 <PlusIcon className="size-4" /> Add Farmer
@@ -70,12 +64,12 @@ export default async function FieldPage({
                 <TableRow key={farmer._id}>
                   <TableCell>{farmer.name}</TableCell>
                   <TableCell>
-                    {farmer.shareType === "HALF" ? "1/2" : "1/4"}
+                    {convertShareTypes(farmer.shareType, true)}
                   </TableCell>
                   <TableCell>{farmer.allocatedArea} acres</TableCell>
                   <TableCell className="text-right">
                     <Link href={`/fields/${field._id}/farmers/${farmer._id}`}>
-                      <Button variant="outline">View Transactions</Button>
+                      <Button variant="outline">Field Details</Button>
                     </Link>
                   </TableCell>
                 </TableRow>

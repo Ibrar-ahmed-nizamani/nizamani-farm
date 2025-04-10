@@ -32,14 +32,10 @@ const formSchema = z.object({
 });
 
 interface AddExpenseFormProps {
-  fieldId: string;
   shareType: string;
 }
 
-export default function AddExpenseForm({
-  fieldId,
-  shareType,
-}: AddExpenseFormProps) {
+export default function AddExpenseForm({ shareType }: AddExpenseFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,7 +51,7 @@ export default function AddExpenseForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsSubmitting(true);
-      await addFarmerShareExpense(fieldId, {
+      await addFarmerShareExpense({
         ...values,
         shareType,
       });
@@ -66,7 +62,8 @@ export default function AddExpenseForm({
       //     description: "The expense has been added successfully.",
       //   });
       router.refresh();
-    } catch (error) {
+    } catch {
+      console.error("Failed to add expense:");
       //   toast({
       //     title: "Error",
       //     description: "Failed to add expense. Please try again.",

@@ -75,3 +75,24 @@ export function capitalizeFirstLetter(str: string): string {
   if (!str) return str; // Return the original string if it's empty
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+export function convertShareTypes(share: string, ui: boolean = false) {
+  if (share === "1/2" && ui === false) {
+    return "HALF";
+  }
+  if (share === "1/2" && ui) {
+    return "50%";
+  }
+  if (share === "1/3" && ui === false) {
+    return "THIRD";
+  }
+  if (share === "1/3" && ui) {
+    return "33%";
+  }
+  if (share === "1/4" && ui === false) {
+    return "QUARTER";
+  }
+  if (share === "1/4" && ui) {
+    return "25%";
+  }
+}
