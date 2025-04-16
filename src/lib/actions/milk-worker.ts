@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
+// Modified getMilkWorkers function to include balance calculations
 export async function getMilkWorkers() {
   try {
     const client = await clientPromise;
@@ -15,13 +16,71 @@ export async function getMilkWorkers() {
       .sort({ name: 1 })
       .toArray();
 
-    return workers.map((worker) => ({
-      name: worker.name,
-      _id: worker._id.toString(),
-    }));
+    // Calculate credit, debit, and balance for each worker
+    let grandTotalCredit = 0;
+    let grandTotalDebit = 0;
+
+    const workersWithBalance = await Promise.all(
+      workers.map(async (worker) => {
+        const workerId = worker._id;
+
+        // Get all transactions for this worker
+        const transactions = await db
+          .collection("milk_worker_transactions")
+          .find({ workerId })
+          .toArray();
+
+        // Calculate total credit and debit
+        let totalCredit = 0;
+        let totalDebit = 0;
+
+        transactions.forEach((transaction) => {
+          if (transaction.type === "credit") {
+            totalCredit += transaction.amount;
+          } else if (transaction.type === "debit") {
+            totalDebit += transaction.amount;
+          }
+        });
+
+        // Add to grand totals
+        grandTotalCredit += totalCredit;
+        grandTotalDebit += totalDebit;
+
+        // Calculate balance
+        const balance = totalCredit - totalDebit;
+
+        return {
+          name: worker.name,
+          _id: worker._id.toString(),
+          totalCredit,
+          totalDebit,
+          balance,
+          balanceType: balance >= 0 ? "credit" : "debit",
+        };
+      })
+    );
+
+    // Calculate grand balance
+    const grandBalance = grandTotalCredit - grandTotalDebit;
+
+    return {
+      workers: workersWithBalance,
+      summary: {
+        totalCredit: grandTotalCredit,
+        totalDebit: grandTotalDebit,
+        balance: grandBalance,
+      },
+    };
   } catch (error) {
     console.error("Failed to fetch milk workers:", error);
-    return [];
+    return {
+      workers: [],
+      summary: {
+        totalCredit: 0,
+        totalDebit: 0,
+        balance: 0,
+      },
+    };
   }
 }
 

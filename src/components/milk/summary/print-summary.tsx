@@ -3,16 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
-import { formatDatePattern, monthNumberToName } from "@/lib/utils";
+import { formatDatePattern } from "@/lib/utils";
 import { Transaction } from "@/lib/type-definitions";
+import { format } from "date-fns";
 
 interface PrintMilkSummaryProps {
   transactions: Transaction[];
   totalIncome: number;
   totalExpense: number;
   totalBalance: number;
-  selectedYear?: string;
+  selectedYear: string;
   selectedMonth?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export default function PrintMilkSummary({
@@ -22,16 +25,60 @@ export default function PrintMilkSummary({
   totalBalance,
   selectedYear,
   selectedMonth,
+  startDate,
+  endDate,
 }: PrintMilkSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
+
+  // Function to generate date range description for the report header
+  const getDateRangeDescription = () => {
+    if (startDate && endDate) {
+      return `${format(startDate, "PPP")} to ${format(endDate, "PPP")}`;
+    } else if (startDate) {
+      return `From ${formatDatePattern(startDate)}`;
+    } else if (endDate) {
+      return `Until ${formatDatePattern(endDate)}`;
+    } else if (
+      selectedYear !== "all" &&
+      selectedMonth &&
+      selectedMonth !== "all"
+    ) {
+      const monthDate = new Date(
+        parseInt(selectedYear),
+        parseInt(selectedMonth) - 1,
+        1
+      );
+      return `${monthDate.toLocaleString("default", {
+        month: "long",
+      })} ${selectedYear}`;
+    } else if (selectedYear !== "all") {
+      return `Year ${selectedYear}`;
+    } else {
+      return "All Time";
+    }
+  };
 
   const handlePrint = async () => {
     try {
       setIsLoading(true);
 
-      // const sortedTransactions = [...transactions].sort(
-      //   (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      // );
+      const sortedTransactions = [...transactions].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      // Calculate running total for each transaction
+      let runningTotal = 0;
+      const transactionsWithRunningTotal = sortedTransactions.map(
+        (transaction) => {
+          runningTotal += transaction.amount;
+          return {
+            ...transaction,
+            runningTotal,
+          };
+        }
+      );
+
+      const dateRangeDescription = getDateRangeDescription();
 
       const printContent = `
         <html>
@@ -106,15 +153,7 @@ export default function PrintMilkSummary({
           <body>
             <div class="header">
               <h1>Milk Summary Report</h1>
-              <p>Period: ${
-                selectedYear === "today"
-                  ? "Today"
-                  : selectedYear
-                  ? selectedYear
-                  : "All Years"
-              }${
-        selectedMonth ? ` - ${monthNumberToName(Number(selectedMonth))}` : ""
-      }</p>
+              <p>Period: ${dateRangeDescription}</p>
             </div>
 
             <div class="summary">
@@ -140,16 +179,15 @@ export default function PrintMilkSummary({
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Customer</th>
-                  <th>Expense Detail</th>
-                  <th>Income Details</th>
+                  <th>Customer/Expense</th>
+                  <th>Details</th>
                   <th class="amount">Income</th>
                   <th class="amount">Expense</th>
-                  <th class="amount">Balance</th>
+                  <th class="amount">Net Balance</th>
                 </tr>
               </thead>
               <tbody>
-                ${transactions
+                ${transactionsWithRunningTotal
                   .map(
                     (transaction) => `
                   <tr>
@@ -159,12 +197,7 @@ export default function PrintMilkSummary({
                     <td>${
                       transaction.type === "income"
                         ? transaction.description
-                        : "-"
-                    }</td>
-                    <td>${
-                      transaction.type === "expense"
-                        ? transaction.description
-                        : "-"
+                        : transaction.description
                     }</td>
                     <td>${transaction.details}</td>
                     <td class="amount">${
@@ -178,17 +211,10 @@ export default function PrintMilkSummary({
                         : "-"
                     }</td>
                     <td class="amount ${
-                      transaction.balance && transaction.balance >= 0
-                        ? "income"
-                        : "expense"
+                      transaction.runningTotal >= 0 ? "income" : "expense"
                     }">
-                      Rs ${
-                        transaction.balance &&
-                        Math.abs(transaction.balance).toFixed(0)
-                      } ${
-                      transaction.balance && transaction.balance >= 0
-                        ? "Cr"
-                        : "Dr"
+                      Rs ${Math.abs(transaction.runningTotal)} ${
+                      transaction.runningTotal >= 0 ? "Cr" : "Dr"
                     }
                     </td>
                   </tr>

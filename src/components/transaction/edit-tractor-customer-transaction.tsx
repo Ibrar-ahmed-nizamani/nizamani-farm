@@ -9,11 +9,14 @@ import { Button } from "@/components/ui/button";
 import EditDialog from "@/components/shared/edit-dialog";
 import { updateTransaction } from "@/lib/actions/transaction";
 
-// Define the schema with proper types
+// Define the schema with proper types including the transaction type
 const editTransactionSchema = z.object({
   amount: z.coerce.number().positive("Must be a valid positive number"),
   description: z.string().min(1, "Description is required"),
   date: z.string().min(1, "Date is required"),
+  type: z.enum(["CREDIT", "DEBIT"], {
+    required_error: "Transaction type is required",
+  }),
 });
 
 type EditTransactionFormData = z.infer<typeof editTransactionSchema>;
@@ -23,7 +26,7 @@ interface Transaction {
   amount: number;
   description: string;
   date: string;
-  type: string;
+  type: "CREDIT" | "DEBIT"; // Include the transaction type
 }
 
 interface EditTransactionProps {
@@ -44,15 +47,27 @@ export function EditTransaction({
       amount: values.amount,
       description: values.description,
       date: new Date(values.date),
+      type: values.type, // Include the transaction type
     });
   };
 
   const fields: Array<{
     name: Path<EditTransactionFormData>;
     label: string;
-    type: "text" | "number" | "date";
+    type: "text" | "number" | "date" | "select";
     placeholder?: string;
+    options?: { value: string; label: string }[];
   }> = [
+    {
+      name: "type",
+      label: "Transaction Type",
+      type: "select",
+      placeholder: "Select transaction type",
+      options: [
+        { value: "CREDIT", label: "Credit " },
+        { value: "DEBIT", label: "Debit " },
+      ],
+    },
     {
       name: "amount",
       label: "Amount",
@@ -77,6 +92,7 @@ export function EditTransaction({
     amount: transaction.amount,
     description: transaction.description,
     date: transaction.date.split("T")[0],
+    type: transaction.type, // Include the initial transaction type
   };
 
   return (

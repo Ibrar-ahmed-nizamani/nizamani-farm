@@ -61,8 +61,7 @@ export default async function CustomerTransactionsPage({
           <Button>Add Transaction</Button>
         </Link>
       </div>
-      {transactions.filter((transaction) => transaction.type === "CREDIT")
-        .length === 0 ? (
+      {transactions.length === 0 ? (
         <EmptyTractorData title="transactions" />
       ) : (
         <TransactionsTable

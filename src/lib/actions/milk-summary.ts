@@ -2,61 +2,99 @@
 "use server";
 
 import clientPromise from "@/lib/mongodb";
-import { MongoDBFilter } from "../type-definitions";
+
+interface DateFilterOptions {
+  year?: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+  date?: string; // Keep existing date param for backward compatibility
+}
+
 export async function getMilkSummaryData(
-  year?: string,
-  month?: string,
-  date?: string
+  filterOptions: DateFilterOptions = {}
 ) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    // Build date filter
-    const dateFilter: MongoDBFilter = {};
+    // Explicit date filter construction
+    const buildMatchStage = (collection: string) => {
+      const { year, month, startDate, endDate, date } = filterOptions;
+      const matchConditions: any = {};
 
-    if (date === "today") {
-      // Create today's date filter
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Date range filter
+      if (startDate || endDate) {
+        matchConditions.date = {};
+        if (startDate) {
+          matchConditions.date.$gte = new Date(startDate);
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          matchConditions.date.$lte = end;
+        }
+      }
+      // Specific date filter
+      else if (date) {
+        if (date === "today") {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
 
-      dateFilter.date = {
-        $gte: today,
-        $lt: tomorrow,
-      };
-    } else if (date !== "today" && date) {
-      // Handle custom date selection
-      const selectedDate = new Date(date);
-      selectedDate.setHours(0, 0, 0, 0);
-      const nextDay = new Date(selectedDate);
-      nextDay.setDate(nextDay.getDate() + 1);
+          matchConditions.date = {
+            $gte: today,
+            $lt: tomorrow,
+          };
+        } else {
+          const selectedDate = new Date(date);
+          selectedDate.setHours(0, 0, 0, 0);
+          const nextDay = new Date(selectedDate);
+          nextDay.setDate(nextDay.getDate() + 1);
 
-      dateFilter.date = {
-        $gte: selectedDate,
-        $lt: nextDay,
-      };
-    } else if (year) {
-      const startDate = month
-        ? new Date(`${year}-${month}-01`)
-        : new Date(`${year}-01-01`);
+          matchConditions.date = {
+            $gte: selectedDate,
+            $lt: nextDay,
+          };
+        }
+      }
+      // Year and month filter
+      else if (year && year !== "all") {
+        if (month && month !== "all") {
+          const monthNum = parseInt(month);
+          const yearNum = parseInt(year);
 
-      const endDate = month
-        ? new Date(new Date(startDate).setMonth(startDate.getMonth() + 1))
-        : new Date(`${year}-12-31`);
+          const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+          const endOfMonth = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
 
-      dateFilter.date = {
-        $gte: startDate,
-        $lt: endDate,
-      };
-    }
+          matchConditions.date = {
+            $gte: startOfMonth,
+            $lte: endOfMonth,
+          };
+        } else {
+          matchConditions.date = {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+          };
+        }
+      }
+
+      // For milk-transactions, add type filter for debits
+      if (collection === "milk-transactions") {
+        matchConditions.type = "DEBIT";
+      }
+
+      return Object.keys(matchConditions).length > 0
+        ? { $match: matchConditions }
+        : { $match: {} };
+    };
 
     // Get expenses
     const expenses = await db
       .collection("milk_expenses")
       .aggregate([
-        { $match: dateFilter },
+        buildMatchStage("milk_expenses"),
         {
           $lookup: {
             from: "milk_expense_types",
@@ -73,7 +111,7 @@ export async function getMilkSummaryData(
     const customerRecords = await db
       .collection("milk-records")
       .aggregate([
-        { $match: dateFilter },
+        buildMatchStage("milk-records"),
         {
           $lookup: {
             from: "milk-customers",
@@ -90,12 +128,7 @@ export async function getMilkSummaryData(
     const customerDebits = await db
       .collection("milk-transactions")
       .aggregate([
-        {
-          $match: {
-            ...dateFilter,
-            type: "DEBIT",
-          },
-        },
+        buildMatchStage("milk-transactions"),
         {
           $lookup: {
             from: "milk-customers",
@@ -108,35 +141,9 @@ export async function getMilkSummaryData(
       ])
       .toArray();
 
-    // Get available years from all collections
-    const years = await db.collection("milk_expenses").distinct("date");
-    const recordYears = await db.collection("milk-records").distinct("date");
-    const debitYears = await db
-      .collection("milk-transactions")
-      .distinct("date");
-
-    const allYears = Array.from(
-      new Set([
-        ...years.map((date) => new Date(date).getFullYear()),
-        ...recordYears.map((date) => new Date(date).getFullYear()),
-        ...debitYears.map((date) => new Date(date).getFullYear()),
-      ])
-    ).sort((a, b) => b - a);
-
-    // Get available months for selected year
-    const months = year
-      ? Array.from(
-          new Set([
-            ...expenses.map((exp) => new Date(exp.date).getMonth() + 1),
-            ...customerRecords.map(
-              (record) => new Date(record.date).getMonth() + 1
-            ),
-            ...customerDebits.map(
-              (debit) => new Date(debit.date).getMonth() + 1
-            ),
-          ])
-        ).sort((a, b) => a - b)
-      : [];
+    // Calculate years and months dynamically
+    const years = await getUniqueYears(db);
+    const months = await getAvailableMonths(db, years);
 
     return {
       expenses: expenses.map((exp) => ({
@@ -169,7 +176,7 @@ export async function getMilkSummaryData(
         description: debit.description,
         customerName: debit.customer?.name,
       })),
-      years: allYears,
+      years,
       months,
     };
   } catch (error) {
@@ -183,47 +190,65 @@ export async function getMilkSummaryData(
     };
   }
 }
-export async function getMilkSummaryYearsAndMonths() {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
 
-    // Get dates from all three collections
-    const expenseDates = await db.collection("milk_expenses").distinct("date");
-    const workerDates = await db
-      .collection("milk_worker_transactions")
-      .distinct("date");
-    const recordDates = await db.collection("milk-records").distinct("date");
+// Helper function to get unique years dynamically
+async function getUniqueYears(db: any) {
+  const expenseYears = await db.collection("milk_expenses").distinct("date");
+  const recordYears = await db.collection("milk-records").distinct("date");
+  const debitYears = await db.collection("milk-transactions").distinct("date");
 
-    // Create a map to store months for each year
-    const yearMonthMap = new Map<number, Set<number>>();
+  return Array.from(
+    new Set([
+      ...expenseYears.map((date: Date) => new Date(date).getFullYear()),
+      ...recordYears.map((date: Date) => new Date(date).getFullYear()),
+      ...debitYears.map((date: Date) => new Date(date).getFullYear()),
+    ])
+  ).sort((a, b) => b - a);
+}
 
-    // Helper function to process dates
-    const processDate = (date: string | Date) => {
-      const dateObj = new Date(date);
-      const year = dateObj.getFullYear();
-      const month = dateObj.getMonth() + 1; // Adding 1 since getMonth() returns 0-11
+// Helper function to get available months
+async function getAvailableMonths(db: any, years: number[]) {
+  const monthsMap = new Map<number, Set<number>>();
 
-      if (!yearMonthMap.has(year)) {
-        yearMonthMap.set(year, new Set<number>());
-      }
-      yearMonthMap.get(year)?.add(month);
-    };
+  const collections = ["milk_expenses", "milk-records", "milk-transactions"];
 
-    // Process dates from all collections
-    [...expenseDates, ...workerDates, ...recordDates].forEach(processDate);
+  for (const collection of collections) {
+    for (const year of years) {
+      const dates = await db
+        .collection(collection)
+        .find({
+          date: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        })
+        .project({ date: 1 })
+        .toArray();
 
-    // Convert the map to the desired format and sort
-    const result = Array.from(yearMonthMap.entries())
-      .map(([year, months]) => ({
-        year,
-        months: Array.from(months).sort((a: number, b: number) => a - b),
-      }))
-      .sort((a, b) => b.year - a.year);
+      dates.forEach((item: { date: Date }) => {
+        const date = new Date(item.date);
+        const month = date.getMonth() + 1;
 
-    return result;
-  } catch (error) {
-    console.error("Failed to fetch milk data years and months:", error);
-    return [];
+        if (!monthsMap.has(year)) {
+          monthsMap.set(year, new Set());
+        }
+        monthsMap.get(year)?.add(month);
+      });
+    }
   }
+
+  return Array.from(monthsMap.entries())
+    .flatMap(([year, months]) =>
+      Array.from(months).map((month) => ({
+        year,
+        month,
+        label: new Date(year, month - 1).toLocaleString("default", {
+          month: "long",
+        }),
+      }))
+    )
+    .sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return a.month - b.month;
+    });
 }

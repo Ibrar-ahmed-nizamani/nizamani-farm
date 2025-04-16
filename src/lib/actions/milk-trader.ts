@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
+// Modified getMilkTraders function in lib/actions/milk-trader.ts
 export async function getMilkTraders() {
   try {
     const client = await clientPromise;
@@ -16,16 +17,73 @@ export async function getMilkTraders() {
       .sort({ name: 1 })
       .toArray();
 
-    return traders.map((trader) => ({
-      name: trader.name,
-      _id: trader._id.toString(),
-    }));
+    // Calculate credit, debit, and balance for each trader
+    let grandTotalCredit = 0;
+    let grandTotalDebit = 0;
+
+    const tradersWithBalance = await Promise.all(
+      traders.map(async (trader) => {
+        const traderId = trader._id;
+
+        // Get all transactions for this trader
+        const transactions = await db
+          .collection("milk_trader_transactions")
+          .find({ traderId })
+          .toArray();
+
+        // Calculate total credit and debit
+        let totalCredit = 0;
+        let totalDebit = 0;
+
+        transactions.forEach((transaction) => {
+          if (transaction.type === "credit") {
+            totalCredit += transaction.amount;
+          } else if (transaction.type === "debit") {
+            totalDebit += transaction.amount;
+          }
+        });
+
+        // Add to grand totals
+        grandTotalCredit += totalCredit;
+        grandTotalDebit += totalDebit;
+
+        // Calculate balance
+        const balance = totalCredit - totalDebit;
+
+        return {
+          name: trader.name,
+          _id: trader._id.toString(),
+          totalCredit,
+          totalDebit,
+          balance,
+          balanceType: balance >= 0 ? "credit" : "debit",
+        };
+      })
+    );
+
+    // Calculate grand balance
+    const grandBalance = grandTotalCredit - grandTotalDebit;
+
+    return {
+      traders: tradersWithBalance,
+      summary: {
+        totalCredit: grandTotalCredit,
+        totalDebit: grandTotalDebit,
+        balance: grandBalance,
+      },
+    };
   } catch (error) {
     console.error("Failed to fetch milk traders:", error);
-    return [];
+    return {
+      traders: [],
+      summary: {
+        totalCredit: 0,
+        totalDebit: 0,
+        balance: 0,
+      },
+    };
   }
 }
-
 export async function getMilkTrader(id: string) {
   try {
     const client = await clientPromise;

@@ -3,32 +3,52 @@ import TractorWorkTable from "@/components/tractor/work-table";
 import { Button } from "@/components/ui/button";
 import { CardDescription } from "@/components/ui/card";
 import Link from "next/link";
-import { getTractorWorks } from "@/lib/actions/work";
+import {
+  getFilteredWorks,
+  getTractorAvailableMonths,
+} from "@/lib/actions/work";
 import { getTractorDetails } from "@/lib/actions/tractor";
-import YearSelector from "@/components/tractor/year-selector";
 import PrintReport from "@/components/tractor/print-report";
 import CompleteReport from "@/components/tractor/complete-report";
 import SummaryCards from "@/components/shared/summary-cards";
+import DateRangeSelector from "@/components/shared/date-range-selector";
 
 export default async function TractorDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ tractorID: string }>;
-  searchParams: Promise<{ year?: string; page?: string }>;
+  searchParams: Promise<{
+    year?: string;
+    month?: string;
+    startDate?: string;
+    endDate?: string;
+  }>;
 }) {
   const tractorID = (await params).tractorID;
   const selectedYear = (await searchParams).year || "all";
-  const page = (await searchParams).page || 1;
+  const selectedMonth = (await searchParams).month || "all";
+  const startDate = (await searchParams).startDate;
+  const endDate = (await searchParams).endDate;
 
-  const { works, pagination, availableYears } = await getTractorWorks(
-    tractorID,
-    selectedYear,
-    Number(page)
-  );
+  // Get available months for the selected year
+  const availableMonths = await getTractorAvailableMonths(tractorID);
+
+  // Get filtered works based on date filters
+  const { works, availableYears } = await getFilteredWorks(tractorID, {
+    year: selectedYear,
+    month: selectedMonth,
+    startDate,
+    endDate,
+  });
+
+  // Get tractor details with appropriate date filters
   const tractorDetails = await getTractorDetails(
     tractorID,
-    selectedYear === "all" ? undefined : selectedYear
+    selectedYear === "all" ? undefined : selectedYear,
+    selectedMonth === "all" ? undefined : selectedMonth,
+    startDate,
+    endDate
   );
 
   return (
@@ -47,8 +67,11 @@ export default async function TractorDetailPage({
             tractorDetails={tractorDetails}
             tractorId={tractorID}
             year={selectedYear}
+            month={selectedMonth}
+            startDate={startDate}
+            endDate={endDate}
           />
-          <YearSelector availableYears={availableYears} />
+
           <Link href={`/tractor/${tractorID}/expenses`}>
             <Button variant="outline" size="lg">
               Show Expenses
@@ -56,27 +79,32 @@ export default async function TractorDetailPage({
           </Link>
         </div>
       </div>
+      <div className="space-y-4 mb-4">
+        <DateRangeSelector
+          availableYears={availableYears}
+          availableMonths={availableMonths}
+        />
 
-      <SummaryCards
-        cards={[
-          {
-            label: "Total Income",
-            value: tractorDetails.totalIncome,
-            type: "income",
-          },
-          {
-            label: "Total Expenses",
-            value: tractorDetails.totalExpenses,
-            type: "expense",
-          },
-          {
-            label: "Net Revenue",
-            value: -tractorDetails.revenue,
-            type: "due",
-          },
-        ]}
-      />
-
+        <SummaryCards
+          cards={[
+            {
+              label: "Total Income",
+              value: tractorDetails.totalIncome,
+              type: "income",
+            },
+            {
+              label: "Total Expenses",
+              value: tractorDetails.totalExpenses,
+              type: "expense",
+            },
+            {
+              label: "Net Revenue",
+              value: -tractorDetails.revenue,
+              type: "due",
+            },
+          ]}
+        />
+      </div>
       <h3 className="text-xl font-semibold mb-3">Tractor Works List</h3>
       <div className="flex justify-between ">
         <div className="flex gap-8">
@@ -95,6 +123,9 @@ export default async function TractorDetailPage({
             tractorDetails={{
               ...tractorDetails,
               year: selectedYear,
+              month: selectedMonth,
+              startDate: startDate,
+              endDate: endDate,
             }}
           />
         </div>
@@ -102,11 +133,7 @@ export default async function TractorDetailPage({
       {works.length === 0 ? (
         <EmptyTractorData title="work" />
       ) : (
-        <TractorWorkTable
-          works={works}
-          pagination={pagination}
-          tractorId={tractorID}
-        />
+        <TractorWorkTable works={works} tractorId={tractorID} />
       )}
     </section>
   );

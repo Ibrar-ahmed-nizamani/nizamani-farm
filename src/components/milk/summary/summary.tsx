@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -11,10 +10,11 @@ import {
 } from "@/components/ui/table";
 import SummaryCards from "@/components/shared/summary-cards";
 import { MilkSummaryData, Transaction } from "@/lib/type-definitions";
-import DateSelector from "./date-selector";
 import BackLink from "@/components/ui/back-link";
-import { formatDatePattern } from "@/lib/utils";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 import PrintMilkSummary from "./print-summary";
+import DateRangeSelector from "@/components/shared/date-range-selector";
+import { CardDescription } from "@/components/ui/card";
 
 export default function MilkSummaryPage({
   expenses,
@@ -22,54 +22,11 @@ export default function MilkSummaryPage({
   customerDebits,
   years,
   months,
+  startDate,
+  endDate,
+  selectedYear,
+  selectedMonth,
 }: MilkSummaryData) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const handleYearChange = (year: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.delete("date");
-    if (year === "today") {
-      params.delete("year");
-      params.delete("month");
-      params.set("date", "today");
-    }
-
-    if (year === "all" || year === "today") {
-      params.delete("year");
-      params.delete("month");
-    } else {
-      params.set("year", year);
-      params.delete("month");
-    }
-    router.replace(`${pathname}?${params.toString()}`);
-  };
-
-  const handleMonthChange = (month: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.delete("date");
-    if (month === "all") {
-      params.delete("month");
-    } else {
-      params.set("month", month);
-    }
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const handleDateChange = (date: Date | undefined) => {
-    const params = new URLSearchParams(searchParams);
-
-    if (date) {
-      params.set("date", date.toISOString());
-      params.delete("month");
-      params.delete("year");
-    } else {
-      params.delete("date");
-    }
-    router.replace(`${pathname}?${params.toString()}`);
-  };
-
   // Combine and format all transactions
   const allTransactions: Transaction[] = [
     ...expenses.map((exp) => ({
@@ -116,6 +73,13 @@ export default function MilkSummaryPage({
 
   const totalBalance = totalIncome - totalExpense;
 
+  const dateRangeDescription = getDateRangeDescription({
+    selectedYear: selectedYear ? selectedYear : "all",
+    endDate,
+    startDate,
+    selectedMonth,
+  });
+
   return (
     <section className="space-y-6">
       <div className="flex justify-between items-center">
@@ -125,33 +89,19 @@ export default function MilkSummaryPage({
         </div>
       </div>
       <div className="flex gap-4 items-center justify-between">
-        <div className="flex items-center gap-4">
-          <DateSelector
-            years={years}
-            months={months}
-            selectedYear={searchParams.get("year") || undefined}
-            selectedMonth={searchParams.get("month") || undefined}
-            selectedDate={
-              searchParams.get("date")
-                ? new Date(searchParams.get("date")!)
-                : undefined
-            }
-            onYearChange={handleYearChange}
-            onMonthChange={handleMonthChange}
-            onDateChange={handleDateChange}
-          />
-        </div>
+        <CardDescription>{dateRangeDescription}</CardDescription>
         <PrintMilkSummary
           transactions={transactionsWithBalance}
           totalIncome={totalIncome}
           totalExpense={totalExpense}
           totalBalance={totalBalance}
-          selectedYear={
-            searchParams.get("year") || searchParams.get("date") || undefined
-          }
-          selectedMonth={searchParams.get("month") || undefined}
+          selectedYear={selectedYear ? selectedYear : "all"}
+          selectedMonth={selectedMonth}
+          startDate={startDate}
+          endDate={endDate}
         />
       </div>
+      <DateRangeSelector availableYears={years} availableMonths={months} />
       <SummaryCards
         cards={[
           {

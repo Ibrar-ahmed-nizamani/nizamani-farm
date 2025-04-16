@@ -24,7 +24,7 @@ export default function ExpenseReport({
   const handlePrint = async () => {
     try {
       setIsLoading(true);
-      const expenses = await getAllTractorExpenses(tractorId, year);
+      const expenses = await getAllTractorExpenses(tractorId, { year });
 
       const totalAmount = expenses.reduce(
         (sum, expense) => sum + expense.amount,

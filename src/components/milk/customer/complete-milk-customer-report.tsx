@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getMilkCustomerSummary } from "@/lib/actions/milk-customer-actions";
-import { formatDatePattern, monthNumberToName } from "@/lib/utils";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 
 interface CompleteCustomerReportProps {
   customerDetails: {
@@ -17,6 +17,8 @@ interface CompleteCustomerReportProps {
   customerId: string;
   year: string;
   month?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface CombinedEntry {
@@ -34,6 +36,8 @@ export default function CompleteCustomerReport({
   customerId,
   year,
   month,
+  startDate,
+  endDate,
 }: CompleteCustomerReportProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,7 +49,9 @@ export default function CompleteCustomerReport({
       const { milkRecords, transactions } = await getMilkCustomerSummary(
         customerId,
         year,
-        month
+        month,
+        startDate,
+        endDate
       );
 
       // Combine and sort milk records and transactions by date
@@ -168,9 +174,12 @@ export default function CompleteCustomerReport({
           <body>
             <div class="header">
               <h1>Account Statement - ${customerDetails.customerName}</h1>
-              <p>Period: ${year === "all" ? "All Time" : year}${
-        month ? ` - ${monthNumberToName(Number(month))}` : ""
-      }</p>
+              <p>Period: ${getDateRangeDescription({
+                startDate,
+                endDate,
+                selectedYear: year,
+                selectedMonth: month,
+              })}
             </div>
 
             <div class="summary">

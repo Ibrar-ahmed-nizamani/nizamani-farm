@@ -279,22 +279,40 @@ export async function addMilkPayment(
     return { success: false, error: "Failed to add payment" };
   }
 }
-
 export async function getMilkCustomerSummary(
   customerId: string,
   year?: string,
-  month?: string
+  month?: string,
+  startDate?: string,
+  endDate?: string
 ) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
     let dateMatch = {};
-    if (year && year !== "all") {
+
+    // Handle date range filtering (priority over year/month)
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      dateMatch = {
+        date: {
+          $gte: start,
+          $lte: end,
+        },
+      };
+    }
+    // Handle year/month filtering if no date range
+    else if (year && year !== "all") {
       const startDate = new Date(`${year}-01-01`);
       const endDate = new Date(`${year}-12-31`);
 
-      if (month) {
+      if (month && month !== "all") {
         startDate.setMonth(parseInt(month) - 1);
         endDate.setMonth(parseInt(month), 0);
       }

@@ -104,7 +104,15 @@ export interface MilkSummaryData {
   customerDebits: CustomerDebit[];
   customerRecords: CustomerRecord[];
   years: number[];
-  months: number[];
+  months: {
+    year: number;
+    month: number;
+    label: string;
+  }[];
+  selectedYear?: string;
+  selectedMonth?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface SummaryCardProps {

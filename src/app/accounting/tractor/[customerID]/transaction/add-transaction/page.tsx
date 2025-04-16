@@ -1,4 +1,4 @@
-import AddTransactionForm from "@/components/accounting/tractor/add-transaction";
+import CustomerTransactionForm from "@/components/accounting/tractor/add-transaction";
 import BackButton from "@/components/shared/back-button";
 import { getCustomerName } from "@/lib/actions/customer";
 
@@ -19,7 +19,7 @@ export default async function Page({
 
         <BackButton />
       </div>
-      <AddTransactionForm customerId={customerId} />
+      <CustomerTransactionForm customerId={customerId} />
     </section>
   );
 }

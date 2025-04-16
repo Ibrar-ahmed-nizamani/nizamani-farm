@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { addMilkExpense } from "@/lib/actions/milk-expense";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -39,6 +40,7 @@ const formSchema = z.object({
     .transform((val) => Number(val))
     .refine((val) => !isNaN(val) && val > 0, "Must be a valid positive number"),
   date: z.string().min(1, "Date is required"),
+  description: z.string().optional(),
 });
 
 // Define the shape of the form values (before transformation)
@@ -46,6 +48,7 @@ type FormInput = {
   type: string;
   amount: string;
   date: string;
+  description: string;
 };
 
 export default function AddExpenseForm({
@@ -66,6 +69,7 @@ export default function AddExpenseForm({
       type: "",
       amount: "",
       date: new Date().toISOString().split("T")[0],
+      description: "",
     },
   });
 
@@ -76,6 +80,7 @@ export default function AddExpenseForm({
         typeId: values.type,
         amount: parseFloat(values.amount),
         date: new Date(values.date),
+        description: values.description,
       });
 
       if (result.success) {
@@ -152,6 +157,24 @@ export default function AddExpenseForm({
               <FormLabel>Amount</FormLabel>
               <FormControl>
                 <Input type="number" {...field} disabled={isLoading} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter expense details..."
+                  {...field}
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

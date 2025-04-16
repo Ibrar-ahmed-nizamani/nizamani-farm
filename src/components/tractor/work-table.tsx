@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Pen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,29 +19,15 @@ import { capitalizeFirstLetter, formatDatePattern } from "@/lib/utils";
 
 interface TractorWorkTableProps {
   works: TractorWork[];
-  pagination: {
-    total: number;
-    pages: number;
-    currentPage: number;
-  };
+
   tractorId: string;
 }
 
 export default function TractorWorkTable({
   works,
-  pagination,
   tractorId,
 }: TractorWorkTableProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [deleteWorkId, setDeleteWorkId] = useState<string | null>(null);
-
-  const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", page.toString());
-    router.replace(`${pathname}?${params.toString()}`);
-  };
 
   return (
     <div className="space-y-4">
@@ -115,20 +100,6 @@ export default function TractorWorkTable({
           onClose={() => setDeleteWorkId(null)}
         />
       )}
-
-      <div className="flex justify-center gap-2 mt-4">
-        {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
-          (page) => (
-            <Button
-              key={page}
-              variant={page === pagination.currentPage ? "default" : "outline"}
-              onClick={() => handlePageChange(page)}
-            >
-              {page}
-            </Button>
-          )
-        )}
-      </div>
     </div>
   );
 }

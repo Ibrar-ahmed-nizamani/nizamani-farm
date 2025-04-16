@@ -9,39 +9,54 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CardDescription } from "@/components/ui/card";
-// import { CustomerTractorWork } from "@/lib/type-definitions";
 import {
   getCustomerSummary,
   getCustomerAvailableYears,
+  getCustomerAvailableMonths,
 } from "@/lib/actions/customer";
 import { ArrowLeftIcon, Edit2 } from "lucide-react";
 import CustomerCompleteReport from "@/components/accounting/customer/customer-complete-report";
 import SummaryCards from "@/components/shared/summary-cards";
-import YearSelector from "@/components/tractor/year-selector";
 import BackButton from "@/components/shared/back-button";
 import CustomerWorksReport from "@/components/accounting/customer/customer-works-report";
 import { capitalizeFirstLetter, formatDatePattern } from "@/lib/utils";
+import DateRangeSelector from "@/components/shared/date-range-selector";
 
-export default async function CustomerSummary({
+export default async function TractorCustomerSummary({
   params,
   searchParams,
 }: {
   params: Promise<{ customerID: string }>;
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{
+    year?: string;
+    month?: string;
+    startDate?: string;
+    endDate?: string;
+  }>;
 }) {
   const customerId = (await params).customerID;
   const selectedYear = (await searchParams).year || "all";
+  const selectedMonth = (await searchParams).month || "all";
+  const startDate = (await searchParams).startDate;
+  const endDate = (await searchParams).endDate;
 
   // Fetch data in parallel
-  const [customerSummary, availableYears] = await Promise.all([
-    getCustomerSummary(customerId, selectedYear),
+  const [customerSummary, availableYears, availableMonths] = await Promise.all([
+    getCustomerSummary(
+      customerId,
+      selectedYear,
+      selectedMonth,
+      startDate,
+      endDate
+    ),
     getCustomerAvailableYears(customerId),
+    getCustomerAvailableMonths(customerId),
   ]);
-
   const customerName =
     customerSummary?.customer?.name?.charAt(0).toUpperCase() +
     customerSummary?.customer?.name?.slice(1);
   const summary = customerSummary.summary;
+
   return (
     <>
       <section className="space-y-6">
@@ -56,25 +71,33 @@ export default async function CustomerSummary({
             </Link>
           </div>
         </div>
-        <div className="flex items-center justify-end">
-          <div className="flex items-center space-x-4">
-            <CustomerCompleteReport
-              customerId={customerId}
-              customerName={customerName}
-              year={selectedYear}
-            />
-            <YearSelector availableYears={availableYears} />
 
-            <Link href={`/accounting/tractor/${customerId}/transaction`}>
-              <Button variant="outline">Show Transactions</Button>
-            </Link>
-            <Link
-              href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
-            >
-              <Button>Add Transaction</Button>
-            </Link>
+        <div className="space-y-4">
+          <div className="flex items-center justify-end">
+            <div className="flex items-center space-x-4">
+              <CustomerCompleteReport
+                customerId={customerId}
+                customerName={customerName}
+                year={selectedYear}
+                month={selectedMonth}
+                startDate={startDate}
+                endDate={endDate}
+              />
+              <Link href={`/accounting/tractor/${customerId}/transaction`}>
+                <Button variant="outline">Show Transactions</Button>
+              </Link>
+              <Link
+                href={`/accounting/tractor/${customerId}/transaction/add-transaction`}
+              >
+                <Button>Add Transaction</Button>
+              </Link>
+            </div>
           </div>
         </div>
+        <DateRangeSelector
+          availableYears={availableYears}
+          availableMonths={availableMonths}
+        />
 
         <SummaryCards
           cards={[
@@ -100,6 +123,9 @@ export default async function CustomerSummary({
             customerName={customerName}
             customerId={customerId}
             year={selectedYear}
+            month={selectedMonth}
+            startDate={startDate}
+            endDate={endDate}
           />
         </div>
 

@@ -4,28 +4,41 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getCustomerWorks } from "@/lib/actions/work";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 
 interface CustomerWorksReportProps {
   customerName: string;
   customerId: string;
   year: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export default function CustomerWorksReport({
   customerName,
   customerId,
   year,
+  month,
+  startDate,
+  endDate,
 }: CustomerWorksReportProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePrint = async () => {
     try {
       setIsLoading(true);
-      const works = await getCustomerWorks(customerId, year);
+      const works = await getCustomerWorks(
+        customerId,
+        year,
+        month,
+        startDate,
+        endDate
+      );
 
-      // Sort works by date (newest first)
+      // Sort works by date (oldest first)
       const sortedWorks = works.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
       );
 
       const totalAmount = works.reduce(
@@ -91,7 +104,12 @@ export default function CustomerWorksReport({
           <body>
             <div class="header">
               <h2>${customerName} - Tractor Works Report</h2>
-              <p>Period: ${year === "all" ? "All Time" : year}</p>
+              <p>Period: ${getDateRangeDescription({
+                selectedYear: year,
+                endDate,
+                selectedMonth: month,
+                startDate,
+              })}</p>
             </div>
 
             <table>
@@ -110,7 +128,7 @@ export default function CustomerWorksReport({
                   .map(
                     (work) => `
                   <tr>
-                    <td>${new Date(work.date).toLocaleDateString("en-GB")}</td>
+                    <td>${formatDatePattern(work.date)}</td>
                     <td>
                       ${work.tractor.tractorName}<br/>
                       <span class="equipment-details">${

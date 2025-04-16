@@ -5,7 +5,8 @@ import clientPromise from "@/lib/mongodb";
 import { revalidatePath } from "next/cache";
 
 interface WorkQuery {
-  customerId: ObjectId;
+  customerId?: ObjectId;
+  tractorId?: ObjectId;
   date?: {
     $gte: Date;
     $lte: Date;
@@ -17,6 +18,114 @@ interface Equipment {
   hours: number;
   ratePerHour: number;
   amount: number;
+}
+
+interface DateFilterOptions {
+  year?: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+// Function to build date filter based on provided filter options
+function buildDateFilter(filterOptions: DateFilterOptions) {
+  const { year, month, startDate, endDate } = filterOptions;
+
+  // Date range filter takes precedence
+  if (startDate || endDate) {
+    const dateFilter: any = {};
+
+    if (startDate) {
+      dateFilter.$gte = new Date(startDate);
+    }
+
+    if (endDate) {
+      dateFilter.$lte = new Date(endDate);
+    }
+
+    return dateFilter;
+  }
+
+  // Year and month filter
+  if (year && year !== "all") {
+    if (month && month !== "all") {
+      // Specific year and month
+      const monthNum = parseInt(month);
+      const yearNum = parseInt(year);
+
+      const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+      const endOfMonth = new Date(yearNum, monthNum, 0);
+
+      return {
+        $gte: startOfMonth,
+        $lte: endOfMonth,
+      };
+    }
+
+    // Just year filter
+    return {
+      $gte: new Date(`${year}-01-01`),
+      $lte: new Date(`${year}-12-31`),
+    };
+  }
+
+  // No date filter
+  return undefined;
+}
+
+// Get available months with data for a tractor (from both works and expenses)
+export async function getTractorAvailableMonths(tractorId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Fetch dates from both works and expenses collections
+    const [works, expenses] = await Promise.all([
+      db
+        .collection("works")
+        .find({ tractorId: new ObjectId(tractorId) })
+        .project({ date: 1 })
+        .toArray(),
+      db
+        .collection("tractorExpenses")
+        .find({ tractorId: new ObjectId(tractorId) })
+        .project({ date: 1 })
+        .toArray(),
+    ]);
+
+    const monthsMap = new Map();
+
+    // Process work dates
+    works.forEach((work) => {
+      const date = new Date(work.date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const monthName = date.toLocaleString("default", { month: "long" });
+
+      const key = `${year}-${month}`;
+      monthsMap.set(key, { year, month, label: monthName });
+    });
+
+    // Process expense dates
+    expenses.forEach((expense) => {
+      const date = new Date(expense.date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const monthName = date.toLocaleString("default", { month: "long" });
+
+      const key = `${year}-${month}`;
+      monthsMap.set(key, { year, month, label: monthName });
+    });
+
+    // Convert the map to an array and sort by year (descending) and month (descending)
+    return Array.from(monthsMap.values()).sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return a.month - b.month;
+    });
+  } catch (error) {
+    console.error("Failed to fetch tractor available months:", error);
+    return [];
+  }
 }
 export async function submitTractorWork(
   prevState: unknown,
@@ -128,18 +237,46 @@ export async function submitTractorWork(
   }
 }
 
-export async function getCustomerWorks(customerId: string, year?: string) {
+export async function getCustomerWorks(
+  customerId: string,
+  year?: string,
+  month?: string,
+  startDate?: string,
+  endDate?: string
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
     const query: WorkQuery = { customerId: new ObjectId(customerId) };
-    if (year && year !== "all") {
+
+    if (startDate && endDate) {
+      // Use date range filtering if provided
       query.date = {
-        $gte: new Date(`${year}-01-01`),
-        $lte: new Date(`${year}-12-31`),
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       };
+    } else if (year && year !== "all") {
+      if (month && month !== "all") {
+        // Both year and month filtering
+        const monthNum = parseInt(month);
+        const lastDay = new Date(parseInt(year), monthNum, 0).getDate();
+        query.date = {
+          $gte: new Date(`${year}-${monthNum.toString().padStart(2, "0")}-01`),
+          $lte: new Date(
+            `${year}-${monthNum.toString().padStart(2, "0")}-${lastDay}`
+          ),
+        };
+      } else {
+        // Only year filtering
+        query.date = {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31`),
+        };
+      }
     }
+
+    // Rest of the function remains the same...
 
     const works = await db
       .collection("works")
@@ -189,23 +326,13 @@ export async function getCustomerWorks(customerId: string, year?: string) {
   }
 }
 
-interface MatchCondition {
-  tractorId: ObjectId;
-  date?: {
-    $gte: Date;
-    $lte: Date;
-  };
-}
-
 export async function getTractorWorks(
   tractorId: string,
-  year?: string,
-  page: number = 1
+  filterOptions: DateFilterOptions = {}
 ) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
-    const limit = 20; // Hardcoded limit
 
     // Get available years
     const availableYears = await db.collection("works").distinct("date", {
@@ -217,24 +344,21 @@ export async function getTractorWorks(
     ].sort((a, b) => b - a);
 
     // Build match condition
-
-    const matchCondition: MatchCondition = {
+    const matchCondition: WorkQuery = {
       tractorId: new ObjectId(tractorId),
     };
-    if (year && year !== "all") {
-      matchCondition.date = {
-        $gte: new Date(`${year}-01-01`),
-        $lte: new Date(`${year}-12-31`),
-      };
+
+    const dateFilter = buildDateFilter(filterOptions);
+    if (dateFilter) {
+      matchCondition.date = dateFilter;
     }
 
     // Get total count for pagination
     const totalCount = await db
       .collection("works")
       .countDocuments(matchCondition);
-    const totalPages = Math.ceil(totalCount / limit);
 
-    // Get paginated works
+    // Get works (no pagination)
     const works = await db
       .collection("works")
       .aggregate([
@@ -249,14 +373,12 @@ export async function getTractorWorks(
         },
         { $unwind: "$customer" },
         { $sort: { date: -1 } },
-        { $skip: (page - 1) * limit },
-        { $limit: limit },
       ])
       .toArray();
 
     return {
       works: works.map((work, index) => ({
-        no: totalCount - ((page - 1) * limit + index),
+        no: totalCount - index,
         id: work._id.toString(),
         customerId: work.customerId.toString(),
         tractorId: work.tractorId.toString(),
@@ -275,18 +397,12 @@ export async function getTractorWorks(
           createdAt: work.customer.createdAt.toISOString(),
         },
       })),
-      pagination: {
-        total: totalCount,
-        pages: totalPages,
-        currentPage: page,
-      },
       availableYears: years,
     };
   } catch (error) {
     console.error("Failed to fetch tractor works:", error);
     return {
       works: [],
-      pagination: { total: 0, pages: 0, currentPage: 1 },
       availableYears: [],
     };
   }
@@ -294,11 +410,9 @@ export async function getTractorWorks(
 
 export async function getFilteredWorks(
   tractorId: string,
-  year?: string,
-  page: number = 1
+  filterOptions: DateFilterOptions = {}
 ) {
-  const yearNum = year ? parseInt(year) : undefined;
-  return getTractorWorks(tractorId, yearNum?.toString() || undefined, page);
+  return getTractorWorks(tractorId, filterOptions);
 }
 
 export async function deleteWork(workId: string, tractorId: string) {
@@ -534,20 +648,21 @@ export async function editTractorWork(
   }
 }
 
-export async function getAllTractorWorks(tractorId: string, year?: string) {
+export async function getAllTractorWorks(
+  tractorId: string,
+  filterOptions: DateFilterOptions = {}
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const query: { tractorId: ObjectId; date?: { $gte: Date; $lte: Date } } = {
+    const query: { tractorId: ObjectId; date?: any } = {
       tractorId: new ObjectId(tractorId),
     };
 
-    if (year && year !== "all") {
-      query.date = {
-        $gte: new Date(`${year}-01-01`),
-        $lte: new Date(`${year}-12-31`),
-      };
+    const dateFilter = buildDateFilter(filterOptions);
+    if (dateFilter) {
+      query.date = dateFilter;
     }
 
     const works = await db

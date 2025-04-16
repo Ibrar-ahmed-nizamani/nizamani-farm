@@ -5,17 +5,20 @@ import { Printer } from "lucide-react";
 import { useState } from "react";
 import { getCustomerWorks } from "@/lib/actions/work";
 import { getCustomerTransactions } from "@/lib/actions/transaction";
-import { formatDatePattern } from "@/lib/utils";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 
 interface CompleteReportProps {
   customerName: string;
   customerId: string;
   year: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface CombinedEntry {
   date: string;
-  type: "work" | "payment";
+  type: "work" | "CREDIT" | "DEBIT";
   description: string;
   debit?: number;
   payment?: number;
@@ -30,6 +33,9 @@ export default function CustomerCompleteReport({
   customerName,
   customerId,
   year,
+  month,
+  startDate,
+  endDate,
 }: CompleteReportProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,10 +43,10 @@ export default function CustomerCompleteReport({
     try {
       setIsLoading(true);
 
-      // Fetch works and transactions
+      // Fetch works and transactions with proper filtering
       const [works, transactions] = await Promise.all([
-        getCustomerWorks(customerId, year),
-        getCustomerTransactions(customerId, year),
+        getCustomerWorks(customerId, year, month, startDate, endDate),
+        getCustomerTransactions(customerId, year, month, startDate, endDate),
       ]);
 
       let runningBalance = 0;
@@ -63,28 +69,26 @@ export default function CustomerCompleteReport({
             runningBalance: 0,
           })
         ),
-        ...transactions
-          .filter((transaction) => transaction.type === "CREDIT")
-          .map(
-            (transaction): CombinedEntry => ({
-              date: transaction.date,
-              type: transaction.type,
-              description:
-                transaction.description ||
-                (transaction.type === "CREDIT"
-                  ? "Payment Received"
-                  : "Additional Charge"),
-              payment:
-                transaction.type === "CREDIT" ? transaction.amount : undefined,
-              debit:
-                transaction.type === "DEBIT" ? transaction.amount : undefined,
-              netAmount:
-                transaction.type === "CREDIT"
-                  ? -transaction.amount
-                  : transaction.amount,
-              runningBalance: 0,
-            })
-          ),
+        ...transactions.map(
+          (transaction): CombinedEntry => ({
+            date: transaction.date,
+            type: transaction.type,
+            description:
+              transaction.description ||
+              (transaction.type === "CREDIT"
+                ? "Payment Received"
+                : "Additional Charge"),
+            payment:
+              transaction.type === "CREDIT" ? transaction.amount : undefined,
+            debit:
+              transaction.type === "DEBIT" ? transaction.amount : undefined,
+            netAmount:
+              transaction.type === "CREDIT"
+                ? -transaction.amount
+                : transaction.amount,
+            runningBalance: 0,
+          })
+        ),
       ]
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .map((entry) => {
@@ -183,6 +187,16 @@ export default function CustomerCompleteReport({
               .badge.work { background-color: #fee2e2; color: #991b1b; }
               .badge.credit { background-color: #dcfce7; color: #166534; }
               .badge.debit { background-color: #fee2e2; color: #991b1b; }
+              .transaction-type {
+                display: inline-block;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 10px;
+                font-weight: 500;
+              }
+              .transaction-type.work { background-color: #e5e7eb; color: #1f2937; }
+              .transaction-type.CREDIT { background-color: #dcfce7; color: #166534; }
+              .transaction-type.DEBIT { background-color: #fee2e2; color: #991b1b; }
               @media print {
                 button { display: none; }
                 body { padding: 0; }
@@ -192,7 +206,12 @@ export default function CustomerCompleteReport({
           <body>
             <div class="header">
               <h1>${customerName}</h1>
-              <p>Complete Report for: ${year === "all" ? "All Years" : year}</p>
+              <p>Complete Report for: ${getDateRangeDescription({
+                selectedYear: year,
+                endDate,
+                selectedMonth: month,
+                startDate,
+              })}</p>
             </div>
 
             <div class="summary">
@@ -218,8 +237,8 @@ export default function CustomerCompleteReport({
               <thead>
                 <tr>
                   <th>Date</th>
-                  
-                  <th>Payment Detail</th>
+                  <th>Type</th>
+                  <th>Description</th>
                   <th>Tractor Details</th>
                   <th>Equipment Details</th>
                   <th>Work Details</th>
@@ -234,7 +253,17 @@ export default function CustomerCompleteReport({
                     (entry) => `
                   <tr>
                     <td>${formatDatePattern(entry.date)}</td>
-                    
+                    <td>
+                      <span class="transaction-type ${entry.type.toLowerCase()}">
+                        ${
+                          entry.type === "work"
+                            ? "Work"
+                            : entry.type === "CREDIT"
+                            ? "Payment"
+                            : "Debit"
+                        }
+                      </span>
+                    </td>
                     <td>${entry.description}</td>
                     <td>${entry.tractorDetails || "-"}</td>
                     <td>${entry.equipmentDetails || "-"}</td>

@@ -87,7 +87,13 @@ export async function getTractors(): Promise<Tractor[]> {
   }
 }
 
-export async function getTractorDetails(tractorId: string, year?: string) {
+export async function getTractorDetails(
+  tractorId: string,
+  year?: string,
+  month?: string,
+  startDate?: string,
+  endDate?: string
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -100,20 +106,66 @@ export async function getTractorDetails(tractorId: string, year?: string) {
       throw new Error("Tractor not found");
     }
 
-    // Build date filter for the specified year
+    // Build date filter based on the provided parameters
     let dateFilter = {};
-    if (year && year !== "all") {
-      const startDate = new Date(`${year}-01-01`);
-      const endDate = new Date(`${year}-12-31`);
+
+    // If date range is provided, use it
+    if (startDate && endDate) {
       dateFilter = {
         date: {
-          $gte: startDate,
-          $lte: endDate,
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
         },
       };
     }
+    // Otherwise, use year and month filters
+    else {
+      if (year && year !== "all") {
+        const startYear = new Date(`${year}-01-01`);
+        const endYear = new Date(`${year}-12-31`);
 
-    // Get total income from works with year filter
+        if (month && month !== "all") {
+          // Handle month filter when year is specified
+          const monthNum = parseInt(month);
+          const startMonth = new Date(startYear);
+          startMonth.setMonth(monthNum - 1);
+
+          const endMonth = new Date(startMonth);
+          endMonth.setMonth(monthNum);
+          endMonth.setDate(0); // Last day of the month
+
+          dateFilter = {
+            date: {
+              $gte: startMonth,
+              $lte: endMonth,
+            },
+          };
+        } else {
+          // Just year filter
+          dateFilter = {
+            date: {
+              $gte: startYear,
+              $lte: endYear,
+            },
+          };
+        }
+      } else if (month && month !== "all") {
+        // Handle month filter when year is not specified (use current year)
+        const currentYear = new Date().getFullYear();
+        const monthNum = parseInt(month);
+        const startMonth = new Date(currentYear, monthNum - 1, 1);
+        const endMonth = new Date(currentYear, monthNum, 0);
+
+        dateFilter = {
+          date: {
+            $gte: startMonth,
+            $lte: endMonth,
+          },
+        };
+      }
+    }
+
+    // Get total income from works with filter
     const works = await db
       .collection("works")
       .find({
@@ -123,7 +175,7 @@ export async function getTractorDetails(tractorId: string, year?: string) {
       .toArray();
     const totalIncome = works.reduce((sum, work) => sum + work.totalAmount, 0);
 
-    // Get total expenses with year filter
+    // Get total expenses with filter
     const expenses = await db
       .collection("tractorExpenses")
       .find({
@@ -136,7 +188,7 @@ export async function getTractorDetails(tractorId: string, year?: string) {
       0
     );
 
-    // Return all fields including financial summary
+    // Return all fields including financial summary and filter info
     return {
       id: tractor._id.toString(),
       tractorName: tractor.tractorName,
@@ -145,6 +197,9 @@ export async function getTractorDetails(tractorId: string, year?: string) {
       totalExpenses,
       revenue: totalIncome - totalExpenses,
       year: year || "all",
+      month: month || "all",
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
     };
   } catch (error) {
     console.error("Failed to fetch tractor details:", error);

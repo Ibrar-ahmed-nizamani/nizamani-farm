@@ -6,6 +6,7 @@ import { useState } from "react";
 import { getAllTractorWorks } from "@/lib/actions/work";
 import { getAllTractorExpenses } from "@/lib/actions/tractor-expense";
 import { formatDatePattern } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface CompleteReportProps {
   tractorDetails: {
@@ -17,6 +18,9 @@ interface CompleteReportProps {
   };
   tractorId: string;
   year: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface CombinedEntry {
@@ -36,17 +40,50 @@ export default function CompleteReport({
   tractorDetails,
   tractorId,
   year,
+  month,
+  startDate,
+  endDate,
 }: CompleteReportProps) {
   const [isLoading, setIsLoading] = useState(false);
+
+  // Function to generate date range description for the report header
+  const getDateRangeDescription = () => {
+    if (startDate && endDate) {
+      return `${format(startDate, "PPP")} to ${format(endDate, "PPP")}`;
+    } else if (startDate) {
+      return `From ${formatDatePattern(startDate)}`;
+    } else if (endDate) {
+      return `Until ${formatDatePattern(endDate)}`;
+    } else if (year !== "all" && month && month !== "all") {
+      const monthDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      return `${monthDate.toLocaleString("default", {
+        month: "long",
+      })} ${year}`;
+    } else if (year !== "all") {
+      return `Year ${year}`;
+    } else {
+      return "All Time";
+    }
+  };
 
   const handlePrint = async () => {
     try {
       setIsLoading(true);
 
-      // Fetch both works and expenses
+      // Fetch both works and expenses with all filter parameters
       const [works, expenses] = await Promise.all([
-        getAllTractorWorks(tractorId, year),
-        getAllTractorExpenses(tractorId, year),
+        getAllTractorWorks(tractorId, {
+          year,
+          month,
+          startDate,
+          endDate,
+        }),
+        getAllTractorExpenses(tractorId, {
+          year,
+          month,
+          startDate,
+          endDate,
+        }),
       ]);
 
       // Combine and sort works and expenses by date
@@ -100,6 +137,8 @@ export default function CompleteReport({
         0
       );
       const netRevenue = totalIncome - totalExpenses;
+
+      const dateRangeDescription = getDateRangeDescription();
 
       const printContent = `
         <html>
@@ -158,6 +197,9 @@ export default function CompleteReport({
               .amount {
                 text-align: right;
               }
+                .max-width{
+                    max-width: 330px;
+                }
               .income { color: green; }
               .expense { color: red; }
               .equipment-details {
@@ -180,7 +222,7 @@ export default function CompleteReport({
               <h1>${tractorDetails.tractorName} - ${
         tractorDetails.tractorModel
       }</h1>
-              <p>Complete Report for: ${year === "all" ? "All Years" : year}</p>
+              <p>Complete Report for: ${dateRangeDescription}</p>
             </div>
 
             <div class="summary">
@@ -223,7 +265,7 @@ export default function CompleteReport({
                     <td>${entry.type}</td>
                     <td>${entry.description}</td>
                     <td>${entry.customerName || "-"}</td>
-                    <td>${entry.equipmentDetails || "-"}</td>
+                    <td class="max-width">${entry.equipmentDetails || "-"}</td>
                     <td>${entry.workDetails || "-"}</td>
                     <td class="amount">${
                       entry.income ? `Rs ${entry.income.toLocaleString()}` : "-"

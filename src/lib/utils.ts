@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { MilkExpense } from "./type-definitions";
+import { format } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -76,6 +77,7 @@ export function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+
 export function convertShareTypes(share: string, ui: boolean = false) {
   if (share === "1/2" && ui === false) {
     return "HALF";
@@ -95,4 +97,59 @@ export function convertShareTypes(share: string, ui: boolean = false) {
   if (share === "1/4" && ui) {
     return "25%";
   }
+
+export function getDateRangeDescription({
+  startDate,
+  endDate,
+  selectedYear,
+  selectedMonth,
+}: {
+  startDate?: string;
+  endDate?: string;
+  selectedYear: string;
+  selectedMonth?: string;
+}): string {
+  // Helper function to format date with a consistent pattern
+  const formatDatePattern = (date: string) => {
+    return format(new Date(date), "PP");
+  };
+
+  // Specific date range with both start and end dates
+  if (startDate && endDate) {
+    return `${format(new Date(startDate), "PPP")} to ${format(
+      new Date(endDate),
+      "PPP"
+    )}`;
+  }
+
+  // Only start date provided
+  if (startDate) {
+    return `From ${formatDatePattern(startDate)}`;
+  }
+
+  // Only end date provided
+  if (endDate) {
+    return `Until ${formatDatePattern(endDate)}`;
+  }
+
+  // Specific month and year selected
+  if (selectedYear !== "all" && selectedMonth && selectedMonth !== "all") {
+    const monthDate = new Date(
+      parseInt(selectedYear),
+      parseInt(selectedMonth) - 1,
+      1
+    );
+    return `${monthDate.toLocaleString("default", {
+      month: "long",
+    })} ${selectedYear}`;
+  }
+
+  // Only year selected
+  if (selectedYear !== "all") {
+    return `Year ${selectedYear}`;
+  }
+
+  // No specific date range selected
+  return "All Time";
+
 }

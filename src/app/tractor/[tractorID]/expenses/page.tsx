@@ -22,7 +22,7 @@ export default async function TractorExpensesPage({
   const selectedYear = (await searchParams).year || "all";
 
   const [expenses, availableYears, tractorDetails] = await Promise.all([
-    getAllTractorExpenses(tractorID, selectedYear),
+    getAllTractorExpenses(tractorID, { year: selectedYear }),
     getExpenseYears(tractorID),
     getTractorDetails(tractorID),
   ]);
