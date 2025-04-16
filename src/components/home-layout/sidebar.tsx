@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Tractor, FileText, MilkIcon } from "lucide-react";
+import { Tractor, FileText, MilkIcon, Sprout } from "lucide-react";
 
 const menuItems = [
   { icon: MilkIcon, label: "Milk", href: "/milk" },
   { icon: Tractor, label: "Tractor", href: "/tractor" },
   { icon: FileText, label: "Tractor Accounting", href: "/accounting/tractor" },
+  { icon: Sprout, label: "Fields", href: "/fields" },
 ];
 
 export function Sidebar() {
