@@ -224,6 +224,9 @@ export async function getFieldFarmerExpenses(farmerId: string) {
         farmerId: expense.farmerId.toString(),
         type: expense.type,
         expenseType: expense.expenseType,
+        expenseTypeId: expense.expenseTypeId
+          ? expense.expenseTypeId.toString()
+          : "",
         amount: expense.amount,
         description: expense.description,
         date: expense.date,
@@ -398,6 +401,116 @@ export async function addFarmerTransaction(
     return {
       success: false,
       error: "Failed to add transaction",
+    };
+  }
+}
+
+// Additions to lib/actions/farmer.ts
+
+export async function updateFarmerTransaction(
+  farmerId: string,
+  transactionId: string,
+  type: "debit" | "credit",
+  amount: number,
+  date: Date,
+  description: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the field-farmer relationship to get the fieldId for revalidation
+    const fieldFarmer = await db
+      .collection("field_farmers")
+      .findOne({ _id: new ObjectId(farmerId) });
+
+    if (!fieldFarmer) {
+      return {
+        success: false,
+        error: "Farmer not found",
+      };
+    }
+
+    // Update the transaction
+    const result = await db.collection("farmer_transactions").updateOne(
+      { _id: new ObjectId(transactionId), farmerId: new ObjectId(farmerId) },
+      {
+        $set: {
+          type,
+          amount,
+          date: new Date(date),
+          description,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return {
+        success: false,
+        error: "Transaction not found",
+      };
+    }
+
+    // Revalidate the page
+    revalidatePath(
+      `/fields/${fieldFarmer.fieldId}/farmers/${farmerId}/transactions`
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update farmer transaction:", error);
+    return {
+      success: false,
+      error: "Failed to update transaction",
+    };
+  }
+}
+
+export async function deleteFarmerTransaction(
+  farmerId: string,
+  transactionId: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the field-farmer relationship to get the fieldId for revalidation
+    const fieldFarmer = await db
+      .collection("field_farmers")
+      .findOne({ _id: new ObjectId(farmerId) });
+
+    if (!fieldFarmer) {
+      return {
+        success: false,
+        error: "Farmer not found",
+      };
+    }
+
+    // Delete the transaction
+    const result = await db.collection("farmer_transactions").deleteOne({
+      _id: new ObjectId(transactionId),
+      farmerId: new ObjectId(farmerId),
+    });
+
+    if (result.deletedCount === 0) {
+      return {
+        success: false,
+        error: "Transaction not found",
+      };
+    }
+
+    // Revalidate the page
+    revalidatePath(
+      `/fields/${fieldFarmer.fieldId}/farmers/${farmerId}/transactions`
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete farmer transaction:", error);
+    return {
+      success: false,
+      error: "Failed to delete transaction",
     };
   }
 }

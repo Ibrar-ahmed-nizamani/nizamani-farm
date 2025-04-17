@@ -40,8 +40,8 @@ export default function AddFieldForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      totalArea: "",
-      location: "",
+      totalArea: 0,
+      // location: "",
     },
   });
 

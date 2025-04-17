@@ -12,9 +12,14 @@ import {
 import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
-import { getField, getFieldFarmers } from "@/lib/actions/field";
+import {
+  getField,
+  getFieldFarmers,
+  getFieldSummary,
+} from "@/lib/actions/field";
 import { PlusIcon } from "lucide-react";
 import { convertShareTypes } from "@/lib/utils";
+import FieldSummary from "@/components/fields/field-summary";
 
 export default async function FieldPage({
   params,
@@ -25,6 +30,8 @@ export default async function FieldPage({
 
   const field = await getField(fieldId);
   const farmers = await getFieldFarmers(fieldId);
+  const { success, summary } = await getFieldSummary(fieldId);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -36,6 +43,14 @@ export default async function FieldPage({
         </div>
         <BackLink href="/fields" linkText="Back to Fields" />
       </div>
+
+      {/* Field Summary Section */}
+      {success && farmers.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Field Summary</h2>
+          <FieldSummary summary={summary} />
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">

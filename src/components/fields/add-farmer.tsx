@@ -36,10 +36,14 @@ const formSchema = z.object({
   shareType: z.enum(["1/3", "1/2", "1/4"]), // Updated shareType
   allocatedArea: z
     .string()
-    .min(1, "Allocated area is required")
-    .transform((val) => Number(val))
-    .refine((val) => !isNaN(val) && val > 0, "Must be a valid positive number"),
+    .transform((val) => (val === "" ? 0 : Number(val)))
+    .pipe(z.number().min(0.01, "Must be a valid positive number")),
 });
+type FormValues = {
+  farmerName: string;
+  shareType: "1/3" | "1/2" | "1/4";
+  allocatedArea: string; // This should be a string for input
+};
 
 export default function AddFarmerForm({ fieldId, maxArea }: Props) {
   const [isLoading, setIsLoading] = useState(false);
@@ -48,17 +52,17 @@ export default function AddFarmerForm({ fieldId, maxArea }: Props) {
     message: string | null;
   }>({ type: null, message: null });
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       farmerName: "",
-      shareType: "1/2", // Default to "1/2"
+      shareType: "1/2",
       allocatedArea: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (values.allocatedArea > maxArea) {
+  const onSubmit = async (values: FormValues) => {
+    if (parseFloat(values.allocatedArea) > maxArea) {
       setStatus({
         type: "error",
         message: `Allocated area cannot exceed ${maxArea} acres`,
@@ -72,7 +76,7 @@ export default function AddFarmerForm({ fieldId, maxArea }: Props) {
         fieldId,
         values.farmerName,
         values.shareType,
-        values.allocatedArea
+        parseFloat(values.allocatedArea)
       );
       if (result.success) {
         setStatus({

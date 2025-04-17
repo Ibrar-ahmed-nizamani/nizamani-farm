@@ -25,6 +25,8 @@ import {
   WorkerYearSelector,
 } from "@/components/milk/worker/selectors";
 import { getField } from "@/lib/actions/field";
+import { EditFarmerTransaction } from "@/components/fields/farmer-transactions/edit-farmer-transaction";
+import { DeleteFarmerTransaction } from "@/components/fields/farmer-transactions/delete-farmer-transaction";
 
 export default async function FarmerTransactionsPage({
   params,
@@ -80,7 +82,9 @@ export default async function FarmerTransactionsPage({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{farmer.name}&apos;s Transactions</h1>
+          <h1 className="text-2xl font-bold">
+            {farmer.name}&apos;s Transactions
+          </h1>
           <p className="text-muted-foreground">
             Field: {field.name} - Allocated Area: {farmer.allocatedArea} acres
           </p>
@@ -171,46 +175,25 @@ export default async function FarmerTransactionsPage({
                   {transaction.runningBalance > 0 ? " Cr" : " Dr"}
                 </TableCell>
                 <TableCell className="flex gap-3 items-center justify-center">
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Link
-                      href={`/fields/${fieldId}/farmers/${farmerId}/transactions/${transaction._id}/edit`}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                      </svg>
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                    </svg>
-                  </Button>
+                  <EditFarmerTransaction
+                    fieldId={fieldId}
+                    farmerId={farmerId}
+                    transaction={{
+                      _id: transaction._id,
+                      amount: transaction.amount,
+                      date: transaction.date.toISOString(),
+                      description: transaction.description,
+                      type: transaction.type,
+                    }}
+                  />
+                  <DeleteFarmerTransaction
+                    fieldId={fieldId}
+                    farmerId={farmerId}
+                    transactionId={transaction._id}
+                    date={formatDatePattern(transaction.date)}
+                    amount={transaction.amount}
+                    type={transaction.type}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -220,7 +203,7 @@ export default async function FarmerTransactionsPage({
         <EmptyState
           title="No transactions found"
           description="Start by adding your first farmer transaction"
-          link={`/fields/${fieldId}/farmers/${farmerId}/add-transaction`}
+          link={`/fields/${fieldId}/farmers/${farmerId}/transactions/add-transaction`}
           linkText="Add Transaction"
         />
       )}

@@ -104,6 +104,7 @@ export async function getField(id: string) {
 
     return {
       ...field,
+      totalArea: field.totalArea,
       name: field.name,
       _id: field._id.toString(),
     };
@@ -153,90 +154,6 @@ export async function getFieldFarmers(fieldId: string) {
   }
 }
 
-export async function getFieldExpenses(fieldId: string) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
-
-    const expenses = await db
-      .collection("field_expenses")
-      .find({ fieldId: new ObjectId(fieldId) })
-      .sort({ date: -1 })
-      .toArray();
-
-    return expenses.map((expense) => ({
-      ...expense,
-      _id: expense._id.toString(),
-      fieldId: expense.fieldId.toString(),
-    }));
-  } catch (error) {
-    console.error("Failed to fetch field expenses:", error);
-    return [];
-  }
-}
-
-export async function getFieldSummary(fieldId: string) {
-  try {
-    const client = await clientPromise;
-    const db = client.db("farm");
-
-    // Get field details
-    const field = await getField(fieldId);
-
-    // Get all farmers in the field
-    const fieldFarmers = await getFieldFarmers(fieldId);
-
-    // Get total expenses
-    const expenses = await getFieldExpenses(fieldId);
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-
-    // Calculate total allocated area
-    const totalAllocatedArea = fieldFarmers.reduce(
-      (sum, ff) => sum + ff.allocatedArea,
-      0
-    );
-
-    // Get farmer transactions
-    const transactions = await db
-      .collection("farmer_transactions")
-      .find({ fieldId: new ObjectId(fieldId) })
-      .toArray();
-
-    // Calculate balances for each farmer
-    const farmerBalances = fieldFarmers.map((farmer) => {
-      const farmerTransactions = transactions.filter(
-        (t) => t.farmerId.toString() === farmer.farmerId
-      );
-
-      const balance = farmerTransactions.reduce(
-        (sum, t) => sum + (t.type === "CREDIT" ? t.amount : -t.amount),
-        0
-      );
-
-      return {
-        farmerId: farmer.farmerId,
-        name: farmer.name,
-        allocatedArea: farmer.allocatedArea,
-        shareType: farmer.shareType,
-        balance,
-      };
-    });
-
-    return {
-      field,
-      totalExpenses,
-      totalAllocatedArea,
-      remainingArea: field.totalArea - totalAllocatedArea,
-      activeFarmers: fieldFarmers.filter((f) => f.status === "ACTIVE").length,
-      farmerBalances,
-    };
-  } catch (error) {
-    console.error("Failed to fetch field summary:", error);
-    throw new Error("Failed to fetch field summary");
-  }
-}
-
-// This is an update to the existing addFieldExpense function in lib/actions/field.ts
 export async function addFieldExpense(
   fieldId: string,
   farmerId: string,
@@ -290,5 +207,210 @@ export async function addFieldExpense(
   } catch (error) {
     console.error("Failed to add field expense:", error);
     throw new Error("Failed to add field expense");
+  }
+}
+
+// Add this to lib/actions/field.ts
+export async function getFieldSummary(fieldId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get all farmers for this field
+    const fieldFarmers = await db
+      .collection("field_farmers")
+      .find({ fieldId: new ObjectId(fieldId) })
+      .toArray();
+
+    // Get all expenses/income for these farmers
+    const farmerIds = fieldFarmers.map((ff) => new ObjectId(ff._id));
+    const allExpenses = await db
+      .collection("field_expenses")
+      .find({ farmerId: { $in: farmerIds } })
+      .toArray();
+
+    // Initialize summary values
+    let totalExpenses = 0;
+    let totalIncome = 0;
+    let totalOwnerExpenses = 0;
+    let totalFarmerExpenses = 0;
+    let totalOwnerIncome = 0;
+    let totalFarmerIncome = 0;
+
+    // Get share settings for expense calculations
+    const shareSettings = await db
+      .collection("share_settings")
+      .find({})
+      .toArray();
+
+    // Create a map of expense types to their share percentages
+    const expenseShareMap: { [key: string]: number } = {};
+    shareSettings.forEach((setting) => {
+      expenseShareMap[setting.name] = setting.farmerExpenseSharePercentage;
+    });
+
+    // Function to get income share percentage based on share type
+    const getSharePercentage = (shareType: string) => {
+      switch (shareType) {
+        case "1/2":
+          return 50;
+        case "1/3":
+          return 33.33;
+        case "1/4":
+          return 25;
+        default:
+          return 0;
+      }
+    };
+
+    // Create a map of farmer IDs to their share types
+    const farmerShareMap: { [key: string]: string } = {};
+    fieldFarmers.forEach((ff) => {
+      farmerShareMap[ff._id.toString()] = ff.shareType;
+    });
+
+    // Calculate totals
+    allExpenses.forEach((expense) => {
+      const farmerId = expense.farmerId.toString();
+      const shareType = farmerShareMap[farmerId];
+
+      if (expense.type === "expense") {
+        totalExpenses += expense.amount;
+
+        // Calculate expense share
+        const sharePercentage =
+          expense.expenseType && expenseShareMap[expense.expenseType]
+            ? expenseShareMap[expense.expenseType]
+            : 0;
+
+        const farmerShare = (expense.amount * sharePercentage) / 100;
+        const ownerShare = expense.amount - farmerShare;
+
+        totalFarmerExpenses += farmerShare;
+        totalOwnerExpenses += ownerShare;
+      } else if (expense.type === "income") {
+        totalIncome += expense.amount;
+
+        // Calculate income share based on farmer's share type
+        const farmerSharePercentage = getSharePercentage(shareType);
+        const farmerIncome = (expense.amount * farmerSharePercentage) / 100;
+        const ownerIncome = expense.amount - farmerIncome;
+
+        totalFarmerIncome += farmerIncome;
+        totalOwnerIncome += ownerIncome;
+      }
+    });
+
+    return {
+      success: true,
+      summary: {
+        totalExpenses: Math.round(totalExpenses),
+        totalIncome: Math.round(totalIncome),
+        balance: Math.round(totalIncome - totalExpenses),
+        totalOwnerExpenses: Math.round(totalOwnerExpenses),
+        totalFarmerExpenses: Math.round(totalFarmerExpenses),
+        totalOwnerIncome: Math.round(totalOwnerIncome),
+        totalFarmerIncome: Math.round(totalFarmerIncome),
+        totalOwnerBalance: Math.round(totalOwnerIncome - totalOwnerExpenses),
+        totalFarmerBalance: Math.round(totalFarmerIncome - totalFarmerExpenses),
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch field summary:", error);
+    return {
+      success: false,
+      error: "Failed to fetch field summary",
+      summary: {
+        totalExpenses: 0,
+        totalIncome: 0,
+        balance: 0,
+        totalOwnerExpenses: 0,
+        totalFarmerExpenses: 0,
+        totalOwnerIncome: 0,
+        totalFarmerIncome: 0,
+        totalOwnerBalance: 0,
+        totalFarmerBalance: 0,
+      },
+    };
+  }
+}
+
+export async function deleteFieldExpense(
+  fieldId: string,
+  farmerId: string,
+  expenseId: string
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Delete the field expense record
+    await db.collection("field_expenses").deleteOne({
+      _id: new ObjectId(expenseId),
+    });
+
+    revalidatePath(`/fields/${fieldId}/farmers/${farmerId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete field expense:", error);
+    throw new Error("Failed to delete field expense");
+  }
+}
+
+export async function updateFieldExpense(
+  fieldId: string,
+  farmerId: string,
+  expenseId: string,
+  data: {
+    type: "expense" | "income";
+    expenseType?: string;
+    amount: number;
+    date: Date;
+    description: string;
+    farmerShare: number;
+  }
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get expense type details if provided
+    let expenseTypeDetails = null;
+    if (data.type === "expense" && data.expenseType) {
+      expenseTypeDetails = await db
+        .collection("share_settings")
+        .findOne({ _id: new ObjectId(data.expenseType) });
+    }
+
+    // Update the field expense record
+    await db.collection("field_expenses").updateOne(
+      { _id: new ObjectId(expenseId) },
+      {
+        $set: {
+          fieldId: new ObjectId(fieldId),
+          farmerId: new ObjectId(farmerId),
+          type: data.type,
+          expenseType:
+            data.type === "expense" && expenseTypeDetails
+              ? expenseTypeDetails.name
+              : undefined,
+          expenseTypeId:
+            data.type === "expense" && data.expenseType
+              ? new ObjectId(data.expenseType)
+              : undefined,
+          amount: data.amount,
+          date: new Date(data.date),
+          description: data.description,
+          farmerShare: data.farmerShare,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    revalidatePath(`/fields/${fieldId}/farmers/${farmerId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update field expense:", error);
+    throw new Error("Failed to update field expense");
   }
 }

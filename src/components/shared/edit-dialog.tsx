@@ -1,3 +1,4 @@
+// edit-dialog.tsx
 "use client";
 
 import { useState } from "react";
@@ -49,6 +50,7 @@ interface EditDialogProps<TSchema extends z.ZodType> {
   initialData: z.infer<TSchema>;
   schema: TSchema;
   fields: Field<z.infer<TSchema>>[];
+  onFieldChange?: (fieldName: string, value: any) => void; // Add this prop
 }
 
 export default function EditDialog<TSchema extends z.ZodType>({
@@ -59,6 +61,7 @@ export default function EditDialog<TSchema extends z.ZodType>({
   initialData,
   schema,
   fields,
+  onFieldChange,
 }: EditDialogProps<TSchema>) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,6 +81,13 @@ export default function EditDialog<TSchema extends z.ZodType>({
       console.error("Failed to update:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle field changes and notify parent component
+  const handleFieldChange = (fieldName: string, value: any) => {
+    if (onFieldChange) {
+      onFieldChange(fieldName, value);
     }
   };
 
@@ -104,7 +114,10 @@ export default function EditDialog<TSchema extends z.ZodType>({
                     <FormControl>
                       {field.type === "select" ? (
                         <Select
-                          onValueChange={formField.onChange}
+                          onValueChange={(value) => {
+                            formField.onChange(value);
+                            handleFieldChange(field.name as string, value);
+                          }}
                           defaultValue={formField.value}
                           disabled={isLoading}
                         >
@@ -127,6 +140,13 @@ export default function EditDialog<TSchema extends z.ZodType>({
                       ) : field.type === "textarea" ? (
                         <Textarea
                           {...formField}
+                          onChange={(e) => {
+                            formField.onChange(e);
+                            handleFieldChange(
+                              field.name as string,
+                              e.target.value
+                            );
+                          }}
                           disabled={isLoading}
                           placeholder={field.placeholder}
                         />
@@ -134,6 +154,13 @@ export default function EditDialog<TSchema extends z.ZodType>({
                         <Input
                           type={field.type}
                           {...formField}
+                          onChange={(e) => {
+                            formField.onChange(e);
+                            handleFieldChange(
+                              field.name as string,
+                              e.target.value
+                            );
+                          }}
                           disabled={isLoading}
                           placeholder={field.placeholder}
                         />

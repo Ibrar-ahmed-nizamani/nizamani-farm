@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { convertShareTypes } from "../utils";
 
 // Existing functions like getField and getFieldFarmers should be here
 export async function getFieldShareExpenses(shareType: string) {
@@ -42,7 +43,13 @@ export async function addFarmerShareExpense(data: {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    const insertData = {
+    const insertData: {
+      name: string;
+      farmerExpenseSharePercentage: number;
+      shareType: string;
+      createdAt: Date;
+      fieldId?: ObjectId; // Made fieldId optional
+    } = {
       name: data.name,
       farmerExpenseSharePercentage: data.farmerExpenseSharePercentage,
       shareType: data.shareType,
@@ -128,5 +135,34 @@ export async function deleteFieldExpense(expenseId: string) {
   } catch (error) {
     console.error("Failed to delete field expense:", error);
     throw new Error("Failed to delete field expense");
+  }
+}
+
+// Updated function in share-settings.ts
+
+export async function getExpenseTypes(shareType: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    const convertedShareType = convertShareTypes(shareType);
+    // Build query based on whether shareType is provided
+    const query = convertedShareType ? { shareType: convertedShareType } : {};
+
+    const expenseTypes = await db
+      .collection("share_settings")
+      .find(query)
+      .sort({ name: 1 })
+      .toArray();
+
+    return expenseTypes.map((type) => ({
+      _id: type._id.toString(),
+      name: type.name,
+      farmerExpenseSharePercentage: type.farmerExpenseSharePercentage,
+      shareType: type.shareType,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch expense types:", error);
+    return [];
   }
 }

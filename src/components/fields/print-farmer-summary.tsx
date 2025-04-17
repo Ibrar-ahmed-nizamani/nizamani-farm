@@ -300,7 +300,7 @@ export default function PrintFarmerSummary({
                     }</td>
                     <td>${
                       expense.type === "expense"
-                        ? expense.expenseType || "Expense"
+                        ? expense.expenseType || "---"
                         : "Income"
                     }${
                       expense.type === "expense" &&

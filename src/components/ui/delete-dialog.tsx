@@ -32,7 +32,7 @@ export function DeleteDialog({
   useEffect(() => {
     // Cleanup function to reset pointer-events when dialog closes
     return () => {
-      document.body.style.pointerEvents = '';
+      document.body.style.pointerEvents = "";
     };
   }, [isOpen]);
 
@@ -44,10 +44,12 @@ export function DeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive hover:bg-destructive/80" onClick={onConfirm} disabled={isLoading}>
+          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive hover:bg-destructive/80"
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
             {isLoading ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>

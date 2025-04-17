@@ -18,6 +18,9 @@ import { PlusIcon, ArrowRight } from "lucide-react";
 import { getFieldFarmer, getFieldFarmerExpenses } from "@/lib/actions/farmer";
 import { Card, CardContent } from "@/components/ui/card";
 import PrintFarmerSummary from "@/components/fields/print-farmer-summary";
+import { EditFieldTransaction } from "@/components/fields/edit-field-transaction";
+import { DeleteFieldTransaction } from "@/components/fields/delete-field-transaction";
+import { getExpenseTypes } from "@/lib/actions/share-settings";
 
 export default async function FarmerFieldPage({
   params,
@@ -28,7 +31,10 @@ export default async function FarmerFieldPage({
 
   const farmer = await getFieldFarmer(farmerId);
   const { expenses, summary } = await getFieldFarmerExpenses(farmerId);
-
+  console.log(farmer.shareType);
+  // Get expense types filtered by farmer's share type
+  const expenseTypes = await getExpenseTypes(farmer.shareType);
+  console.log(expenseTypes);
   // Calculate total expenses and income
   const totalExpenses = expenses.reduce(
     (acc, curr) => acc + (curr.type === "expense" ? curr.amount : 0),
@@ -247,7 +253,33 @@ export default async function FarmerFieldPage({
                     : "-"}
                 </TableCell>
                 <TableCell className="flex justify-center gap-2">
-                  {/* Actions remain the same */}
+                  {/* Add edit and delete actions */}
+                  <EditFieldTransaction
+                    fieldId={fieldId}
+                    farmerId={farmerId}
+                    expense={{
+                      _id: expense._id,
+                      type: expense.type,
+                      expenseType: expense.expenseType,
+                      expenseTypeId: expense.expenseTypeId,
+                      amount: expense.amount,
+                      date: expense.date,
+                      description: expense.description,
+                      farmerShare: expense.sharePercentage || 0,
+                    }}
+                    expenseTypes={expenseTypes}
+                  />
+                  <DeleteFieldTransaction
+                    fieldId={fieldId}
+                    farmerId={farmerId}
+                    transaction={{
+                      _id: expense._id,
+                      type: expense.type,
+                      amount: expense.amount,
+                      date: expense.date,
+                      description: expense.description,
+                    }}
+                  />
                 </TableCell>
               </TableRow>
             ))}

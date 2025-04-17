@@ -77,7 +77,6 @@ export function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-
 export function convertShareTypes(share: string, ui: boolean = false) {
   if (share === "1/2" && ui === false) {
     return "HALF";
@@ -97,6 +96,7 @@ export function convertShareTypes(share: string, ui: boolean = false) {
   if (share === "1/4" && ui) {
     return "25%";
   }
+}
 
 export function getDateRangeDescription({
   startDate,
@@ -151,5 +151,4 @@ export function getDateRangeDescription({
 
   // No specific date range selected
   return "All Time";
-
 }
