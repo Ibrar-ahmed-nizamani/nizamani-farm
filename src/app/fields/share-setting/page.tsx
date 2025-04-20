@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getFieldShareExpenses } from "@/lib/actions/share-settings";
 import AddExpenseForm from "@/components/fields/share-setting/add-expense-percent-form";
 import EditExpenseModal from "@/components/fields/share-setting/edit-expense-percent";
+import { DeleteIcon } from "lucide-react";
+import { DeleteShareExpense } from "@/components/fields/share-setting/delete-share-expense";
 
 export default async function ShareSettingsPage({
   // params,
@@ -99,8 +101,9 @@ export default async function ShareSettingsPage({
                         <TableCell>
                           {expense.farmerExpenseSharePercentage}%
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="flex gap-2 items-center justify-end ">
                           <EditExpenseModal expense={expense} />
+                          <DeleteShareExpense expenseId={expense._id} />
                         </TableCell>
                       </TableRow>
                     ))}

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -31,6 +32,7 @@ import {
   deleteFieldExpense,
   updateFieldExpense,
 } from "@/lib/actions/share-settings";
+import { PencilIcon } from "lucide-react";
 // import { toast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
@@ -90,33 +92,12 @@ export default function EditExpenseModal({ expense }: EditExpenseModalProps) {
     }
   }
 
-  async function handleDelete() {
-    try {
-      setIsDeleting(true);
-      await deleteFieldExpense(expense._id);
-
-      //   toast({
-      //     title: "Expense deleted",
-      //     description: "The expense has been deleted successfully.",
-      //   });
-      setIsOpen(false);
-      router.refresh();
-    } catch {
-      console.error("Failed to delete expense:");
-      //   toast({
-      //     title: "Error",
-      //     description: "Failed to delete expense. Please try again.",
-      //     variant: "destructive",
-      //   });
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Edit</Button>
+        <Button variant="ghost" size="icon" onClick={() => setIsOpen(true)}>
+          <PencilIcon className="h-4 w-4" />
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -165,13 +146,8 @@ export default function EditExpenseModal({ expense }: EditExpenseModalProps) {
             />
 
             <DialogFooter className="flex justify-between">
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isDeleting || isSubmitting}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
+              <Button asChild variant="secondary">
+                <DialogClose>Close</DialogClose>
               </Button>
               <Button type="submit" disabled={isSubmitting || isDeleting}>
                 {isSubmitting ? "Saving..." : "Save changes"}
