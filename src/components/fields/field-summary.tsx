@@ -48,13 +48,13 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
             <h3 className="font-semibold text-lg">Expenses Split</h3>
 
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Owner's Expenses:</h4>
+              <h4 className="font-medium">Owner&apos;s Expenses:</h4>
               <p className="font-bold text-red-600">
                 Rs {summary.totalOwnerExpenses.toLocaleString()}
               </p>
             </div>
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Farmers' Expenses:</h4>
+              <h4 className="font-medium">Farmers&apos; Expenses:</h4>
               <p className="font-bold text-red-600">
                 Rs {summary.totalFarmerExpenses.toLocaleString()}
               </p>
@@ -66,13 +66,13 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
             <h3 className="font-semibold text-lg">Income Split</h3>
 
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Owner's Income:</h4>
+              <h4 className="font-medium">Owner&apos;s Income:</h4>
               <p className="font-bold text-green-600">
                 Rs {summary.totalOwnerIncome.toLocaleString()}
               </p>
             </div>
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Farmers' Income:</h4>
+              <h4 className="font-medium">Farmers&apos; Income:</h4>
               <p className="font-bold text-green-600">
                 Rs {summary.totalFarmerIncome.toLocaleString()}
               </p>
@@ -84,7 +84,7 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
             <h3 className="font-semibold text-lg">Net Balance</h3>
 
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Owner's Net Balance:</h4>
+              <h4 className="font-medium">Owner&apos;s Net Balance:</h4>
               <p
                 className={`font-bold ${
                   summary.totalOwnerBalance >= 0
@@ -96,7 +96,7 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
               </p>
             </div>
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Farmers' Net Balance:</h4>
+              <h4 className="font-medium">Farmers&apos; Net Balance:</h4>
               <p
                 className={`font-bold ${
                   summary.totalFarmerBalance >= 0

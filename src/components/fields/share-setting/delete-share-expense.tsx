@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { deleteMilkWorkerTransaction } from "@/lib/actions/milk-worker";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { deleteFieldExpense } from "@/lib/actions/share-settings";
 

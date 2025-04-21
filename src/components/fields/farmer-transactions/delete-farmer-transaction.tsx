@@ -17,7 +17,6 @@ interface DeleteFarmerTransactionProps {
 }
 
 export function DeleteFarmerTransaction({
-  fieldId,
   farmerId,
   transactionId,
   date,
@@ -25,7 +24,6 @@ export function DeleteFarmerTransaction({
   type,
 }: DeleteFarmerTransactionProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleDelete = async () => {
     await deleteFarmerTransaction(farmerId, transactionId);
@@ -48,7 +46,6 @@ export function DeleteFarmerTransaction({
         onConfirm={handleDelete}
         title="Delete Transaction"
         description={`Are you sure you want to delete the ${type} transaction of Rs ${amount.toLocaleString()} from ${date}? This action cannot be undone.`}
-        isLoading={isLoading}
       />
     </>
   );

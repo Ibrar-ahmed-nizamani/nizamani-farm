@@ -28,10 +28,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  deleteFieldExpense,
-  updateFieldExpense,
-} from "@/lib/actions/share-settings";
+import { updateFieldExpense } from "@/lib/actions/share-settings";
 import { PencilIcon } from "lucide-react";
 // import { toast } from "@/components/ui/use-toast";
 
@@ -59,7 +56,6 @@ export default function EditExpenseModal({ expense }: EditExpenseModalProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -149,7 +145,7 @@ export default function EditExpenseModal({ expense }: EditExpenseModalProps) {
               <Button asChild variant="secondary">
                 <DialogClose>Close</DialogClose>
               </Button>
-              <Button type="submit" disabled={isSubmitting || isDeleting}>
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : "Save changes"}
               </Button>
             </DialogFooter>

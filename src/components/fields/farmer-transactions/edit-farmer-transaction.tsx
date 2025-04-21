@@ -33,7 +33,6 @@ interface EditFarmerTransactionProps {
 }
 
 export function EditFarmerTransaction({
-  fieldId,
   farmerId,
   transaction,
 }: EditFarmerTransactionProps) {
