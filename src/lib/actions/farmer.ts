@@ -514,3 +514,163 @@ export async function deleteFarmerTransaction(
     };
   }
 }
+
+export async function updateFarmer(
+  fieldId: string,
+  farmerId: string,
+  farmerName: string,
+  shareType: "1/3" | "1/2" | "1/4",
+  allocatedArea: number
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the current field-farmer relationship
+    const currentFieldFarmer = await db
+      .collection("field_farmers")
+      .findOne({ _id: new ObjectId(farmerId) });
+
+    if (!currentFieldFarmer) {
+      return {
+        success: false,
+        error: "Farmer not found",
+      };
+    }
+
+    // Get the field to check remaining area
+    const field = await db
+      .collection("fields")
+      .findOne({ _id: new ObjectId(fieldId) });
+
+    if (!field) {
+      return {
+        success: false,
+        error: "Field not found",
+      };
+    }
+
+    // Calculate the difference in allocated area
+    const areaDifference = allocatedArea - currentFieldFarmer.allocatedArea;
+
+    // Check if the new allocated area would exceed the field's remaining area
+    if (areaDifference > field.remainingArea) {
+      return {
+        success: false,
+        error: `Cannot allocate more than remaining area (${field.remainingArea + currentFieldFarmer.allocatedArea} acres)`,
+      };
+    }
+
+    // Get the farmer document to update the name
+    const farmer = await db
+      .collection("farmers")
+      .findOne({ _id: currentFieldFarmer.farmerId });
+
+    if (!farmer) {
+      return {
+        success: false,
+        error: "Farmer record not found",
+      };
+    }
+
+    // Update the farmer's name
+    await db.collection("farmers").updateOne(
+      { _id: farmer._id },
+      {
+        $set: {
+          name: farmerName,
+        },
+      }
+    );
+
+    // Update the field-farmer relationship
+    await db.collection("field_farmers").updateOne(
+      { _id: new ObjectId(farmerId) },
+      {
+        $set: {
+          shareType,
+          allocatedArea,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    // Update the field's remaining area
+    await db
+      .collection("fields")
+      .updateOne(
+        { _id: new ObjectId(fieldId) },
+        { $inc: { remainingArea: -areaDifference } }
+      );
+
+    revalidatePath(`/fields/${fieldId}`);
+    revalidatePath(`/fields/${fieldId}/farmers/${farmerId}`);
+    revalidatePath(`/fields`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update farmer:", error);
+    return {
+      success: false,
+      error: "Failed to update farmer",
+    };
+  }
+}
+
+export async function deleteFarmer(farmerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the field-farmer relationship to get the fieldId for revalidation
+    const fieldFarmer = await db
+      .collection("field_farmers")
+      .findOne({ _id: new ObjectId(farmerId) });
+
+    if (!fieldFarmer) {
+      return {
+        success: false,
+        error: "Farmer not found",
+      };
+    }
+
+    const fieldId = fieldFarmer.fieldId;
+
+    // Update the field's remaining area
+    await db
+      .collection("fields")
+      .updateOne(
+        { _id: fieldId },
+        { $inc: { remainingArea: fieldFarmer.allocatedArea } }
+      );
+
+    // Delete all transactions related to this farmer
+    await db.collection("farmer_transactions").deleteMany({
+      farmerId: new ObjectId(farmerId),
+    });
+
+    // Delete the field-farmer relationship
+    const result = await db.collection("field_farmers").deleteOne({
+      _id: new ObjectId(farmerId),
+    });
+
+    if (result.deletedCount === 0) {
+      return {
+        success: false,
+        error: "Failed to delete farmer",
+      };
+    }
+
+    // Note: We don't delete the actual farmer document as it might be referenced elsewhere
+
+    revalidatePath(`/fields/${fieldId}`);
+    revalidatePath(`/fields/${fieldId}/farmers/${farmerId}`);
+    revalidatePath(`/fields`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete farmer:", error);
+    return {
+      success: false,
+      error: "Failed to delete farmer",
+    };
+  }
+}

@@ -16,10 +16,14 @@ import {
   getField,
   getFieldFarmers,
   getFieldSummary,
+  getRemainingArea,
 } from "@/lib/actions/field";
 import { PlusIcon } from "lucide-react";
 import { convertShareTypes } from "@/lib/utils";
 import FieldSummary from "@/components/fields/field-summary";
+import EditFarmerDialog from "@/components/fields/edit-farmer-dialog";
+import DeleteFarmerDialog from "@/components/fields/delete-farmer-dialog";
+import { getFieldFarmerExpenses } from "@/lib/actions/farmer";
 
 export default async function FieldPage({
   params,
@@ -31,6 +35,26 @@ export default async function FieldPage({
   const field = await getField(fieldId);
   const farmers = await getFieldFarmers(fieldId);
   const { success, summary } = await getFieldSummary(fieldId);
+  const { remainingArea } = await getRemainingArea(fieldId);
+  
+  // Get financial details for each farmer
+  const farmersWithFinancials = await Promise.all(
+    farmers.map(async (farmer) => {
+      const result = await getFieldFarmerExpenses(farmer._id);
+      
+      // Extract total values (farmer + owner)
+      const totalExpenses = (result.summary?.totalFarmerExpenses || 0) + (result.summary?.totalOwnerExpenses || 0);
+      const totalIncome = result.summary?.totalIncome || 0;
+      const totalBalance = totalIncome - totalExpenses;
+      
+      return {
+        ...farmer,
+        expenses: totalExpenses,
+        income: totalIncome,
+        balance: totalBalance
+      };
+    })
+  );
 
   return (
     <div className="space-y-6">
@@ -64,28 +88,57 @@ export default async function FieldPage({
           </div>
         </div>
 
-        {farmers.length > 0 ? (
+        {farmersWithFinancials.length > 0 ? (
           <Table className="border">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Share Type</TableHead>
                 <TableHead>Allocated Area</TableHead>
+                <TableHead>Total Expenses</TableHead>
+                <TableHead>Total Income</TableHead>
+                <TableHead>Net Balance</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {farmers.map((farmer) => (
+              {farmersWithFinancials.map((farmer) => (
                 <TableRow key={farmer._id}>
                   <TableCell>{farmer.name}</TableCell>
                   <TableCell>
                     {convertShareTypes(farmer.shareType, true)}
                   </TableCell>
                   <TableCell>{farmer.allocatedArea} acres</TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/fields/${field._id}/farmers/${farmer._id}`}>
-                      <Button variant="outline">Field Details</Button>
-                    </Link>
+                  <TableCell className=" bg-red-500/10 font-medium">
+                    Rs. {(farmer.expenses || 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className=" bg-green-500/10 font-medium">
+                    Rs. {(farmer.income || 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className={`font-medium ${(farmer.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    Rs. {(farmer.balance || 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <div className="flex justify-end gap-2">
+                      <EditFarmerDialog
+                        fieldId={field._id}
+                        farmerId={farmer._id}
+                        farmerName={farmer.name}
+                        shareType={farmer.shareType}
+                        allocatedArea={farmer.allocatedArea}
+                        maxArea={remainingArea}
+                      />
+                      <DeleteFarmerDialog
+                        fieldId={field._id}
+                        farmerId={farmer._id}
+                        farmerName={farmer.name}
+                      />
+                      <Link href={`/fields/${field._id}/farmers/${farmer._id}`}>
+                        <Button variant="outline" size="sm" className="h-8">
+                          Details
+                        </Button>
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

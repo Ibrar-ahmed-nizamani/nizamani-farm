@@ -414,3 +414,124 @@ export async function updateFieldExpense(
     throw new Error("Failed to update field expense");
   }
 }
+
+export async function updateField(fieldId: string, name: string, totalArea: number) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the current field to calculate area difference
+    const currentField = await db
+      .collection("fields")
+      .findOne({ _id: new ObjectId(fieldId) });
+
+    if (!currentField) {
+      return {
+        success: false,
+        error: "Field not found",
+      };
+    }
+
+    // Check if name is already used by another field
+    if (name !== currentField.name) {
+      const existingField = await db
+        .collection("fields")
+        .findOne({
+          name: { $regex: new RegExp(`^${name}$`, "i") },
+          _id: { $ne: new ObjectId(fieldId) },
+        });
+
+      if (existingField) {
+        return {
+          success: false,
+          error: "A field with this name already exists",
+        };
+      }
+    }
+
+    // Calculate the difference in total area
+    const areaDifference = totalArea - currentField.totalArea;
+
+    // Calculate new remaining area
+    const newRemainingArea = currentField.remainingArea + areaDifference;
+
+    // Check if new remaining area would be negative
+    if (newRemainingArea < 0) {
+      return {
+        success: false,
+        error: "Cannot reduce total area below allocated area",
+      };
+    }
+
+    // Update the field
+    await db.collection("fields").updateOne(
+      { _id: new ObjectId(fieldId) },
+      {
+        $set: {
+          name,
+          totalArea,
+          remainingArea: newRemainingArea,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    revalidatePath("/fields");
+    revalidatePath(`/fields/${fieldId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to update field:", error);
+    return {
+      success: false,
+      error: "Failed to update field",
+    };
+  }
+}
+
+export async function getFieldSummaryForList(fieldId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get all farmers for this field
+    const fieldFarmers = await db
+      .collection("field_farmers")
+      .find({ fieldId: new ObjectId(fieldId) })
+      .toArray();
+
+    // Get all expenses for this field
+    const expenses = await db
+      .collection("field_expenses")
+      .find({ fieldId: new ObjectId(fieldId) })
+      .toArray();
+
+    // Calculate totals
+    let totalExpenses = 0;
+    let totalIncome = 0;
+
+    expenses.forEach((expense) => {
+      if (expense.type === "expense") {
+        totalExpenses += expense.amount;
+      } else if (expense.type === "income") {
+        totalIncome += expense.amount;
+      }
+    });
+
+    return {
+      success: true,
+      farmerCount: fieldFarmers.length,
+      totalExpenses: Math.round(totalExpenses),
+      totalIncome: Math.round(totalIncome),
+      balance: Math.round(totalIncome - totalExpenses),
+    };
+  } catch (error) {
+    console.error("Failed to fetch field summary for list:", error);
+    return {
+      success: false,
+      farmerCount: 0,
+      totalExpenses: 0,
+      totalIncome: 0,
+      balance: 0,
+    };
+  }
+}
