@@ -42,7 +42,7 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
 
       {/* Detailed Breakdown Card */}
       <Card className="w-full">
-        <CardContent className="py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CardContent className="py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Expenses Column */}
           <div className="space-y-2">
             <h3 className="font-semibold text-lg">Expenses Split</h3>
@@ -80,7 +80,7 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
           </div>
 
           {/* Net Balance */}
-          <div className="space-y-2 col-span-1 md:col-span-2 mt-4 pt-4 border-t">
+          <div className="space-y-2 col-span-1 md:col-span-1  ">
             <h3 className="font-semibold text-lg">Net Balance</h3>
 
             <div className="flex gap-3 items-center">

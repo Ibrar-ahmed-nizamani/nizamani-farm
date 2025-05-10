@@ -14,6 +14,7 @@ import { getFields, getFieldSummaryForList, getRemainingArea } from "@/lib/actio
 import { PlusIcon, Settings } from "lucide-react";
 import Link from "next/link";
 import EditFieldDialog from "@/components/fields/edit-field-dialog";
+import DeleteFieldDialog from "@/components/fields/delete-field-dialog";
 
 export default async function FieldsPage() {
   const fields = await getFields();
@@ -92,6 +93,11 @@ export default async function FieldsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <DeleteFieldDialog  
+                    fieldId={field._id}
+                    fieldName={field.name}
+                    farmerCount={field.farmerCount}
+                    />
                     <EditFieldDialog
                       fieldId={field._id}
                       fieldName={field.name}

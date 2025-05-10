@@ -13,28 +13,51 @@ import {
 import BackLink from "@/components/ui/back-link";
 import EmptyState from "@/components/shared/empty-state";
 import SummaryCards from "@/components/shared/summary-cards";
-import { formatDatePattern } from "@/lib/utils";
+import { formatDatePattern, getDateRangeDescription } from "@/lib/utils";
 import { PlusIcon, ArrowRight } from "lucide-react";
 import { getFieldFarmer, getFieldFarmerExpenses } from "@/lib/actions/farmer";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import PrintFarmerSummary from "@/components/fields/print-farmer-summary";
 import { EditFieldTransaction } from "@/components/fields/edit-field-transaction";
 import { DeleteFieldTransaction } from "@/components/fields/delete-field-transaction";
 import { getExpenseTypes } from "@/lib/actions/share-settings";
+import DateRangeSelector from "@/components/shared/date-range-selector";
+
+interface SearchParams {
+  startDate?: string;
+  endDate?: string;
+  year?: string;
+  month?: string;
+}
 
 export default async function FarmerFieldPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ fieldId: string; farmerId: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { fieldId, farmerId } = await params;
+  const { startDate, endDate, year, month } = await searchParams;
 
   const farmer = await getFieldFarmer(farmerId);
-  const { expenses, summary } = await getFieldFarmerExpenses(farmerId);
-  console.log(farmer.shareType);
+  const { expenses, summary, years, months } = await getFieldFarmerExpenses(farmerId, {
+    startDate,
+    endDate,
+    year,
+    month
+  });
+  
   // Get expense types filtered by farmer's share type
   const expenseTypes = await getExpenseTypes(farmer.shareType);
-  console.log(expenseTypes);
+  
+  // Get date range description for display
+  const dateRangeDescription = getDateRangeDescription({
+    selectedYear: year || "all",
+    selectedMonth: month,
+    startDate,
+    endDate
+  });
   // Calculate total expenses and income
   const totalExpenses = expenses.reduce(
     (acc, curr) => acc + (curr.type === "expense" ? curr.amount : 0),
@@ -87,6 +110,14 @@ export default async function FarmerFieldPage({
           <BackLink href={`/fields/${fieldId}`} linkText="Back to Field" />
         </div>
       </div>
+      
+      {/* Date Filter */}
+      <div className="mb-6">
+        <div className="flex gap-4 items-center justify-between mb-2">
+          <CardDescription>{dateRangeDescription}</CardDescription>
+        </div>
+        <DateRangeSelector availableYears={years} availableMonths={months} />
+      </div>
 
       {/* First row of summary cards */}
       <SummaryCards
@@ -111,7 +142,7 @@ export default async function FarmerFieldPage({
 
       {/* Updated card to show both expenses, income split, and net balance */}
       <Card className="">
-        <CardContent className="py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CardContent className="py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Expenses Column */}
           <div className="space-y-2">
             <h3 className="font-semibold text-lg">Expenses Split</h3>
@@ -151,7 +182,7 @@ export default async function FarmerFieldPage({
           </div>
 
           {/* New section for Net Balance */}
-          <div className="space-y-2 col-span-1 md:col-span-2 mt-4 pt-4 border-t">
+          <div className="space-y-2 col-span-1 ">
             <h3 className="font-semibold text-lg">Net Balance</h3>
 
             <div className="flex gap-3 items-center">

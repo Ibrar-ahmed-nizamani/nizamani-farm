@@ -19,28 +19,61 @@ import {
   getRemainingArea,
 } from "@/lib/actions/field";
 import { PlusIcon } from "lucide-react";
-import { convertShareTypes } from "@/lib/utils";
+import { convertShareTypes, getDateRangeDescription } from "@/lib/utils";
 import FieldSummary from "@/components/fields/field-summary";
 import EditFarmerDialog from "@/components/fields/edit-farmer-dialog";
 import DeleteFarmerDialog from "@/components/fields/delete-farmer-dialog";
 import { getFieldFarmerExpenses } from "@/lib/actions/farmer";
+import DateRangeSelector from "@/components/shared/date-range-selector";
+import { CardDescription } from "@/components/ui/card";
+
+interface SearchParams {
+  startDate?: string;
+  endDate?: string;
+  year?: string;
+  month?: string;
+}
 
 export default async function FieldPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ fieldId: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const fieldId = (await params).fieldId;
+  const { startDate, endDate, year, month } = await searchParams;
 
   const field = await getField(fieldId);
   const farmers = await getFieldFarmers(fieldId);
-  const { success, summary } = await getFieldSummary(fieldId);
+  const { success, summary, years, months } = await getFieldSummary(fieldId, {
+    startDate,
+    endDate,
+    year,
+    month
+  });
   const { remainingArea } = await getRemainingArea(fieldId);
+  
+  // Get date range description for display
+  const dateRangeDescription = getDateRangeDescription({
+    selectedYear: year || "all",
+    selectedMonth: month,
+    startDate,
+    endDate
+  });
   
   // Get financial details for each farmer
   const farmersWithFinancials = await Promise.all(
     farmers.map(async (farmer) => {
-      const result = await getFieldFarmerExpenses(farmer._id);
+      const result = await getFieldFarmerExpenses(
+        farmer._id.toString(),
+        {
+          startDate,
+          endDate,
+          year,
+          month
+        }
+      );
       
       // Extract total values (farmer + owner)
       const totalExpenses = (result.summary?.totalFarmerExpenses || 0) + (result.summary?.totalOwnerExpenses || 0);
@@ -66,6 +99,14 @@ export default async function FieldPage({
           </p>
         </div>
         <BackLink href="/fields" linkText="Back to Fields" />
+      </div>
+      
+      {/* Date Filter */}
+      <div className="mb-6">
+        <div className="flex gap-4 items-center justify-between mb-2">
+          <CardDescription>{dateRangeDescription}</CardDescription>
+        </div>
+        <DateRangeSelector availableYears={years || []} availableMonths={months || []} />
       </div>
 
       {/* Field Summary Section */}

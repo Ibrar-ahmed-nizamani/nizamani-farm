@@ -210,8 +210,15 @@ export async function addFieldExpense(
   }
 }
 
+interface DateFilterOptions {
+  year?: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 // Add this to lib/actions/field.ts
-export async function getFieldSummary(fieldId: string) {
+export async function getFieldSummary(fieldId: string, filterOptions: DateFilterOptions = {}) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -222,11 +229,53 @@ export async function getFieldSummary(fieldId: string) {
       .find({ fieldId: new ObjectId(fieldId) })
       .toArray();
 
-    // Get all expenses/income for these farmers
-    const farmerIds = fieldFarmers.map((ff) => new ObjectId(ff._id));
+    // Build query with date filter if provided
+    const query: any = {
+      farmerId: { $in: fieldFarmers.map((ff) => new ObjectId(ff._id)) }
+    };
+
+    const { year, month, startDate, endDate } = filterOptions;
+
+    // Date range filter
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      // Set start date to beginning of day
+      start.setHours(0, 0, 0, 0);
+      
+      const end = new Date(endDate);
+      // Set end date to end of day
+      end.setHours(23, 59, 59, 999);
+      
+      query.date = {
+        $gte: start,
+        $lte: end,
+      };
+    }
+    // Year and month filter
+    else if (year && year !== 'all') {
+      if (month && month !== 'all') {
+        const monthNum = parseInt(month);
+        const yearNum = parseInt(year);
+
+        const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+        const endOfMonth = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+
+        query.date = {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        };
+      } else {
+        query.date = {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+        };
+      }
+    }
+
+    // Get all expenses/income for these farmers with optional date filter
     const allExpenses = await db
       .collection("field_expenses")
-      .find({ farmerId: { $in: farmerIds } })
+      .find(query)
       .toArray();
 
     // Initialize summary values
@@ -301,6 +350,41 @@ export async function getFieldSummary(fieldId: string) {
       }
     });
 
+    // Get unique years and months for the filter
+    const years = Array.from(
+      new Set(
+        allExpenses.map((expense) => new Date(expense.date).getFullYear())
+      )
+    ).sort((a, b) => b - a); // Sort in descending order
+
+    // Get available months
+    const monthsMap = new Map<number, Set<number>>();
+    allExpenses.forEach((expense) => {
+      const date = new Date(expense.date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+
+      if (!monthsMap.has(year)) {
+        monthsMap.set(year, new Set());
+      }
+      monthsMap.get(year)?.add(month);
+    });
+
+    const months = Array.from(monthsMap.entries())
+      .flatMap(([year, months]) =>
+        Array.from(months).map((month) => ({
+          year,
+          month,
+          label: new Date(year, month - 1).toLocaleString("default", {
+            month: "long",
+          }),
+        }))
+      )
+      .sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return a.month - b.month;
+      });
+
     return {
       success: true,
       summary: {
@@ -314,6 +398,8 @@ export async function getFieldSummary(fieldId: string) {
         totalOwnerBalance: Math.round(totalOwnerIncome - totalOwnerExpenses),
         totalFarmerBalance: Math.round(totalFarmerIncome - totalFarmerExpenses),
       },
+      years,
+      months,
     };
   } catch (error) {
     console.error("Failed to fetch field summary:", error);
@@ -334,7 +420,6 @@ export async function getFieldSummary(fieldId: string) {
     };
   }
 }
-
 export async function deleteFieldExpense(
   fieldId: string,
   farmerId: string,
@@ -488,7 +573,7 @@ export async function updateField(fieldId: string, name: string, totalArea: numb
   }
 }
 
-export async function getFieldSummaryForList(fieldId: string) {
+export async function getFieldSummaryForList(fieldId: string, filterOptions: DateFilterOptions = {}) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -499,10 +584,56 @@ export async function getFieldSummaryForList(fieldId: string) {
       .find({ fieldId: new ObjectId(fieldId) })
       .toArray();
 
-    // Get all expenses for this field
+    // Build query with date filter if provided
+    const query: any = {
+      fieldId: new ObjectId(fieldId),
+    };
+
+    // If filterOptions is provided, apply date filters
+    if (filterOptions) {
+      const { year, month, startDate, endDate } = filterOptions;
+
+      // Date range filter
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        // Set start date to beginning of day
+        start.setHours(0, 0, 0, 0);
+        
+        const end = new Date(endDate);
+        // Set end date to end of day
+        end.setHours(23, 59, 59, 999);
+        
+        query.date = {
+          $gte: start,
+          $lte: end,
+        };
+      }
+      // Year and month filter
+      else if (year && year !== 'all') {
+        if (month && month !== 'all') {
+          const monthNum = parseInt(month);
+          const yearNum = parseInt(year);
+
+          const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+          const endOfMonth = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+
+          query.date = {
+            $gte: startOfMonth,
+            $lte: endOfMonth,
+          };
+        } else {
+          query.date = {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+          };
+        }
+      }
+    }
+
+    // Get all expenses for this field with optional date filter
     const expenses = await db
       .collection("field_expenses")
-      .find({ fieldId: new ObjectId(fieldId) })
+      .find(query)
       .toArray();
 
     // Calculate totals
@@ -532,6 +663,57 @@ export async function getFieldSummaryForList(fieldId: string) {
       totalExpenses: 0,
       totalIncome: 0,
       balance: 0,
+    };
+  }
+}
+
+export async function deleteField(fieldId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Check if field exists
+    const field = await db
+      .collection("fields")
+      .findOne({ _id: new ObjectId(fieldId) });
+
+    if (!field) {
+      return {
+        success: false,
+        error: "Field not found",
+      };
+    }
+
+    // Check if there are any farmers associated with this field
+    const fieldFarmers = await db
+      .collection("field_farmers")
+      .find({ fieldId: new ObjectId(fieldId) })
+      .toArray();
+
+    if (fieldFarmers.length > 0) {
+      return {
+        success: false,
+        error: "Cannot delete field with associated farmers. Remove all farmers first.",
+      };
+    }
+
+    // Delete all expenses associated with this field
+    await db.collection("field_expenses").deleteMany({ 
+      fieldId: new ObjectId(fieldId) 
+    });
+
+    // Delete the field
+    await db.collection("fields").deleteOne({ 
+      _id: new ObjectId(fieldId) 
+    });
+
+    revalidatePath("/fields");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete field:", error);
+    return {
+      success: false,
+      error: "Failed to delete field",
     };
   }
 }

@@ -158,14 +158,23 @@ export async function getFieldFarmer(farmerId: string) {
     throw new Error("Failed to fetch field farmer");
   }
 }
-// Part of lib/actions/farmer.ts - only the updated function is shown
 
-export async function getFieldFarmerExpenses(farmerId: string) {
+interface DateFilterOptions {
+  year?: string;
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export async function getFieldFarmerExpenses(
+  farmerId: string,
+  filterOptions: DateFilterOptions = {}
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
 
-    // First get the field-farmer relationship to find shareType
+    // Get the field-farmer relationship
     const fieldFarmer = await db
       .collection("field_farmers")
       .findOne({ _id: new ObjectId(farmerId) });
@@ -174,13 +183,57 @@ export async function getFieldFarmerExpenses(farmerId: string) {
       throw new Error("Field-farmer relationship not found");
     }
 
-    // Get the expenses
+    // Build query with date filter if provided
+    const query: any = {
+      fieldId: fieldFarmer.fieldId,
+      farmerId: new ObjectId(farmerId),
+    };
+
+    const { year, month, startDate, endDate } = filterOptions;
+
+    // Date range filter
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      // Set start date to beginning of day
+      start.setHours(0, 0, 0, 0);
+      
+      const end = new Date(endDate);
+      // Set end date to end of day
+      end.setHours(23, 59, 59, 999);
+      
+      query.date = {
+        $gte: start,
+        $lte: end,
+      };
+    }
+    // Year and month filter
+    else if (year && year !== 'all') {
+      if (month && month !== 'all') {
+        const monthNum = parseInt(month);
+        const yearNum = parseInt(year);
+
+        const startOfMonth = new Date(yearNum, monthNum - 1, 1);
+        const endOfMonth = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+
+        query.date = {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        };
+      } else {
+        query.date = {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31T23:59:59.999Z`),
+        };
+      }
+    }
+
+    // Get all expenses for this field and farmer with optional date filter
     const expenses = await db
       .collection("field_expenses")
-      .find({ farmerId: new ObjectId(farmerId) })
+      .find(query)
       .sort({ date: -1 })
       .toArray();
-
+console.log(query)
     // Get share settings for this farmer's share type
     const shareSettings = await db
       .collection("share_settings")
@@ -255,6 +308,41 @@ export async function getFieldFarmerExpenses(farmerId: string) {
     );
     const ownerIncome = totalIncome - farmerIncome;
 
+    // Get unique years and months for the filter
+    const years = Array.from(
+      new Set(
+        expenses.map((expense) => new Date(expense.date).getFullYear())
+      )
+    ).sort((a, b) => b - a); // Sort in descending order
+
+    // Get available months
+    const monthsMap = new Map<number, Set<number>>();
+    expenses.forEach((expense) => {
+      const date = new Date(expense.date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+
+      if (!monthsMap.has(year)) {
+        monthsMap.set(year, new Set());
+      }
+      monthsMap.get(year)?.add(month);
+    });
+
+    const months = Array.from(monthsMap.entries())
+      .flatMap(([year, months]) =>
+        Array.from(months).map((month) => ({
+          year,
+          month,
+          label: new Date(year, month - 1).toLocaleString("default", {
+            month: "long",
+          }),
+        }))
+      )
+      .sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return a.month - b.month;
+      });
+
     return {
       expenses: mappedExpenses,
       summary: {
@@ -265,6 +353,8 @@ export async function getFieldFarmerExpenses(farmerId: string) {
         ownerIncome: ownerIncome,
         farmerSharePercentage: farmerSharePercentage,
       },
+      years,
+      months,
     };
   } catch (error) {
     console.error("Failed to fetch field farmer expenses:", error);
@@ -278,6 +368,8 @@ export async function getFieldFarmerExpenses(farmerId: string) {
         ownerIncome: 0,
         farmerSharePercentage: 0,
       },
+      years: [],
+      months: [],
     };
   }
 }
