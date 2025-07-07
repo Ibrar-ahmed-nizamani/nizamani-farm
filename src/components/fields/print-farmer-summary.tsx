@@ -145,6 +145,9 @@ export default function PrintFarmerSummary({
                 border-bottom: 1px solid #eee;
                 padding-bottom: 5px;
               }
+              .split-column p {
+                margin: 5px 0;
+              }
               table {
                 width: 100%;
                 border-collapse: collapse;
@@ -170,21 +173,6 @@ export default function PrintFarmerSummary({
                 margin-left: auto;
                 margin-top: 20px;
               }
-              .net-balance {
-                margin-top: 20px;
-                border: 2px solid #ddd;
-                padding: 10px;
-              }
-              .net-balance h2 {
-                font-size: 14px;
-                margin-top: 0;
-                margin-bottom: 10px;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 5px;
-              }
-              .net-balance-table {
-                width: 100%;
-              }
               @media print {
                 button { display: none; }
                 body { padding: 0; }
@@ -198,28 +186,28 @@ export default function PrintFarmerSummary({
             </div>
 
             <div class="info-box">
-              <h2>Farmer & Field Information</h2>
-              <p><strong>Farmer Name:</strong> ${farmer.name}</p>
-              <p><strong>Field Name:</strong> ${farmer.fieldName}</p>
-              <p><strong>Allocated Area:</strong> ${
+              <h2>هاري ۽ زمين جي ڄاڻ</h2>
+              <p> ${farmer.name} :<strong>ھاري جو نالو</strong></p>
+              <p> ${farmer.fieldName} :<strong>زمين جو نالو</strong></p>
+              <p> ايڪر ${
                 farmer.allocatedArea
-              } acres</p>
-              <p><strong>Share Type:</strong> ${farmer.shareType} (${
+              } :<strong>مختص ٿيل علائقو</strong></p>
+              <p> ${farmer.shareType} (${
         summary.farmerSharePercentage
-      }%)</p>
+      }%) :<strong>حصيداري</strong></p>
             </div>
 
             <div class="summary">
               <div class="summary-item">
-                <strong>Total Expenses:</strong>
+                <strong>مڪمل خرچ:</strong>
                 <p class="expense">Rs ${totalExpenses.toLocaleString()}</p>
               </div>
               <div class="summary-item">
-                <strong>Total Income:</strong>
+                <strong>مڪمل آمدني:</strong>
                 <p class="income">Rs ${totalIncome.toLocaleString()}</p>
               </div>
               <div class="summary-item">
-                <strong>Net Balance:</strong>
+                <strong>خالص بيلنس:</strong>
                 <p class="${
                   totalIncome - totalExpenses >= 0 ? "income" : "expense"
                 }">
@@ -233,76 +221,82 @@ export default function PrintFarmerSummary({
             </div>
 
             <div class="split-summary">
-              <div class="split-header">Expenses & Income Split</div>
+              <div class="split-header">خرچ، آمدني ۽ خالص بيلنس جي تقسيم</div>
               <div class="split-content">
                 <div class="split-column">
-                  <h3>Expenses Split</h3>
-                  <p><strong>Owner's Expenses:</strong> <span class="expense">Rs ${summary.totalOwnerExpenses.toLocaleString()}</span></p>
-                  <p><strong>Farmer's Expenses:</strong> <span class="expense">Rs ${summary.totalFarmerExpenses.toLocaleString()}</span></p>
+                  <h3>خرچ جي ورهاست</h3>
+                  <p><strong>مالڪ جو خرچ:</strong> <span class="expense">Rs ${summary.totalOwnerExpenses.toLocaleString()}</span></p>
+                  <p><strong>ھاري جو خرچ:</strong> <span class="expense">Rs ${summary.totalFarmerExpenses.toLocaleString()}</span></p>
                 </div>
                 <div class="split-column">
-                  <h3>Income Split (${
+                  <h3> ( هاريءَ جو حصو %${
                     summary.farmerSharePercentage
-                  }% Farmer)</h3>
-                  <p><strong>Owner's Income:</strong> <span class="income">Rs ${summary.ownerIncome.toLocaleString()}</span></p>
-                  <p><strong>Farmer's Income:</strong> <span class="income">Rs ${summary.farmerIncome.toLocaleString()}</span></p>
+                  }) آمدنيءَ جي ورهاست </h3>
+                  <p><strong>مالڪ جو آمدني:</strong> <span class="income">Rs ${summary.ownerIncome.toLocaleString()}</span></p>
+                  <p><strong>ھاري جو آمدني:</strong> <span class="income">Rs ${summary.farmerIncome.toLocaleString()}</span></p>
+                </div>
+                <div class="split-column">
+                  <h3>بقايا</h3>
+                  <p><strong>مالڪ جو بيلينس</strong> 
+                    <span class="${
+                      ownerNetBalance >= 0 ? "income" : "expense"
+                    }">
+                      Rs ${Math.abs(ownerNetBalance).toLocaleString()} ${
+        ownerNetBalance >= 0 ? "Cr" : "Dr"
+      }
+                    </span>
+                  </p>
+                  <p><strong>ھاري جو بيلينس</strong> 
+                    <span class="${
+                      farmerNetBalance >= 0 ? "income" : "expense"
+                    }">
+                      Rs ${Math.abs(farmerNetBalance).toLocaleString()} ${
+        farmerNetBalance >= 0 ? "Cr" : "Dr"
+      }
+                    </span>
+                  </p>
                 </div>
               </div>
-            </div>
-
-            <div class="net-balance">
-              <h2>Net Balance</h2>
-              <table class="net-balance-table">
-                <tr>
-                  <td><strong>Owner's Net Balance:</strong></td>
-                  <td class="amount ${
-                    ownerNetBalance >= 0 ? "income" : "expense"
-                  }">
-                    <strong>Rs ${Math.abs(ownerNetBalance).toLocaleString()} ${
-        ownerNetBalance >= 0 ? "Cr" : "Dr"
-      }</strong>
-                  </td>
-                </tr>
-                <tr>
-                  <td><strong>Farmer's Net Balance:</strong></td>
-                  <td class="amount ${
-                    farmerNetBalance >= 0 ? "income" : "expense"
-                  }">
-                    <strong>Rs ${Math.abs(farmerNetBalance).toLocaleString()} ${
-        farmerNetBalance >= 0 ? "Cr" : "Dr"
-      }</strong>
-                  </td>
-                </tr>
-              </table>
             </div>
 
             <h2>Field Transactions</h2>
             <table>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th class="amount">Expense (Rs)</th>
-                  <th class="amount">Income (Rs)</th>
-                  <th class="amount">Farmer Share</th>
+                  <th>تاريخ</th>
+                  <th>خرچ جو قسم</th>
+                  <th>تفصيل</th>
+                  <th class="amount">مڪمل رڪم</th>
+                  <th class="amount">ھاري جو خرچ </th>
+                  <th class="amount">مالڪ جو خرچ </th>
                 </tr>
               </thead>
               <tbody>
                 ${sortedExpenses
-                  .map(
-                    (expense) => `
-                  <tr>
-                    <td>${
-                      typeof expense.date === "string"
-                        ? formatDatePattern(expense.date)
-                        : formatDatePattern(expense.date.toISOString())
-                    }</td>
-                    <td>${
-                      expense.type === "expense"
-                        ? expense.expenseType || "---"
-                        : "Income"
-                    }${
+                  .map((expense) => {
+                    let farmerExpense = 0;
+                    let ownerExpense = 0;
+
+                    if (expense.type === "expense") {
+                      const sharePercentage = expense.sharePercentage || 0;
+                      farmerExpense = Math.round(
+                        (expense.amount * sharePercentage) / 100
+                      );
+                      ownerExpense = expense.amount - farmerExpense;
+                    }
+
+                    return `
+                      <tr>
+                        <td>${
+                          typeof expense.date === "string"
+                            ? formatDatePattern(expense.date)
+                            : formatDatePattern(expense.date.toISOString())
+                        }</td>
+                        <td>${
+                          expense.type === "expense"
+                            ? expense.expenseType || "---"
+                            : "Income"
+                        }${
                       expense.type === "expense" &&
                       expense.sharePercentage !== null &&
                       expense.sharePercentage !== undefined &&
@@ -312,39 +306,37 @@ export default function PrintFarmerSummary({
                         ? ` (${summary.farmerSharePercentage}% farmer)`
                         : ""
                     }</td>
-                    <td>${expense.description}</td>
-                    <td class="amount ${
-                      expense.type === "expense" ? "expense" : ""
-                    }">
-                      ${
-                        expense.type === "expense"
-                          ? expense.amount.toLocaleString()
-                          : "-"
-                      }
-                    </td>
-                    <td class="amount ${
-                      expense.type === "income" ? "income" : ""
-                    }">
-                      ${
-                        expense.type === "income"
-                          ? expense.amount.toLocaleString()
-                          : "-"
-                      }
-                    </td>
-                    <td class="amount">
-                      ${
-                        expense.type === "expense" &&
-                        expense.sharePercentage !== null &&
-                        expense.sharePercentage !== undefined
-                          ? `${expense.sharePercentage}%`
-                          : expense.type === "income"
-                          ? `${summary.farmerSharePercentage}%`
-                          : "-"
-                      }
-                    </td>
-                  </tr>
-                `
-                  )
+                        <td>${expense.description}</td>
+                        <td class="amount ${
+                          expense.type === "expense" ? "expense" : "income"
+                        }">
+                          ${expense.amount.toLocaleString()}
+                        </td>
+                        <td class="amount ${
+                          expense.type === "expense" && farmerExpense > 0
+                            ? "expense"
+                            : ""
+                        }">
+                          ${
+                            expense.type === "expense" && farmerExpense > 0
+                              ? farmerExpense.toLocaleString()
+                              : "-"
+                          }
+                        </td>
+                        <td class="amount ${
+                          expense.type === "expense" && ownerExpense > 0
+                            ? "expense"
+                            : ""
+                        }">
+                          ${
+                            expense.type === "expense" && ownerExpense > 0
+                              ? ownerExpense.toLocaleString()
+                              : "-"
+                          }
+                        </td>
+                      </tr>
+                    `;
+                  })
                   .join("")}
               </tbody>
             </table>

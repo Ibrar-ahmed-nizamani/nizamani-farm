@@ -41,22 +41,25 @@ export default async function FarmerFieldPage({
   const { startDate, endDate, year, month } = await searchParams;
 
   const farmer = await getFieldFarmer(farmerId);
-  const { expenses, summary, years, months } = await getFieldFarmerExpenses(farmerId, {
-    startDate,
-    endDate,
-    year,
-    month
-  });
-  
+  const { expenses, summary, years, months } = await getFieldFarmerExpenses(
+    farmerId,
+    {
+      startDate,
+      endDate,
+      year,
+      month,
+    }
+  );
+
   // Get expense types filtered by farmer's share type
   const expenseTypes = await getExpenseTypes(farmer.shareType);
-  
+
   // Get date range description for display
   const dateRangeDescription = getDateRangeDescription({
     selectedYear: year || "all",
     selectedMonth: month,
     startDate,
-    endDate
+    endDate,
   });
   // Calculate total expenses and income
   const totalExpenses = expenses.reduce(
@@ -110,7 +113,7 @@ export default async function FarmerFieldPage({
           <BackLink href={`/fields/${fieldId}`} linkText="Back to Field" />
         </div>
       </div>
-      
+
       {/* Date Filter */}
       <div className="mb-6">
         <div className="flex gap-4 items-center justify-between mb-2">
@@ -243,77 +246,101 @@ export default async function FarmerFieldPage({
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Expense (Rs)</TableHead>
-              <TableHead>Income (Rs)</TableHead>
+              <TableHead>Total Amount</TableHead>
+              <TableHead>Farmer Expense</TableHead>
+              <TableHead>Owner Expense</TableHead>
               <TableHead className="text-center w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.map((expense) => (
-              <TableRow key={expense._id}>
-                <TableCell>{formatDatePattern(expense.date)}</TableCell>
-                <TableCell>
-                  {expense.type === "expense" ? (
-                    <>
-                      {expense.expenseType ? expense.expenseType : "-"}
-                      {expense.sharePercentage !== null &&
-                        expense.sharePercentage > 0 && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({expense.sharePercentage}% farmer)
-                          </span>
-                        )}
-                    </>
-                  ) : (
-                    <>
-                      Income
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({farmerSharePercentage}% farmer)
-                      </span>
-                    </>
-                  )}
-                </TableCell>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell className="text-red-600">
-                  {expense.type === "expense"
-                    ? expense.amount.toLocaleString()
-                    : "-"}
-                </TableCell>
-                <TableCell className="text-green-600">
-                  {expense.type === "income"
-                    ? expense.amount.toLocaleString()
-                    : "-"}
-                </TableCell>
-                <TableCell className="flex justify-center gap-2">
-                  {/* Add edit and delete actions */}
-                  <EditFieldTransaction
-                    fieldId={fieldId}
-                    farmerId={farmerId}
-                    expense={{
-                      _id: expense._id,
-                      type: expense.type,
-                      expenseType: expense.expenseType,
-                      expenseTypeId: expense.expenseTypeId,
-                      amount: expense.amount,
-                      date: expense.date,
-                      description: expense.description,
-                      farmerShare: expense.sharePercentage || 0,
-                    }}
-                    expenseTypes={expenseTypes}
-                  />
-                  <DeleteFieldTransaction
-                    fieldId={fieldId}
-                    farmerId={farmerId}
-                    transaction={{
-                      _id: expense._id,
-                      type: expense.type,
-                      amount: expense.amount,
-                      date: expense.date,
-                      description: expense.description,
-                    }}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
+            {expenses.map((expense) => {
+              // Calculate expense split for each row
+              let farmerExpense = 0;
+              let ownerExpense = 0;
+
+              if (expense.type === "expense") {
+                const sharePercentage = expense.sharePercentage || 0;
+                farmerExpense = Math.round(
+                  (expense.amount * sharePercentage) / 100
+                );
+                ownerExpense = expense.amount - farmerExpense;
+              }
+
+              return (
+                <TableRow key={expense._id}>
+                  <TableCell>{formatDatePattern(expense.date)}</TableCell>
+                  <TableCell>
+                    {expense.type === "expense" ? (
+                      <>
+                        {expense.expenseType ? expense.expenseType : "-"}
+                        {expense.sharePercentage !== null &&
+                          expense.sharePercentage > 0 && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              ({expense.sharePercentage}% farmer)
+                            </span>
+                          )}
+                      </>
+                    ) : (
+                      <>
+                        Income
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({farmerSharePercentage}% farmer)
+                        </span>
+                      </>
+                    )}
+                  </TableCell>
+                  <TableCell>{expense.description}</TableCell>
+                  <TableCell
+                    className={
+                      expense.type === "expense"
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }
+                  >
+                    {expense.amount.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-red-600">
+                    {expense.type === "expense" && farmerExpense > 0
+                      ? farmerExpense.toLocaleString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-red-600">
+                    {expense.type === "expense" && ownerExpense > 0
+                      ? ownerExpense.toLocaleString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="flex justify-center gap-2">
+                    {/* Add edit and delete actions */}
+                    <EditFieldTransaction
+                      fieldId={fieldId}
+                      farmerId={farmerId}
+                      expense={{
+                        _id: expense._id,
+                        type: expense.type,
+                        expenseType: expense.expenseType,
+                        expenseTypeId: expense.expenseTypeId,
+                        amount: expense.amount,
+                        date: expense.date,
+                        description: expense.description,
+                        farmerShare: expense.sharePercentage || 0,
+                      }}
+                      expenseTypes={expenseTypes}
+                    />
+                    <DeleteFieldTransaction
+                      fieldId={fieldId}
+                      farmerId={farmerId}
+                      transaction={{
+                        _id: expense._id,
+                        type: expense.type,
+                        amount: expense.amount,
+                        date: expense.date,
+                        description: expense.description,
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       ) : (
