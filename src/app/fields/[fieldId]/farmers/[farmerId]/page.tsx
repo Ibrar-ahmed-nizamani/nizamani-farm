@@ -246,7 +246,10 @@ export default async function FarmerFieldPage({
               <TableHead>Date</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Total Amount</TableHead>
+              <TableHead>Total Income</TableHead>
+              <TableHead>Farmer Income</TableHead>
+              <TableHead>Owner Income</TableHead>
+              <TableHead>Total Expense</TableHead>
               <TableHead>Farmer Expense</TableHead>
               <TableHead>Owner Expense</TableHead>
               <TableHead className="text-center w-[120px]">Actions</TableHead>
@@ -257,6 +260,8 @@ export default async function FarmerFieldPage({
               // Calculate expense split for each row
               let farmerExpense = 0;
               let ownerExpense = 0;
+              let farmerIncome = 0;
+              let ownerIncome = 0;
 
               if (expense.type === "expense") {
                 const sharePercentage = expense.sharePercentage || 0;
@@ -264,6 +269,11 @@ export default async function FarmerFieldPage({
                   (expense.amount * sharePercentage) / 100
                 );
                 ownerExpense = expense.amount - farmerExpense;
+              } else if (expense.type === "income") {
+                farmerIncome = Math.round(
+                  (expense.amount * farmerSharePercentage) / 100
+                );
+                ownerIncome = expense.amount - farmerIncome;
               }
 
               return (
@@ -290,14 +300,25 @@ export default async function FarmerFieldPage({
                     )}
                   </TableCell>
                   <TableCell>{expense.description}</TableCell>
-                  <TableCell
-                    className={
-                      expense.type === "expense"
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }
-                  >
-                    {expense.amount.toLocaleString()}
+                  <TableCell className="text-green-600">
+                    {expense.type === "income"
+                      ? expense.amount.toLocaleString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-green-600">
+                    {expense.type === "income" && farmerIncome > 0
+                      ? farmerIncome.toLocaleString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-green-600">
+                    {expense.type === "income" && ownerIncome > 0
+                      ? ownerIncome.toLocaleString()
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-red-600">
+                    {expense.type === "expense"
+                      ? expense.amount.toLocaleString()
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-red-600">
                     {expense.type === "expense" && farmerExpense > 0
