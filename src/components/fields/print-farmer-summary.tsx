@@ -199,15 +199,15 @@ export default function PrintFarmerSummary({
 
             <div class="summary">
               <div class="summary-item">
-                <strong>مڪمل خرچ:</strong>
+                <strong>ڪل خرچ:</strong>
                 <p class="expense">Rs ${totalExpenses.toLocaleString()}</p>
               </div>
               <div class="summary-item">
-                <strong>مڪمل آمدني:</strong>
+                <strong>ڪل آمدني:</strong>
                 <p class="income">Rs ${totalIncome.toLocaleString()}</p>
               </div>
               <div class="summary-item">
-                <strong>خالص بيلنس:</strong>
+                <strong> بيلنس:</strong>
                 <p class="${
                   totalIncome - totalExpenses >= 0 ? "income" : "expense"
                 }">
@@ -236,7 +236,7 @@ export default function PrintFarmerSummary({
                   <p><strong>ھاري جي آمدني:</strong> <span class="income">Rs ${summary.farmerIncome.toLocaleString()}</span></p>
                 </div>
                 <div class="split-column">
-                  <h3>بقايا</h3>
+                  <h3>بيلينس</h3>
                   <p><strong>زميندار جو بيلينس</strong> 
                     <span class="${
                       ownerNetBalance >= 0 ? "income" : "expense"
@@ -267,9 +267,9 @@ export default function PrintFarmerSummary({
                   <th>Type</th>
                   <th>تفصيل</th>
                   <th class="amount">ڪل آمدني</th>
+                  <th class="amount">ڪل خرچ</th>
                   <th class="amount">ھاري جي آمدني</th>
                   <th class="amount">زميندار جي آمدني</th>
-                  <th class="amount">ڪل خرچ</th>
                   <th class="amount">ھاري جو خرچ</th>
                   <th class="amount">زميندار جو خرچ</th>
                   <th class="amount">بيلينس</th>
@@ -332,16 +332,15 @@ export default function PrintFarmerSummary({
                             }
                           </td>
                           <td class="amount ${
-                            expense.type === "income" && farmerIncome > 0
-                              ? "income"
-                              : ""
+                            expense.type === "expense" ? "expense" : ""
                           }">
                             ${
-                              expense.type === "income" && farmerIncome > 0
-                                ? farmerIncome.toLocaleString()
+                              expense.type === "expense"
+                                ? expense.amount.toLocaleString()
                                 : "-"
                             }
                           </td>
+                          
                           <td class="amount ${
                             expense.type === "income" && ownerIncome > 0
                               ? "income"
@@ -354,11 +353,13 @@ export default function PrintFarmerSummary({
                             }
                           </td>
                           <td class="amount ${
-                            expense.type === "expense" ? "expense" : ""
+                            expense.type === "income" && farmerIncome > 0
+                              ? "income"
+                              : ""
                           }">
                             ${
-                              expense.type === "expense"
-                                ? expense.amount.toLocaleString()
+                              expense.type === "income" && farmerIncome > 0
+                                ? farmerIncome.toLocaleString()
                                 : "-"
                             }
                           </td>
