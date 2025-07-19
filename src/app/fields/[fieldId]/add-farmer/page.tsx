@@ -10,7 +10,6 @@ export default async function AddFarmerPage({
   const fieldId = (await params).fieldId;
 
   const { remainingArea } = await getRemainingArea(fieldId);
-  console.log(remainingArea);
   return (
     <section className="space-y-6">
       <div className="flex justify-between items-center">

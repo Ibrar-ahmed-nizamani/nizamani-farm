@@ -196,19 +196,19 @@ export async function getFieldFarmerExpenses(
       const start = new Date(startDate);
       // Set start date to beginning of day
       start.setHours(0, 0, 0, 0);
-      
+
       const end = new Date(endDate);
       // Set end date to end of day
       end.setHours(23, 59, 59, 999);
-      
+
       query.date = {
         $gte: start,
         $lte: end,
       };
     }
     // Year and month filter
-    else if (year && year !== 'all') {
-      if (month && month !== 'all') {
+    else if (year && year !== "all") {
+      if (month && month !== "all") {
         const monthNum = parseInt(month);
         const yearNum = parseInt(year);
 
@@ -233,7 +233,6 @@ export async function getFieldFarmerExpenses(
       .find(query)
       .sort({ date: -1 })
       .toArray();
-console.log(query)
     // Get share settings for this farmer's share type
     const shareSettings = await db
       .collection("share_settings")
@@ -293,7 +292,7 @@ console.log(query)
         case "1/2":
           return 50;
         case "1/3":
-          return 33.33;
+          return 100 / 3;
         case "1/4":
           return 25;
         default:
@@ -303,16 +302,12 @@ console.log(query)
 
     // Calculate income split
     const farmerSharePercentage = getSharePercentage(fieldFarmer.shareType);
-    const farmerIncome = Math.round(
-      (totalIncome * farmerSharePercentage) / 100
-    );
+    const farmerIncome = (totalIncome * farmerSharePercentage) / 100;
     const ownerIncome = totalIncome - farmerIncome;
 
     // Get unique years and months for the filter
     const years = Array.from(
-      new Set(
-        expenses.map((expense) => new Date(expense.date).getFullYear())
-      )
+      new Set(expenses.map((expense) => new Date(expense.date).getFullYear()))
     ).sort((a, b) => b - a); // Sort in descending order
 
     // Get available months
@@ -346,8 +341,8 @@ console.log(query)
     return {
       expenses: mappedExpenses,
       summary: {
-        totalFarmerExpenses: Math.round(totalFarmerExpenses),
-        totalOwnerExpenses: Math.round(totalOwnerExpenses),
+        totalFarmerExpenses: totalFarmerExpenses,
+        totalOwnerExpenses: totalOwnerExpenses,
         totalIncome: totalIncome,
         farmerIncome: farmerIncome,
         ownerIncome: ownerIncome,
@@ -649,7 +644,9 @@ export async function updateFarmer(
     if (areaDifference > field.remainingArea) {
       return {
         success: false,
-        error: `Cannot allocate more than remaining area (${field.remainingArea + currentFieldFarmer.allocatedArea} acres)`,
+        error: `Cannot allocate more than remaining area (${
+          field.remainingArea + currentFieldFarmer.allocatedArea
+        } acres)`,
       };
     }
 

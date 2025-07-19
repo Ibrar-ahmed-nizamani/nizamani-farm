@@ -84,7 +84,6 @@ export async function addEquipment(name: string, rate: number) {
 
     // Check if equipment with same name exists
     const existing = await db.collection("equipment_rates").findOne({ name });
-    console.log(existing);
     if (existing) {
       return {
         success: false,

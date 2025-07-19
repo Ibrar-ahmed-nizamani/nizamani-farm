@@ -50,41 +50,40 @@ export default async function FieldPage({
     startDate,
     endDate,
     year,
-    month
+    month,
   });
   const { remainingArea } = await getRemainingArea(fieldId);
-  
+
   // Get date range description for display
   const dateRangeDescription = getDateRangeDescription({
     selectedYear: year || "all",
     selectedMonth: month,
     startDate,
-    endDate
+    endDate,
   });
-  
+
   // Get financial details for each farmer
   const farmersWithFinancials = await Promise.all(
     farmers.map(async (farmer) => {
-      const result = await getFieldFarmerExpenses(
-        farmer._id.toString(),
-        {
-          startDate,
-          endDate,
-          year,
-          month
-        }
-      );
-      
+      const result = await getFieldFarmerExpenses(farmer._id.toString(), {
+        startDate,
+        endDate,
+        year,
+        month,
+      });
+
       // Extract total values (farmer + owner)
-      const totalExpenses = (result.summary?.totalFarmerExpenses || 0) + (result.summary?.totalOwnerExpenses || 0);
+      const totalExpenses =
+        (result.summary?.totalFarmerExpenses || 0) +
+        (result.summary?.totalOwnerExpenses || 0);
       const totalIncome = result.summary?.totalIncome || 0;
       const totalBalance = totalIncome - totalExpenses;
-      
+
       return {
         ...farmer,
         expenses: totalExpenses,
         income: totalIncome,
-        balance: totalBalance
+        balance: totalBalance,
       };
     })
   );
@@ -100,13 +99,16 @@ export default async function FieldPage({
         </div>
         <BackLink href="/fields" linkText="Back to Fields" />
       </div>
-      
+
       {/* Date Filter */}
       <div className="mb-6">
         <div className="flex gap-4 items-center justify-between mb-2">
           <CardDescription>{dateRangeDescription}</CardDescription>
         </div>
-        <DateRangeSelector availableYears={years || []} availableMonths={months || []} />
+        <DateRangeSelector
+          availableYears={years || []}
+          availableMonths={months || []}
+        />
       </div>
 
       {/* Field Summary Section */}
@@ -156,7 +158,13 @@ export default async function FieldPage({
                   <TableCell className=" bg-green-500/10 font-medium">
                     Rs. {(farmer.income || 0).toLocaleString()}
                   </TableCell>
-                  <TableCell className={`font-medium ${(farmer.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <TableCell
+                    className={`font-medium ${
+                      (farmer.balance || 0) >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
                     Rs. {(farmer.balance || 0).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right space-x-2">

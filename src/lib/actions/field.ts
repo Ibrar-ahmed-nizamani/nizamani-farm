@@ -218,7 +218,10 @@ interface DateFilterOptions {
 }
 
 // Add this to lib/actions/field.ts
-export async function getFieldSummary(fieldId: string, filterOptions: DateFilterOptions = {}) {
+export async function getFieldSummary(
+  fieldId: string,
+  filterOptions: DateFilterOptions = {}
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -231,7 +234,7 @@ export async function getFieldSummary(fieldId: string, filterOptions: DateFilter
 
     // Build query with date filter if provided
     const query: any = {
-      farmerId: { $in: fieldFarmers.map((ff) => new ObjectId(ff._id)) }
+      farmerId: { $in: fieldFarmers.map((ff) => new ObjectId(ff._id)) },
     };
 
     const { year, month, startDate, endDate } = filterOptions;
@@ -241,19 +244,19 @@ export async function getFieldSummary(fieldId: string, filterOptions: DateFilter
       const start = new Date(startDate);
       // Set start date to beginning of day
       start.setHours(0, 0, 0, 0);
-      
+
       const end = new Date(endDate);
       // Set end date to end of day
       end.setHours(23, 59, 59, 999);
-      
+
       query.date = {
         $gte: start,
         $lte: end,
       };
     }
     // Year and month filter
-    else if (year && year !== 'all') {
-      if (month && month !== 'all') {
+    else if (year && year !== "all") {
+      if (month && month !== "all") {
         const monthNum = parseInt(month);
         const yearNum = parseInt(year);
 
@@ -304,7 +307,7 @@ export async function getFieldSummary(fieldId: string, filterOptions: DateFilter
         case "1/2":
           return 50;
         case "1/3":
-          return 33.33;
+          return 100 / 3;
         case "1/4":
           return 25;
         default:
@@ -388,15 +391,15 @@ export async function getFieldSummary(fieldId: string, filterOptions: DateFilter
     return {
       success: true,
       summary: {
-        totalExpenses: Math.round(totalExpenses),
-        totalIncome: Math.round(totalIncome),
-        balance: Math.round(totalIncome - totalExpenses),
-        totalOwnerExpenses: Math.round(totalOwnerExpenses),
-        totalFarmerExpenses: Math.round(totalFarmerExpenses),
-        totalOwnerIncome: Math.round(totalOwnerIncome),
-        totalFarmerIncome: Math.round(totalFarmerIncome),
-        totalOwnerBalance: Math.round(totalOwnerIncome - totalOwnerExpenses),
-        totalFarmerBalance: Math.round(totalFarmerIncome - totalFarmerExpenses),
+        totalExpenses: totalExpenses,
+        totalIncome: totalIncome,
+        balance: totalIncome - totalExpenses,
+        totalOwnerExpenses: totalOwnerExpenses,
+        totalFarmerExpenses: totalFarmerExpenses,
+        totalOwnerIncome: totalOwnerIncome,
+        totalFarmerIncome: totalFarmerIncome,
+        totalOwnerBalance: totalOwnerIncome - totalOwnerExpenses,
+        totalFarmerBalance: totalFarmerIncome - totalFarmerExpenses,
       },
       years,
       months,
@@ -500,7 +503,11 @@ export async function updateFieldExpense(
   }
 }
 
-export async function updateField(fieldId: string, name: string, totalArea: number) {
+export async function updateField(
+  fieldId: string,
+  name: string,
+  totalArea: number
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -519,12 +526,10 @@ export async function updateField(fieldId: string, name: string, totalArea: numb
 
     // Check if name is already used by another field
     if (name !== currentField.name) {
-      const existingField = await db
-        .collection("fields")
-        .findOne({
-          name: { $regex: new RegExp(`^${name}$`, "i") },
-          _id: { $ne: new ObjectId(fieldId) },
-        });
+      const existingField = await db.collection("fields").findOne({
+        name: { $regex: new RegExp(`^${name}$`, "i") },
+        _id: { $ne: new ObjectId(fieldId) },
+      });
 
       if (existingField) {
         return {
@@ -573,7 +578,10 @@ export async function updateField(fieldId: string, name: string, totalArea: numb
   }
 }
 
-export async function getFieldSummaryForList(fieldId: string, filterOptions: DateFilterOptions = {}) {
+export async function getFieldSummaryForList(
+  fieldId: string,
+  filterOptions: DateFilterOptions = {}
+) {
   try {
     const client = await clientPromise;
     const db = client.db("farm");
@@ -598,19 +606,19 @@ export async function getFieldSummaryForList(fieldId: string, filterOptions: Dat
         const start = new Date(startDate);
         // Set start date to beginning of day
         start.setHours(0, 0, 0, 0);
-        
+
         const end = new Date(endDate);
         // Set end date to end of day
         end.setHours(23, 59, 59, 999);
-        
+
         query.date = {
           $gte: start,
           $lte: end,
         };
       }
       // Year and month filter
-      else if (year && year !== 'all') {
-        if (month && month !== 'all') {
+      else if (year && year !== "all") {
+        if (month && month !== "all") {
           const monthNum = parseInt(month);
           const yearNum = parseInt(year);
 
@@ -693,18 +701,19 @@ export async function deleteField(fieldId: string) {
     if (fieldFarmers.length > 0) {
       return {
         success: false,
-        error: "Cannot delete field with associated farmers. Remove all farmers first.",
+        error:
+          "Cannot delete field with associated farmers. Remove all farmers first.",
       };
     }
 
     // Delete all expenses associated with this field
-    await db.collection("field_expenses").deleteMany({ 
-      fieldId: new ObjectId(fieldId) 
+    await db.collection("field_expenses").deleteMany({
+      fieldId: new ObjectId(fieldId),
     });
 
     // Delete the field
-    await db.collection("fields").deleteOne({ 
-      _id: new ObjectId(fieldId) 
+    await db.collection("fields").deleteOne({
+      _id: new ObjectId(fieldId),
     });
 
     revalidatePath("/fields");

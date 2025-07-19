@@ -17,8 +17,6 @@ export default async function EditWorkPage({
     getTractorDetails(tractorID),
     getEquipmentRates(),
   ]);
-  console.log(work);
-  // console.log(equipmentRates);
 
   return (
     <div>

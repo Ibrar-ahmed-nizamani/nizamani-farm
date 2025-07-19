@@ -27,9 +27,6 @@ export default async function CustomerTransactionsPage({
   const id = (await params).id;
   const customer = await getMilkCustomer(id);
   const transactions = await getMilkCustomerPayments(id);
-  // transactions.map((transaction) => {
-  //   console.log(typeof transaction.amount);
-  // });
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

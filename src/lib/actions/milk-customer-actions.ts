@@ -96,7 +96,6 @@ export async function getMilkCustomer(customerId: string) {
       throw new Error("Customer not found");
     }
 
-    console.log(customer);
     return {
       ...customer,
       name: customer.name,

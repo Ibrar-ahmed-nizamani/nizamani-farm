@@ -138,7 +138,6 @@ export function AddTractorWorkForm({
       };
 
       equipmentRates.forEach((equipment) => {
-        console.log(initialData.equipments);
         const equipmentData = initialData.equipments.find(
           (e) => e.name === equipment.name
         );
