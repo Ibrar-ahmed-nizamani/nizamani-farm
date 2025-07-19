@@ -22,10 +22,10 @@ import { PlusIcon } from "lucide-react";
 import { convertShareTypes, getDateRangeDescription } from "@/lib/utils";
 import FieldSummary from "@/components/fields/field-summary";
 import EditFarmerDialog from "@/components/fields/edit-farmer-dialog";
-import DeleteFarmerDialog from "@/components/fields/delete-farmer-dialog";
 import { getFieldFarmerExpenses } from "@/lib/actions/farmer";
 import DateRangeSelector from "@/components/shared/date-range-selector";
 import { CardDescription } from "@/components/ui/card";
+import CustomSearch from "@/components/shared/search";
 
 interface SearchParams {
   startDate?: string;
@@ -54,6 +54,10 @@ export default async function FieldPage({
   });
   const { remainingArea } = await getRemainingArea(fieldId);
 
+  const serializableFarmers = farmers.map((farmer) => ({
+    _id: farmer._id.toString(),
+    name: farmer.name,
+  }));
   // Get date range description for display
   const dateRangeDescription = getDateRangeDescription({
     selectedYear: year || "all",
@@ -122,7 +126,12 @@ export default async function FieldPage({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Farmers</h2>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            <CustomSearch
+              data={serializableFarmers}
+              baseUrl={`/fields/${field._id}/farmers`}
+              placeholder="Search Farmers..."
+            />
             <Link href={`/fields/${field._id}/add-farmer`}>
               <Button>
                 <PlusIcon className="size-4" /> Add Farmer
@@ -176,11 +185,6 @@ export default async function FieldPage({
                         shareType={farmer.shareType}
                         allocatedArea={farmer.allocatedArea}
                         maxArea={remainingArea}
-                      />
-                      <DeleteFarmerDialog
-                        fieldId={field._id}
-                        farmerId={farmer._id}
-                        farmerName={farmer.name}
                       />
                       <Link href={`/fields/${field._id}/farmers/${farmer._id}`}>
                         <Button variant="outline" size="sm" className="h-8">

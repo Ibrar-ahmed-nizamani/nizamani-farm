@@ -10,15 +10,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getFields, getFieldSummaryForList, getRemainingArea } from "@/lib/actions/field";
+import {
+  getFields,
+  getFieldSummaryForList,
+  getRemainingArea,
+} from "@/lib/actions/field";
 import { PlusIcon, Settings } from "lucide-react";
 import Link from "next/link";
 import EditFieldDialog from "@/components/fields/edit-field-dialog";
-import DeleteFieldDialog from "@/components/fields/delete-field-dialog";
 
 export default async function FieldsPage() {
   const fields = await getFields();
-  
+
   // Get summary for each field
   const fieldsWithSummary = await Promise.all(
     fields.map(async (field) => {
@@ -30,7 +33,7 @@ export default async function FieldsPage() {
         totalExpenses: summary.totalExpenses,
         totalIncome: summary.totalIncome,
         balance: summary.balance,
-        remainingArea: remainingArea || 0
+        remainingArea: remainingArea || 0,
       };
     })
   );
@@ -40,9 +43,7 @@ export default async function FieldsPage() {
         <h1 className="text-2xl font-bold">Fields</h1>
         <div className="flex space-x-4 items-center">
           <Link href={`/fields/traders`}>
-            <Button variant="outline">
-              Traders
-            </Button>
+            <Button variant="outline">Traders</Button>
           </Link>
           <Link href={`/fields/share-setting`}>
             <Button variant="outline">
@@ -88,16 +89,17 @@ export default async function FieldsPage() {
                 <TableCell className="bg-green-500/10 font-medium">
                   Rs. {(field.totalIncome || 0).toLocaleString()}
                 </TableCell>
-                <TableCell className={`font-medium ${(field.balance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <TableCell
+                  className={`font-medium ${
+                    (field.balance || 0) >= 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   Rs. {(field.balance || 0).toLocaleString()}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <DeleteFieldDialog  
-                    fieldId={field._id}
-                    fieldName={field.name}
-                    farmerCount={field.farmerCount}
-                    />
                     <EditFieldDialog
                       fieldId={field._id}
                       fieldName={field.name}
@@ -105,7 +107,11 @@ export default async function FieldsPage() {
                       remainingArea={field.remainingArea}
                     />
                     <Link href={`/fields/${field._id}`}>
-                      <Button variant="outline" size="sm" className="h-8  text-[16px]">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8  text-[16px]"
+                      >
                         View Details
                       </Button>
                     </Link>
