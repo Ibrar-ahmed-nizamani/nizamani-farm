@@ -47,7 +47,10 @@ export async function getRemainingArea(fieldId: string) {
 
     const field = await db
       .collection("fields")
-      .findOne({ _id: new ObjectId(fieldId) });
+      .findOne(
+        { _id: new ObjectId(fieldId) },
+        { projection: { remainingArea: 1 } }
+      );
 
     if (!field) {
       throw new Error("Field not found");

@@ -125,13 +125,15 @@ export default async function FieldPage({
 
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Farmers</h2>
-          <div className="flex items-center space-x-4">
+          <div className="flex gap-5 items-center">
+            <h2 className="text-xl font-semibold">Farmers</h2>
             <CustomSearch
               data={serializableFarmers}
               baseUrl={`/fields/${field._id}/farmers`}
               placeholder="Search Farmers..."
             />
+          </div>
+          <div className="flex items-center space-x-4">
             <Link href={`/fields/${field._id}/add-farmer`}>
               <Button>
                 <PlusIcon className="size-4" /> Add Farmer
