@@ -10,33 +10,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  getFields,
-  getFieldSummaryForList,
-  getRemainingArea,
-} from "@/lib/actions/field";
+// import {
+//   getFields,
+//   getFieldSummaryForList,
+//   getRemainingArea,
+// } from "@/lib/actions/field";
 import { PlusIcon, Settings } from "lucide-react";
 import Link from "next/link";
 import EditFieldDialog from "@/components/fields/edit-field-dialog";
+import { getFieldsForListPage } from "@/lib/actions/NewField";
 
 export default async function FieldsPage() {
-  const fields = await getFields();
+  // const fields = await getFields();
 
-  // Get summary for each field
-  const fieldsWithSummary = await Promise.all(
-    fields.map(async (field) => {
-      const summary = await getFieldSummaryForList(field._id);
-      const { remainingArea } = await getRemainingArea(field._id);
-      return {
-        ...field,
-        farmerCount: summary.farmerCount,
-        totalExpenses: summary.totalExpenses,
-        totalIncome: summary.totalIncome,
-        balance: summary.balance,
-        remainingArea: remainingArea || 0,
-      };
-    })
-  );
+  // // Get summary for each field
+  // const fieldsWithSummary = await Promise.all(
+  //   fields.map(async (field) => {
+  //     const summary = await getFieldSummaryForList(field._id);
+  //     const { remainingArea } = await getRemainingArea(field._id);
+  //     return {
+  //       ...field,
+  //       farmerCount: summary.farmerCount,
+  //       totalExpenses: summary.totalExpenses,
+  //       totalIncome: summary.totalIncome,
+  //       balance: summary.balance,
+  //       remainingArea: remainingArea || 0,
+  //     };
+  //   })
+  // );
+
+  const fieldsWithSummary = await getFieldsForListPage();
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -59,7 +62,7 @@ export default async function FieldsPage() {
       </div>
 
       <CustomSearch
-        data={fields}
+        data={fieldsWithSummary}
         baseUrl="/fields"
         placeholder="Search fields..."
       />
@@ -84,7 +87,7 @@ export default async function FieldsPage() {
                 <TableCell>{field.totalArea} acres</TableCell>
                 <TableCell>{field.farmerCount}</TableCell>
                 <TableCell className="bg-red-500/10 font-medium">
-                  Rs. {(field.totalExpenses || 0).toLocaleString()}
+                  Rs. {(field.totalExpense || 0).toLocaleString()}
                 </TableCell>
                 <TableCell className="bg-green-500/10 font-medium">
                   Rs. {(field.totalIncome || 0).toLocaleString()}

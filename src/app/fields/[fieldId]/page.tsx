@@ -12,20 +12,17 @@ import {
 import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
-import {
-  getField,
-  getFieldFarmers,
-  getFieldSummary,
-  getRemainingArea,
-} from "@/lib/actions/field";
 import { PlusIcon } from "lucide-react";
-import { convertShareTypes, getDateRangeDescription } from "@/lib/utils";
+import { getDateRangeDescription } from "@/lib/utils";
 import FieldSummary from "@/components/fields/field-summary";
 import EditFarmerDialog from "@/components/fields/edit-farmer-dialog";
-import { getFieldFarmerExpenses } from "@/lib/actions/farmer";
 import DateRangeSelector from "@/components/shared/date-range-selector";
 import { CardDescription } from "@/components/ui/card";
 import CustomSearch from "@/components/shared/search";
+import {
+  getAvailableDateFiltersForField,
+  getFieldDetailPageData,
+} from "@/lib/actions/NewField";
 
 interface SearchParams {
   startDate?: string;
@@ -42,22 +39,26 @@ export default async function FieldPage({
   searchParams: Promise<SearchParams>;
 }) {
   const fieldId = (await params).fieldId;
-  const { startDate, endDate, year, month } = await searchParams;
+  // const { startDate, endDate, year, month } = await searchParams;
+  const filterOptions = await searchParams;
+  const { endDate, month, startDate, year } = filterOptions;
+  const [pageData, dateFilters] = await Promise.all([
+    getFieldDetailPageData(fieldId, filterOptions),
+    getAvailableDateFiltersForField(fieldId),
+  ]);
 
-  const field = await getField(fieldId);
-  const farmers = await getFieldFarmers(fieldId);
-  const { success, summary, years, months } = await getFieldSummary(fieldId, {
-    startDate,
-    endDate,
-    year,
-    month,
-  });
-  const { remainingArea } = await getRemainingArea(fieldId);
+  if (!pageData) {
+    return (
+      <EmptyState
+        title="Field not found"
+        description="This field may have been deleted."
+      />
+    );
+  }
 
-  const serializableFarmers = farmers.map((farmer) => ({
-    _id: farmer._id.toString(),
-    name: farmer.name,
-  }));
+  const { name, totalArea, summary, farmers } = pageData;
+  const { availableYears, availableMonths } = dateFilters;
+
   // Get date range description for display
   const dateRangeDescription = getDateRangeDescription({
     selectedYear: year || "all",
@@ -65,41 +66,13 @@ export default async function FieldPage({
     startDate,
     endDate,
   });
-
-  // Get financial details for each farmer
-  const farmersWithFinancials = await Promise.all(
-    farmers.map(async (farmer) => {
-      const result = await getFieldFarmerExpenses(farmer._id.toString(), {
-        startDate,
-        endDate,
-        year,
-        month,
-      });
-
-      // Extract total values (farmer + owner)
-      const totalExpenses =
-        (result.summary?.totalFarmerExpenses || 0) +
-        (result.summary?.totalOwnerExpenses || 0);
-      const totalIncome = result.summary?.totalIncome || 0;
-      const totalBalance = totalIncome - totalExpenses;
-
-      return {
-        ...farmer,
-        expenses: totalExpenses,
-        income: totalIncome,
-        balance: totalBalance,
-      };
-    })
-  );
-
+  console.log(farmers);
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{field.name}</h1>
-          <p className="text-muted-foreground">
-            Total Area: {field.totalArea} acres
-          </p>
+          <h1 className="text-2xl font-bold">{name}</h1>
+          <p className="text-muted-foreground">Total Area: {totalArea} acres</p>
         </div>
         <BackLink href="/fields" linkText="Back to Fields" />
       </div>
@@ -110,13 +83,13 @@ export default async function FieldPage({
           <CardDescription>{dateRangeDescription}</CardDescription>
         </div>
         <DateRangeSelector
-          availableYears={years || []}
-          availableMonths={months || []}
+          availableYears={availableYears || []}
+          availableMonths={availableMonths || []}
         />
       </div>
 
       {/* Field Summary Section */}
-      {success && farmers.length > 0 && (
+      {farmers.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Field Summary</h2>
           <FieldSummary summary={summary} />
@@ -128,13 +101,13 @@ export default async function FieldPage({
           <div className="flex gap-5 items-center">
             <h2 className="text-xl font-semibold">Farmers</h2>
             <CustomSearch
-              data={serializableFarmers}
-              baseUrl={`/fields/${field._id}/farmers`}
+              data={farmers}
+              baseUrl={`/fields/${fieldId}/farmers`}
               placeholder="Search Farmers..."
             />
           </div>
           <div className="flex items-center space-x-4">
-            <Link href={`/fields/${field._id}/add-farmer`}>
+            <Link href={`/fields/${fieldId}/add-farmer`}>
               <Button>
                 <PlusIcon className="size-4" /> Add Farmer
               </Button>
@@ -142,7 +115,7 @@ export default async function FieldPage({
           </div>
         </div>
 
-        {farmersWithFinancials.length > 0 ? (
+        {farmers.length > 0 ? (
           <Table className="border">
             <TableHeader>
               <TableRow>
@@ -156,39 +129,37 @@ export default async function FieldPage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {farmersWithFinancials.map((farmer) => (
-                <TableRow key={farmer._id}>
+              {farmers.map((farmer) => (
+                <TableRow key={farmer.id}>
                   <TableCell>{farmer.name}</TableCell>
-                  <TableCell>
-                    {convertShareTypes(farmer.shareType, true)}
-                  </TableCell>
+                  <TableCell>{farmer.share}</TableCell>
                   <TableCell>{farmer.allocatedArea} acres</TableCell>
                   <TableCell className=" bg-red-500/10 font-medium">
-                    Rs. {(farmer.expenses || 0).toLocaleString()}
+                    Rs. {farmer.totalExpense || 0}
                   </TableCell>
                   <TableCell className=" bg-green-500/10 font-medium">
-                    Rs. {(farmer.income || 0).toLocaleString()}
+                    Rs. {farmer.totalIncome || 0}
                   </TableCell>
                   <TableCell
                     className={`font-medium ${
-                      (farmer.balance || 0) >= 0
+                      (farmer.netBalance || 0) >= 0
                         ? "text-green-600"
                         : "text-red-600"
                     }`}
                   >
-                    Rs. {(farmer.balance || 0).toLocaleString()}
+                    Rs. {farmer.netBalance || 0}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <div className="flex justify-end gap-2">
                       <EditFarmerDialog
-                        fieldId={field._id}
-                        farmerId={farmer._id}
+                        fieldId={fieldId}
+                        farmerId={farmer.id}
                         farmerName={farmer.name}
-                        shareType={farmer.shareType}
+                        shareType={farmer.share}
                         allocatedArea={farmer.allocatedArea}
-                        maxArea={remainingArea}
+                        maxArea={20}
                       />
-                      <Link href={`/fields/${field._id}/farmers/${farmer._id}`}>
+                      <Link href={`/fields/${fieldId}/farmers/${farmer.id}`}>
                         <Button variant="outline" size="sm" className="h-8">
                           Details
                         </Button>

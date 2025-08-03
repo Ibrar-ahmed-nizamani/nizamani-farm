@@ -37,7 +37,7 @@ interface Props {
   fieldId: string;
   farmerId: string;
   farmerName: string;
-  shareType: "1/3" | "1/2" | "1/4";
+  shareType: number;
   allocatedArea: number;
   maxArea: number;
 }
@@ -53,7 +53,7 @@ const formSchema = z.object({
 
 type FormValues = {
   farmerName: string;
-  shareType: "1/3" | "1/2" | "1/4";
+  shareType: number;
   allocatedArea: string;
 };
 
@@ -83,13 +83,15 @@ export default function EditFarmerDialog({
 
   const onSubmit = async (values: FormValues) => {
     const newAllocatedArea = parseFloat(values.allocatedArea);
-    
+
     // Check if the allocated area is valid based on current allocation
     const availableArea = maxArea + allocatedArea;
     if (newAllocatedArea > availableArea) {
       setStatus({
         type: "error",
-        message: `Allocated area cannot exceed ${availableArea.toFixed(2)} acres`,
+        message: `Allocated area cannot exceed ${availableArea.toFixed(
+          2
+        )} acres`,
       });
       return;
     }
@@ -178,7 +180,7 @@ export default function EditFarmerDialog({
                     <FormLabel>Share Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value.toString()}
                       disabled={isLoading}
                     >
                       <FormControl>

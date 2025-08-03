@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 interface BaseUser {
   _id: string;
   name: string;
-  [key: string]: unknown;
+  // [key: string]: unknown;
 }
 
 interface SearchProps<T extends BaseUser> {

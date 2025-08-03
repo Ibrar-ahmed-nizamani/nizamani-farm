@@ -4,7 +4,7 @@ import SummaryCards from "@/components/shared/summary-cards";
 
 interface FieldSummaryProps {
   summary: {
-    totalExpenses: number;
+    totalExpense: number;
     totalIncome: number;
     balance: number;
     totalOwnerExpenses: number;
@@ -24,7 +24,7 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
         cards={[
           {
             label: "Total Expenses",
-            value: summary.totalExpenses,
+            value: summary.totalExpense,
             type: "expense",
           },
           {
@@ -48,13 +48,13 @@ export default function FieldSummary({ summary }: FieldSummaryProps) {
             <h3 className="font-semibold text-lg">Expenses Split</h3>
 
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Owner&apos;s Expenses:</h4>
+              <h4 className="font-medium">Owner&apos;s Expense:</h4>
               <p className="font-bold text-red-600">
                 Rs {summary.totalOwnerExpenses.toLocaleString()}
               </p>
             </div>
             <div className="flex gap-3 items-center">
-              <h4 className="font-medium">Farmers&apos; Expenses:</h4>
+              <h4 className="font-medium">Farmers&apos; Expense:</h4>
               <p className="font-bold text-red-600">
                 Rs {summary.totalFarmerExpenses.toLocaleString()}
               </p>
