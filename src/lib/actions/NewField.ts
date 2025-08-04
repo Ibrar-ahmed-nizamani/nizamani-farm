@@ -9,6 +9,12 @@ import {
 import { ObjectId } from "mongodb";
 import { DateRangeSelectorProps } from "../types/types";
 
+// Interface for validation result
+interface ValidationResult {
+  success: boolean;
+  error?: string;
+}
+
 // This is the ONLY function your page will need to call.
 export async function getFieldsForListPage(): Promise<FieldListItem[]> {
   try {
@@ -70,6 +76,7 @@ export async function getFieldsForListPage(): Promise<FieldListItem[]> {
         $project: {
           _id: { $toString: "$_id" }, // Convert ObjectId to string for the client
           name: 1,
+          year: 1, // Include year in the response
           totalArea: 1,
           farmerCount: 1,
           remainingArea: { $ifNull: ["$remainingArea", "$totalArea"] },
@@ -83,9 +90,9 @@ export async function getFieldsForListPage(): Promise<FieldListItem[]> {
           },
         },
       },
-      // Stage 5: Sort the final results
+      // Stage 5: Sort the final results by year (descending) and name (ascending)
       {
-        $sort: { name: 1 },
+        $sort: { year: -1, name: 1 },
       },
     ];
 
@@ -265,6 +272,7 @@ export async function getFieldDetailPageData(
         $project: {
           _id: { $toString: "$_id" },
           name: 1,
+          year: 1,
           totalArea: 1,
           summary: {
             // Use $let to safely access the first element of the summary array
@@ -372,7 +380,7 @@ export async function getFieldDetailPageData(
       return null;
     }
 
-    return result[0] as any; // Cast to 'any' for now, should be FieldPageData
+    return result[0] as FieldPageData;
   } catch (error) {
     console.error("Failed to fetch field detail page data:", error);
     return null;
@@ -458,5 +466,144 @@ export async function getAvailableDateFiltersForField(
   } catch (error) {
     console.error("Failed to fetch available date filters:", error);
     return { availableYears: [], availableMonths: [] };
+  }
+}
+
+// Add a new field with proper validation
+export async function addField(
+  name: string,
+  year: number,
+  totalArea: number
+): Promise<ValidationResult> {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+    const fieldsCollection = db.collection("new_fields");
+
+    // Trim and validate the name
+    const trimmedName = name.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      return {
+        success: false,
+        error: "Field name must be at least 2 characters long",
+      };
+    }
+
+    if (!year || year < 2020 || year > new Date().getFullYear()) {
+      return {
+        success: false,
+        error: "Please select a valid year",
+      };
+    }
+
+    if (!totalArea || totalArea <= 0) {
+      return {
+        success: false,
+        error: "Total area must be a positive number",
+      };
+    }
+
+    // Check if a field with the same name and year already exists
+    const existingField = await fieldsCollection.findOne({
+      name: trimmedName,
+      year: year,
+    });
+
+    if (existingField) {
+      return {
+        success: false,
+        error: `A field named "${trimmedName}" already exists for the year ${year}`,
+      };
+    }
+
+    // Create the new field
+    const newField = {
+      name: trimmedName,
+      year: year,
+      totalArea: totalArea,
+      allocations: [], // Empty allocations array to start with
+      createdAt: new Date(),
+    };
+
+    const result = await fieldsCollection.insertOne(newField);
+
+    if (result.insertedId) {
+      return { success: true };
+    } else {
+      return {
+        success: false,
+        error: "Failed to create field",
+      };
+    }
+  } catch (error) {
+    console.error("Failed to add field:", error);
+    return {
+      success: false,
+      error: "An error occurred while adding the field",
+    };
+  }
+}
+
+// Get existing field names for display in the form
+export async function getExistingFieldNames(): Promise<string[]> {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+    const fieldsCollection = db.collection("new_fields");
+
+    // Get field names with years for better user guidance
+    const pipeline = [
+      {
+        $sort: { year: -1, name: 1 }, // Sort by year (desc) then name (asc)
+      },
+      {
+        $project: {
+          _id: 0,
+          displayName: {
+            $concat: ["$name", " (", { $toString: "$year" }, ")"],
+          },
+        },
+      },
+    ];
+
+    const result = await fieldsCollection.aggregate(pipeline).toArray();
+    return result.map((item) => item.displayName);
+  } catch (error) {
+    console.error("Failed to fetch existing field names:", error);
+    return [];
+  }
+}
+
+// Get unique field names only (without years) for reference
+export async function getUniqueFieldNames(): Promise<string[]> {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+    const fieldsCollection = db.collection("new_fields");
+
+    // Get unique field names using aggregation
+    const pipeline = [
+      {
+        $group: {
+          _id: "$name", // Group by field name
+        },
+      },
+      {
+        $sort: { _id: 1 }, // Sort alphabetically
+      },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+        },
+      },
+    ];
+
+    const result = await fieldsCollection.aggregate(pipeline).toArray();
+    return result.map((item) => item.name);
+  } catch (error) {
+    console.error("Failed to fetch unique field names:", error);
+    return [];
   }
 }

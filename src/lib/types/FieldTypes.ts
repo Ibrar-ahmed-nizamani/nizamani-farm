@@ -2,6 +2,7 @@
 export interface FieldListItem {
   _id: string;
   name: string;
+  year: number;
   totalArea: number;
   farmerCount: number;
   remainingArea: number;
@@ -74,6 +75,7 @@ export interface FarmerFieldSummary {
 export interface FieldPageData {
   _id: string;
   name: string;
+  year: number;
   totalArea: number;
   summary: FieldSummary;
   farmers: FarmerAllocationDetails[];

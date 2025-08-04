@@ -1,7 +1,7 @@
 // components/fields/add-field-form.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,12 +15,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { addField } from "@/lib/actions/field";
+import { addField, getExistingFieldNames } from "@/lib/actions/NewField";
 import StatusAlert from "@/components/ui/status-alert";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").trim(),
+  year: z.string().min(1, "Year is required"),
   totalArea: z
     .string()
     .min(1, "Area is required")
@@ -29,8 +37,19 @@ const formSchema = z.object({
   // location: z.string().min(2, "Location must be at least 2 characters").trim(),
 });
 
+// Generate year options from 2020 to current year
+const generateYearOptions = () => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let year = currentYear; year >= 2020; year--) {
+    years.push(year);
+  }
+  return years;
+};
+
 export default function AddFieldForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [existingFieldNames, setExistingFieldNames] = useState<string[]>([]);
   const [status, setStatus] = useState<{
     type: "success" | "error" | null;
     message: string | null;
@@ -40,16 +59,33 @@ export default function AddFieldForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      year: new Date().getFullYear().toString(),
       totalArea: 0,
       // location: "",
     },
   });
+
+  const yearOptions = generateYearOptions();
+
+  // Fetch existing field names on component mount
+  useEffect(() => {
+    const fetchExistingNames = async () => {
+      try {
+        const names = await getExistingFieldNames();
+        setExistingFieldNames(names);
+      } catch (error) {
+        console.error("Failed to fetch existing field names:", error);
+      }
+    };
+    fetchExistingNames();
+  }, []);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
       const result = await addField(
         values.name,
+        parseInt(values.year),
         values.totalArea
         // values.location
       );
@@ -94,6 +130,40 @@ export default function AddFieldForm() {
                 <FormControl>
                   <Input {...field} disabled={isLoading} />
                 </FormControl>
+                <FormMessage />
+                {existingFieldNames.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Existing fields: {existingFieldNames.join(", ")}
+                  </p>
+                )}
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="year"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Year</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isLoading}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {yearOptions.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
