@@ -13,9 +13,9 @@ import Link from "next/link";
 import EmptyState from "@/components/shared/empty-state";
 import BackLink from "@/components/ui/back-link";
 import {
+  getAvailableDateRangesForField,
   getField,
   getFieldFarmers,
-  getFieldSummary,
   getRemainingArea,
 } from "@/lib/actions/field";
 import { PlusIcon } from "lucide-react";
@@ -46,14 +46,9 @@ export default async function FieldPage({
 
   const field = await getField(fieldId);
   const farmers = await getFieldFarmers(fieldId);
-  const { success, summary, years, months } = await getFieldSummary(fieldId, {
-    startDate,
-    endDate,
-    year,
-    month,
-  });
-  const { remainingArea } = await getRemainingArea(fieldId);
 
+  const { remainingArea } = await getRemainingArea(fieldId);
+  const { months, years } = await getAvailableDateRangesForField(fieldId);
   const serializableFarmers = farmers.map((farmer) => ({
     _id: farmer._id.toString(),
     name: farmer.name,
@@ -66,7 +61,6 @@ export default async function FieldPage({
     endDate,
   });
 
-  // Get financial details for each farmer
   const farmersWithFinancials = await Promise.all(
     farmers.map(async (farmer) => {
       const result = await getFieldFarmerExpenses(farmer._id.toString(), {
@@ -76,20 +70,63 @@ export default async function FieldPage({
         month,
       });
 
-      // Extract total values (farmer + owner)
-      const totalExpenses =
-        (result.summary?.totalFarmerExpenses || 0) +
-        (result.summary?.totalOwnerExpenses || 0);
+      const farmerIncome = result.summary?.farmerIncome || 0;
+      const ownerIncome = result.summary?.ownerIncome || 0;
+      const farmerExpenses = result.summary?.totalFarmerExpenses || 0;
+      const ownerExpenses = result.summary?.totalOwnerExpenses || 0;
+
       const totalIncome = result.summary?.totalIncome || 0;
+      const totalExpenses = farmerExpenses + ownerExpenses;
+
+      // balances
       const totalBalance = totalIncome - totalExpenses;
+      const farmerBalance = farmerIncome - farmerExpenses;
+      const ownerBalance = ownerIncome - ownerExpenses;
 
       return {
         ...farmer,
-        expenses: totalExpenses,
         income: totalIncome,
+        expenses: totalExpenses,
         balance: totalBalance,
+
+        farmerIncome,
+        ownerIncome,
+        farmerExpenses,
+        ownerExpenses,
+        farmerBalance,
+        ownerBalance,
       };
     })
+  );
+
+  // Grand totals
+  const totals = farmersWithFinancials.reduce(
+    (acc, farmer) => {
+      acc.totalFarmerIncome += farmer.farmerIncome;
+      acc.totalOwnerIncome += farmer.ownerIncome;
+      acc.totalFarmerExpenses += farmer.farmerExpenses;
+      acc.totalOwnerExpenses += farmer.ownerExpenses;
+
+      acc.totalIncome += farmer.income;
+      acc.totalExpenses += farmer.expenses;
+      acc.balance += farmer.balance;
+
+      acc.totalFarmerBalance += farmer.farmerBalance;
+      acc.totalOwnerBalance += farmer.ownerBalance;
+
+      return acc;
+    },
+    {
+      totalFarmerIncome: 0,
+      totalOwnerIncome: 0,
+      totalFarmerExpenses: 0,
+      totalOwnerExpenses: 0,
+      totalIncome: 0,
+      totalExpenses: 0,
+      balance: 0,
+      totalFarmerBalance: 0,
+      totalOwnerBalance: 0,
+    }
   );
 
   return (
@@ -116,10 +153,10 @@ export default async function FieldPage({
       </div>
 
       {/* Field Summary Section */}
-      {success && farmers.length > 0 && (
+      {farmers.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Field Summary</h2>
-          <FieldSummary summary={summary} />
+          <FieldSummary summary={totals} />
         </div>
       )}
 

@@ -220,6 +220,93 @@ interface DateFilterOptions {
   endDate?: string;
 }
 
+export async function getAvailableDateRangesForField(fieldId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Step 1: Find all farmer relationships for the given fieldId to get their IDs.
+    // We only need the _id, so we use projection for efficiency.
+    const fieldFarmers = await db
+      .collection("field_farmers")
+      .find({ fieldId: new ObjectId(fieldId) }, { projection: { _id: 1 } })
+      .toArray();
+
+    // If there are no farmers for this field, there can be no expenses.
+    if (fieldFarmers.length === 0) {
+      return { years: [], months: [] };
+    }
+
+    // Extract the ObjectIds of the farmers.
+    const farmerIds = fieldFarmers.map((ff) => ff._id);
+
+    // Step 2: Define the aggregation pipeline.
+    const pipeline = [
+      // Stage 1: Match only the documents for the relevant farmers.
+      // This is the most important step for performance. It filters the dataset early.
+      {
+        $match: {
+          farmerId: { $in: farmerIds },
+        },
+      },
+      // Stage 2: Group documents by year and month to find unique combinations.
+      // We use the $year and $month operators to extract date parts.
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+          },
+        },
+      },
+      // Stage 3: Sort the results. Year descending, then month ascending.
+      {
+        $sort: {
+          "_id.year": -1,
+          "_id.month": 1,
+        },
+      },
+      // Stage 4: Reshape the output documents to be more user-friendly.
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: "$_id.month",
+        },
+      },
+    ];
+
+    // Step 3: Execute the aggregation pipeline.
+    const availableDates = (await db
+      .collection("field_expenses")
+      .aggregate(pipeline)
+      .toArray()) as { year: number; month: number }[];
+
+    // Step 4: Process the results into the final format.
+    const yearsSet = new Set<number>();
+    const months = availableDates.map((dateInfo) => {
+      yearsSet.add(dateInfo.year);
+      return {
+        ...dateInfo,
+        label: new Date(dateInfo.year, dateInfo.month - 1).toLocaleString(
+          "default",
+          {
+            month: "long",
+          }
+        ),
+      };
+    });
+
+    // The years will already be sorted due to the pipeline's $sort stage.
+    const years = Array.from(yearsSet);
+
+    return { years, months };
+  } catch (error) {
+    console.error("Failed to fetch available date ranges:", error);
+    return { years: [], months: [] };
+  }
+}
+
 // Add this to lib/actions/field.ts
 export async function getFieldSummary(
   fieldId: string,
@@ -328,6 +415,19 @@ export async function getFieldSummary(
     allExpenses.forEach((expense) => {
       const farmerId = expense.farmerId.toString();
       const shareType = farmerShareMap[farmerId];
+
+      if (expense.type === "income") {
+        const sharePercentage = getSharePercentage(shareType);
+        if (sharePercentage === 0 && expense.amount > 0) {
+          console.warn(
+            `[POTENTIAL ISSUE] Farmer income share is 0%. ` +
+              `FarmerId: ${farmerId}, ` +
+              `Income Record _id: ${expense._id}, ` +
+              `Amount: ${expense.amount}, ` +
+              `ShareType Found: "${shareType}" (Type: ${typeof shareType})`
+          );
+        }
+      }
 
       if (expense.type === "expense") {
         totalExpenses += expense.amount;
