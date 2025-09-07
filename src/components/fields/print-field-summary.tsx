@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { useState } from "react";
-import { convertShareTypes, formatDatePattern } from "@/lib/utils";
+import { convertShareTypes } from "@/lib/utils";
 
 interface Farmer {
   _id: string;
