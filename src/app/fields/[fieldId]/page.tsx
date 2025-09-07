@@ -26,6 +26,7 @@ import { getFieldFarmerExpenses } from "@/lib/actions/farmer";
 import DateRangeSelector from "@/components/shared/date-range-selector";
 import { CardDescription } from "@/components/ui/card";
 import CustomSearch from "@/components/shared/search";
+import PrintFieldSummary from "@/components/fields/print-field-summary";
 
 interface SearchParams {
   startDate?: string;
@@ -138,7 +139,14 @@ export default async function FieldPage({
             Total Area: {field.totalArea} acres
           </p>
         </div>
-        <BackLink href="/fields" linkText="Back to Fields" />
+        <div className="flex items-center gap-4">
+          <PrintFieldSummary
+            field={field}
+            farmers={farmersWithFinancials}
+            summary={totals}
+          />
+          <BackLink href="/fields" linkText="Back to Fields" />
+        </div>
       </div>
 
       {/* Date Filter */}
