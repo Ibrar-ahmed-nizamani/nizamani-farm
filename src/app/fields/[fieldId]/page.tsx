@@ -191,40 +191,74 @@ export default async function FieldPage({
           <Table className="border">
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Share Type</TableHead>
-                <TableHead>Allocated Area</TableHead>
+                <TableHead className="w-[200px]">Farmer</TableHead>
+                <TableHead>Farmer&apos;s Expense</TableHead>
+                <TableHead>Owner&apos;s Expense</TableHead>
                 <TableHead>Total Expenses</TableHead>
+                <TableHead>Farmer&apos;s Income</TableHead>
+                <TableHead>Owner&apos;s Income</TableHead>
                 <TableHead>Total Income</TableHead>
+                <TableHead>Farmer&apos;s Balance</TableHead>
+                <TableHead>Owner&apos;s Balance</TableHead>
                 <TableHead>Net Balance</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-center w-[120px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {farmersWithFinancials.map((farmer) => (
                 <TableRow key={farmer._id}>
-                  <TableCell>{farmer.name}</TableCell>
                   <TableCell>
-                    {convertShareTypes(farmer.shareType, true)}
+                    <div className="font-medium">{farmer.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {convertShareTypes(farmer.shareType, true)} (
+                      {farmer.allocatedArea} acres)
+                    </div>
                   </TableCell>
-                  <TableCell>{farmer.allocatedArea} acres</TableCell>
-                  <TableCell className=" bg-red-500/10 font-medium">
-                    Rs. {(farmer.expenses || 0).toLocaleString()}
+                  <TableCell className="font-medium bg-red-500/10">
+                    Rs. {farmer.farmerExpenses.toLocaleString()}
                   </TableCell>
-                  <TableCell className=" bg-green-500/10 font-medium">
-                    Rs. {(farmer.income || 0).toLocaleString()}
+                  <TableCell className="font-medium bg-red-500/10">
+                    Rs. {farmer.ownerExpenses.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="bg-red-500/10 font-medium">
+                    Rs. {farmer.expenses.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="font-medium bg-green-500/10">
+                    Rs. {farmer.farmerIncome.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="font-medium bg-green-500/10">
+                    Rs. {farmer.ownerIncome.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="bg-green-500/10 font-medium">
+                    Rs. {farmer.income.toLocaleString()}
                   </TableCell>
                   <TableCell
                     className={`font-medium ${
-                      (farmer.balance || 0) >= 0
+                      farmer.farmerBalance >= 0
                         ? "text-green-600"
                         : "text-red-600"
                     }`}
                   >
-                    Rs. {(farmer.balance || 0).toLocaleString()}
+                    Rs. {farmer.farmerBalance.toLocaleString()}
+                  </TableCell>
+                  <TableCell
+                    className={`font-medium ${
+                      farmer.ownerBalance >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    Rs. {farmer.ownerBalance.toLocaleString()}
+                  </TableCell>
+                  <TableCell
+                    className={`font-medium ${
+                      farmer.balance >= 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    Rs. {farmer.balance.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-center gap-2">
                       <EditFarmerDialog
                         fieldId={field._id}
                         farmerId={farmer._id}
