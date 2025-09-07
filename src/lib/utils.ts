@@ -36,7 +36,7 @@ export function formatDatePattern(inputDate: string | Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
   const year = date.getFullYear();
 
-  return `${day} - ${month} - ${year}`;
+  return `${day}\u2011${month}\u2011${year}`;
 }
 
 export function generateMilkExpensesSummary(expenses: MilkExpense[]) {
