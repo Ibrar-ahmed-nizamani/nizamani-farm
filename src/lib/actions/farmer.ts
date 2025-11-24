@@ -164,6 +164,7 @@ interface DateFilterOptions {
   month?: string;
   startDate?: string;
   endDate?: string;
+  expenseType?: string;
 }
 
 export async function getFieldFarmerExpenses(
@@ -189,7 +190,12 @@ export async function getFieldFarmerExpenses(
       farmerId: new ObjectId(farmerId),
     };
 
-    const { year, month, startDate, endDate } = filterOptions;
+    const { year, month, startDate, endDate, expenseType } = filterOptions;
+
+    // Expense type filter
+    if (expenseType && expenseType !== "all") {
+      query.expenseType = expenseType;
+    }
 
     // Date range filter
     if (startDate && endDate) {

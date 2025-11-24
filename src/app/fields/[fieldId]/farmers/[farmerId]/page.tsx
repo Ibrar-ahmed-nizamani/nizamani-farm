@@ -22,12 +22,14 @@ import { EditFieldTransaction } from "@/components/fields/edit-field-transaction
 import { DeleteFieldTransaction } from "@/components/fields/delete-field-transaction";
 import { getExpenseTypes } from "@/lib/actions/share-settings";
 import DateRangeSelector from "@/components/shared/date-range-selector";
+import ExpenseTypeSelector from "@/components/shared/expense-type-selector";
 
 interface SearchParams {
   startDate?: string;
   endDate?: string;
   year?: string;
   month?: string;
+  expenseType?: string;
 }
 
 export default async function FarmerFieldPage({
@@ -38,7 +40,7 @@ export default async function FarmerFieldPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { fieldId, farmerId } = await params;
-  const { startDate, endDate, year, month } = await searchParams;
+  const { startDate, endDate, year, month, expenseType } = await searchParams;
 
   const farmer = await getFieldFarmer(farmerId);
   const { expenses, summary, years, months } = await getFieldFarmerExpenses(
@@ -48,6 +50,7 @@ export default async function FarmerFieldPage({
       endDate,
       year,
       month,
+      expenseType,
     }
   );
 
@@ -119,7 +122,10 @@ export default async function FarmerFieldPage({
         <div className="flex gap-4 items-center justify-between mb-2">
           <CardDescription>{dateRangeDescription}</CardDescription>
         </div>
-        <DateRangeSelector availableYears={years} availableMonths={months} />
+        <div className="flex flex-wrap gap-4 items-center">
+          <DateRangeSelector availableYears={years} availableMonths={months} />
+          <ExpenseTypeSelector expenseTypes={expenseTypes} />
+        </div>
       </div>
 
       {/* First row of summary cards */}
