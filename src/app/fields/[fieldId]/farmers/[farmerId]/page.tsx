@@ -53,6 +53,7 @@ export default async function FarmerFieldPage({
       expenseType,
     }
   );
+  
 
   // Get expense types filtered by farmer's share type
   const expenseTypes = await getExpenseTypes(farmer.shareType);

@@ -342,17 +342,6 @@ export default function PrintFarmerSummary({
                           </td>
                           
                           <td class="amount ${
-                            expense.type === "income" && ownerIncome > 0
-                              ? "income"
-                              : ""
-                          }">
-                            ${
-                              expense.type === "income" && ownerIncome > 0
-                                ? ownerIncome.toLocaleString()
-                                : "-"
-                            }
-                          </td>
-                          <td class="amount ${
                             expense.type === "income" && farmerIncome > 0
                               ? "income"
                               : ""
@@ -363,6 +352,19 @@ export default function PrintFarmerSummary({
                                 : "-"
                             }
                           </td>
+
+                          <td class="amount ${
+                            expense.type === "income" && ownerIncome > 0
+                              ? "income"
+                              : ""
+                          }">
+                            ${
+                              expense.type === "income" && ownerIncome > 0
+                                ? ownerIncome.toLocaleString()
+                                : "-"
+                            }
+                          </td>
+                          
                           <td class="amount ${
                             expense.type === "expense" && farmerExpense > 0
                               ? "expense"
