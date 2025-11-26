@@ -23,6 +23,7 @@ import { DeleteFieldTransaction } from "@/components/fields/delete-field-transac
 import { getExpenseTypes } from "@/lib/actions/share-settings";
 import DateRangeSelector from "@/components/shared/date-range-selector";
 import ExpenseTypeSelector from "@/components/shared/expense-type-selector";
+import DeleteFarmerButton from "@/components/fields/delete-farmer-button";
 
 interface SearchParams {
   startDate?: string;
@@ -109,7 +110,13 @@ export default async function FarmerFieldPage({
           </p>
         </div>
         <div className="flex gap-4">
-          <PrintFarmerSummary
+         
+          <DeleteFarmerButton 
+            farmerId={farmerId} 
+            farmerName={farmer.name} 
+            fieldId={fieldId} 
+          />
+           <PrintFarmerSummary
             farmer={farmer}
             expenses={expenses}
             summary={summary}

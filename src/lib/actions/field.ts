@@ -125,7 +125,10 @@ export async function getFieldFarmers(fieldId: string) {
     // Get all farmers for this field
     const fieldFarmers = await db
       .collection("field_farmers")
-      .find({ fieldId: new ObjectId(fieldId) })
+      .find({ 
+        fieldId: new ObjectId(fieldId),
+        deleted: { $ne: true }
+      })
       .toArray();
 
     // Get farmer details for each field farmer
@@ -229,7 +232,10 @@ export async function getAvailableDateRangesForField(fieldId: string) {
     // We only need the _id, so we use projection for efficiency.
     const fieldFarmers = await db
       .collection("field_farmers")
-      .find({ fieldId: new ObjectId(fieldId) }, { projection: { _id: 1 } })
+      .find({ 
+        fieldId: new ObjectId(fieldId),
+        deleted: { $ne: true }
+      }, { projection: { _id: 1 } })
       .toArray();
 
     // If there are no farmers for this field, there can be no expenses.
@@ -319,7 +325,10 @@ export async function getFieldSummary(
     // Get all farmers for this field
     const fieldFarmers = await db
       .collection("field_farmers")
-      .find({ fieldId: new ObjectId(fieldId) })
+      .find({ 
+        fieldId: new ObjectId(fieldId),
+        deleted: { $ne: true }
+      })
       .toArray();
 
     // Build query with date filter if provided
@@ -692,12 +701,16 @@ export async function getFieldSummaryForList(
     // Get all farmers for this field
     const fieldFarmers = await db
       .collection("field_farmers")
-      .find({ fieldId: new ObjectId(fieldId) })
+      .find({ 
+        fieldId: new ObjectId(fieldId),
+        deleted: { $ne: true }
+      })
       .toArray();
 
     // Build query with date filter if provided
     const query: any = {
       fieldId: new ObjectId(fieldId),
+      farmerId: { $in: fieldFarmers.map((f) => f._id) },
     };
 
     // If filterOptions is provided, apply date filters

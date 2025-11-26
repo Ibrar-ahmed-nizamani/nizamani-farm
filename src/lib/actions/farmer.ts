@@ -76,6 +76,7 @@ export async function addFarmerToField(
     const existingAssignment = await db.collection("field_farmers").findOne({
       fieldId: new ObjectId(fieldId),
       farmerId: farmer._id,
+      deleted: { $ne: true },
     });
 
     if (existingAssignment) {
@@ -763,6 +764,65 @@ export async function deleteFarmer(farmerId: string) {
     return { success: true };
   } catch (error) {
     console.error("Failed to delete farmer:", error);
+    return {
+      success: false,
+      error: "Failed to delete farmer",
+    };
+  }
+}
+
+export async function softDeleteFarmer(farmerId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("farm");
+
+    // Get the field-farmer relationship to get the fieldId for revalidation
+    const fieldFarmer = await db
+      .collection("field_farmers")
+      .findOne({ _id: new ObjectId(farmerId) });
+
+    if (!fieldFarmer) {
+      return {
+        success: false,
+        error: "Farmer not found",
+      };
+    }
+
+    const fieldId = fieldFarmer.fieldId;
+
+    // Soft delete the field-farmer relationship
+    const result = await db.collection("field_farmers").updateOne(
+      { _id: new ObjectId(farmerId) },
+      {
+        $set: {
+          deleted: true,
+          deletedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return {
+        success: false,
+        error: "Failed to delete farmer",
+      };
+    }
+
+    // Return the allocated area back to the field
+    await db
+      .collection("fields")
+      .updateOne(
+        { _id: fieldId },
+        { $inc: { remainingArea: fieldFarmer.allocatedArea } }
+      );
+
+    revalidatePath(`/fields/${fieldId}`);
+    revalidatePath(`/fields/${fieldId}/farmers/${farmerId}`);
+    revalidatePath(`/fields`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to soft delete farmer:", error);
     return {
       success: false,
       error: "Failed to delete farmer",

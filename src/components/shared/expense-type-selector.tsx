@@ -40,7 +40,7 @@ export default function ExpenseTypeSelector({
         <SelectValue placeholder="All Expense Types" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All Expense Types</SelectItem>
+        <SelectItem value="all">Search</SelectItem>
         {expenseTypes.map((type) => (
           <SelectItem key={type._id} value={type.name}>
             {type.name}
@@ -49,4 +49,4 @@ export default function ExpenseTypeSelector({
       </SelectContent>
     </Select>
   );
-}
+}    
