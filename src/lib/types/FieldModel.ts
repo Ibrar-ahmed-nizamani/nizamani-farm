@@ -1,52 +1,63 @@
 import { ObjectId } from "mongodb";
 
-// --- expenseShares Collection ---
-export interface ExpenseShare {
-  _id: ObjectId;
-  name: string;
-  percentage: number;
-  farmerType: number; // 25, 50 , 100
-  createdAt: Date;
-}
-
-// --- allocations (Embedded in 'fields' Collection) ---
+// --- Allocations (Embedded in 'crops' Collection) ---
 export interface Allocation {
   farmerId: ObjectId; // Reference to a Farmer
   allocatedArea: number;
-  share: number; // 25, 50 , 100
+  sharePercentage: number; // e.g., 50
 }
 
-// --- fields Collection ---
+// --- Crops Collection (The main operational unit) ---
+// A "Crop" represents a specific season/year cultivation on a Field
+export interface Crop {
+  _id: ObjectId;
+  fieldId: ObjectId; // Reference to physical Field
+  name: string; // e.g., "Rice", "Wheat"
+  year: number; // e.g., 2025
+  season?: string; // e.g., "Kharif", "Rabi"
+  
+  allocations: Allocation[];
+  
+  status: 'active' | 'archived';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// --- Fields Collection (Physical Land) ---
 export interface Field {
   _id: ObjectId;
-  name: string;
-  year: number;
-  totalArea: number;
+  name: string; // e.g., "North Acre 1"
+  totalArea: number; // Physical size in acres
   createdAt: Date;
-  allocations: Allocation[];
+  // We might keep a list of crop IDs for quick navigation if needed, 
+  // but querying Crops by fieldId is usually better for scalability.
 }
 
-// --- farmers Collection ---
-export interface Farmer {
-  _id: ObjectId;
-  name: string;
-  createdAt: Date;
-  workingFields: ObjectId[]; // Array of Field IDs
-}
-
-// --- transactions Collection ---
+// --- Transactions Collection ---
 export interface Transaction {
   _id: ObjectId;
-  fieldId: ObjectId; // Direct reference to Field
-  farmerId: ObjectId; // Direct reference to Farmer
+  cropId: ObjectId; // Reference to Crop (which links to Field)
+  farmerId: ObjectId; // Reference to Farmer
+  
+  date: Date;
   type: "income" | "expense";
-  amount: number;
+  category: string; // e.g., "Fertilizer", "Labor", "Sales"
+  item: string; // e.g., "Urea" (Mandatory now)
+  
+  amount: number; // Total amount of the transaction
   description: string;
-  createdAt: Date;
+  
+  // Split Logic
   splitDetails: {
-    expenseShareName?: string;
-    expenseSharePercentage?: number;
-    ownerPortion: number;
-    farmerPortion: number;
+    farmerSharePercentage: number; // e.g., 50
+    // ownerSharePercentage is derived (100 - farmerSharePercentage)
+    
+    farmerAmount: number; // Calculated amount for farmer
+    ownerAmount: number; // Calculated amount for owner
   };
+  
+  // Link to Stock if this was an auto-generated transaction
+  stockDistributionId?: ObjectId;
+  
+  createdAt: Date;
 }

@@ -1,91 +1,94 @@
+import { ObjectId } from "mongodb";
+
 // --- For the Main "Fields" List Page ---
 export interface FieldListItem {
   _id: string;
   name: string;
-  year: number;
   totalArea: number;
-  farmerCount: number;
-  remainingArea: number;
+  activeCrops: {
+    _id: string;
+    name: string;
+    year: number;
+  }[];
+}
+
+// --- For the "Crop Detail" Page (formerly Field Detail) ---
+
+// Represents the summary cards at the top of the page
+// Calculated on-demand from transactions
+export interface CropSummary {
   totalIncome: number;
   totalExpense: number;
   balance: number;
-}
-
-// --- For the "Field Detail" Page ---
-
-// Represents the summary cards at the top of the page
-export interface FieldSummary {
-  totalIncome: number;
-  totalExpense: number; // Match component expectation
-  balance: number;
   // Expense Split
-  totalOwnerExpenses: number; // Match component expectation
-  totalFarmerExpenses: number; // Match component expectation
+  totalOwnerExpenses: number;
+  totalFarmerExpenses: number;
   // Income Split
-  totalOwnerIncome: number; // Match component expectation
-  totalFarmerIncome: number; // Match component expectation
+  totalOwnerIncome: number;
+  totalFarmerIncome: number;
   // Net Balance Split
-  totalOwnerBalance: number; // Match component expectation
-  totalFarmerBalance: number; // Match component expectation
+  totalOwnerBalance: number;
+  totalFarmerBalance: number;
 }
 
-// Represents one row in the list of farmers on the field detail page
+// Represents one row in the list of farmers on the crop detail page
 export interface FarmerAllocationDetails {
-  id: string;
-  _id: string; // For CustomSearch component compatibility
+  id: string; // Farmer ID
+  _id: string; // For compatibility
   name: string;
+  imageUrl?: string;
   allocatedArea: number;
-  share: number;
+  sharePercentage: number;
+  
+  // Aggregated stats for this specific crop (Calculated on-demand)
   totalIncome: number;
   totalExpense: number;
   netBalance: number;
 }
 
-// --- For the "Farmer-Field Detail" Page ---
+// --- For the "Farmer-Crop Detail" Page ---
 
-// Represents one row in the list of transactions on the page
-export interface FarmerFieldTransaction {
+// Represents one row in the list of transactions
+export interface FarmerCropTransaction {
   _id: string;
   date: string; // Formatted for display
-  type: string;
+  type: "income" | "expense";
+  category: string;
+  item: string; // Mandatory now
   description: string;
-  totalIncome: number | null;
-  farmerIncome: number | null;
-  ownerIncome: number | null;
-  totalExpense: number | null;
-  farmerExpense: number | null;
-  ownerExpense: number | null;
+  
+  totalAmount: number;
+  
+  // Display columns
+  farmerAmount: number;
+  ownerAmount: number;
 }
 
-// This could also reuse the FieldSummary type if the cards are identical
-export interface FarmerFieldSummary {
-  totalExpense: number;
-  totalIncome: number;
-  balance: number;
-  // ... and the split details
-  ownerExpense: number;
-  farmerExpense: number;
-  ownerIncome: number;
-  farmerIncome: number;
-  ownerNetBalance: number;
-  farmerNetBalance: number;
+// Represents the entire data payload for the Crop page
+export interface CropPageData {
+  _id: string; // Crop ID
+  fieldId: string;
+  fieldName: string;
+  name: string; // Crop Name
+  year: number;
+  
+  summary: CropSummary;
+  farmers: FarmerAllocationDetails[];
 }
 
-// Represents the entire data payload for the page
-export interface FieldPageData {
+// --- Stock UI Types ---
+
+export interface StockCategoryListItem {
   _id: string;
   name: string;
-  year: number;
-  totalArea: number;
-  summary: FieldSummary;
-  farmers: FarmerAllocationDetails[];
-  // You might still fetch years/months separately if the aggregation gets too slow
-  // availableYears?: number[];
+  itemCount: number;
 }
 
-export interface DateFilterOptions {
-  year?: string;
-  month?: string;
-  startDate?: string;
-  endDate?: string;
+export interface StockItemDetail {
+  _id: string;
+  name: string;
+  currentQuantity: number;
+  unit: string;
+  averageCost: number;
+  totalValue: number;
 }
