@@ -3,7 +3,9 @@ import { ObjectId } from "mongodb";
 // --- Farmer Configuration ---
 
 export interface ExpenseShareConfig {
-  category: string; // e.g., "Fertilizer", "Pesticides", "Labor"
+  categoryId: ObjectId;
+  category: string; // Group, e.g., "Fertilizer"
+  itemName: string; // Specific item, e.g., "DAP"
   farmerShare: number; // Percentage (0-100)
   ownerShare: number; // Percentage (0-100)
 }
@@ -29,7 +31,7 @@ export interface Farmer {
   workingFields: ObjectId[]; // IDs of Crops/Fields they are currently active in
   archivedFields: ObjectId[]; // IDs of past Crops/Fields
   
-  configId?: ObjectId; // Link to a default configuration
+  // configId removed as per requirements (configuration based on crop/field)
   createdAt: Date;
   updatedAt: Date;
 }
