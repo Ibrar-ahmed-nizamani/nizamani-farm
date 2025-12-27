@@ -1,11 +1,10 @@
 import { getFarmer } from "@/lib/newActions/farmerActions";
 import BackLink from "@/components/ui/back-link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Phone, CreditCard, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { Phone, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import FarmerImageUpload from "@/components/farmers/farmer-image-upload";
 
 export default async function FarmerProfilePage({
   params,
@@ -23,12 +22,11 @@ export default async function FarmerProfilePage({
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={farmer.imageUrl} alt={farmer.name} />
-            <AvatarFallback className="text-2xl">
-              {farmer.name.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <FarmerImageUpload
+            farmerId={id}
+            currentImageUrl={farmer.imageUrl}
+            farmerName={farmer.name}
+          />
           <div>
             <h1 className="text-3xl font-bold">{farmer.name}</h1>
             <div className="flex items-center gap-2 text-muted-foreground mt-1">
