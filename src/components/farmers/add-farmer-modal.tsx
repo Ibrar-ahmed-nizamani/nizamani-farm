@@ -34,7 +34,7 @@ function SubmitButton() {
   );
 }
 
-export default function AddFarmerModal({ configs }: { configs: (Omit<FarmerConfig, "_id"> & { _id: string })[] }) {
+export default function AddFarmerModal({ configs }: { configs: (Omit<FarmerConfig, "_id" | "createdAt" | "expenseConfigs"> & { _id: string, createdAt?: string | Date, expenseConfigs: { categoryId: string; category: string; itemName: string; farmerShare: number; ownerShare: number }[] })[] }) {
   const [open, setOpen] = useState(false);
 
   async function clientAction(formData: FormData) {

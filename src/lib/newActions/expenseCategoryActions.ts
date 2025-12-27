@@ -5,15 +5,52 @@ import { ExpenseCategory } from "@/lib/types/ExpenseCategory";
 import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 
-export async function createExpenseCategory(data: Omit<ExpenseCategory, "_id" | "createdAt">) {
+export async function createExpenseCategory(prevState: any, formData: FormData) {
+  const categoryRaw = formData.get("category") as string;
+  const nameRaw = formData.get("name") as string;
+
+  const category = categoryRaw?.trim().toLowerCase();
+  const name = nameRaw?.trim().toLowerCase();
+
+  const errors: { category?: string[]; name?: string[] } = {};
+
+  if (!category) {
+    errors.category = ["Category is required"];
+  }
+  if (!name) {
+    errors.name = ["Name is required"];
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { success: false, errors };
+  }
+
   const db = await getDbV2();
+  
+  // Check for duplicate
+  const existing = await db.collection<ExpenseCategory>("expenseCategories").findOne({
+    category: category,
+    name: name,
+  });
+
+  if (existing) {
+    return {
+      success: false,
+      errors: {
+        name: ["Item name already exists for this category"],
+      },
+    };
+  }
+
   const result = await db.collection<ExpenseCategory>("expenseCategories").insertOne({
-    ...data,
+    category,
+    name,
     _id: new ObjectId(),
     createdAt: new Date(),
   });
+  
   revalidatePath("/farmers/configuration");
-  return { success: true, id: result.insertedId.toString() };
+  return { success: true, message: "Category created successfully" };
 }
 
 export async function getExpenseCategories() {
@@ -22,6 +59,7 @@ export async function getExpenseCategories() {
   return categories.map(cat => ({
     ...cat,
     _id: cat._id.toString(),
+    createdAt: new Date(cat.createdAt).toISOString(),
   }));
 }
 

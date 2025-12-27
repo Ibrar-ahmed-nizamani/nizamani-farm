@@ -20,7 +20,7 @@ import Link from "next/link";
 export default async function FarmerConfigurationPage() {
   const configs = await getFarmerConfigs();
   const categories = await getExpenseCategories();
-
+  console.log(configs);
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -46,7 +46,7 @@ export default async function FarmerConfigurationPage() {
               <p className="text-muted-foreground mb-4">
                 Create a template for farmer expense shares (e.g., "50% Partner")
               </p>
-              <AddFarmerConfigForm categories={categories} />
+              <AddFarmerConfigForm />
             </div>
 
             <div className="space-y-4">

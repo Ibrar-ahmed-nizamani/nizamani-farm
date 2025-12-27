@@ -24,11 +24,28 @@ export async function createFarmerConfig(data: Omit<FarmerConfig, "_id" | "creat
 
 export async function getFarmerConfigs() {
   const db = await getDbV2();
-  const configs = await db.collection<FarmerConfig>("farmerConfigs").find({}).toArray();
+  const configs = await db.collection<FarmerConfig>("farmerConfigs")
+    .find({}, { projection: { name: 1, baseSharePercentage: 1 } })
+    .toArray();
   return configs.map(config => ({
+    _id: config._id.toString(),
+    name: config.name,
+    baseSharePercentage: config.baseSharePercentage
+  }));
+}
+
+export async function getFarmerConfig(id: string) {
+  const db = await getDbV2();
+  const config = await db.collection<FarmerConfig>("farmerConfigs").findOne({ _id: new ObjectId(id) });
+  if (!config) return null;
+  return {
     ...config,
     _id: config._id.toString(),
-  }));
+    expenseConfigs: config.expenseConfigs.map(ec => ({
+      ...ec,
+      categoryId: ec.categoryId.toString()
+    }))
+  };
 }
 
 export async function deleteFarmerConfig(id: string) {
@@ -56,12 +73,18 @@ export async function createFarmer(data: Omit<Farmer, "_id" | "createdAt" | "upd
 
 export async function getFarmers() {
   const db = await getDbV2();
-  const farmers = await db.collection<Farmer>("farmers").find({}).sort({ createdAt: -1 }).toArray();
+  const farmers = await db.collection<Farmer>("farmers")
+    .find({}, { projection: { configId: 0 } })
+    .sort({ createdAt: -1 })
+    .toArray();
+    
   return farmers.map(farmer => ({
     ...farmer,
     _id: farmer._id.toString(),
-    workingFields: farmer.workingFields.map(id => id.toString()),
-    archivedFields: farmer.archivedFields.map(id => id.toString()),
+    workingFields: (farmer.workingFields || []).map(id => id.toString()),
+    archivedFields: (farmer.archivedFields || []).map(id => id.toString()),
+    createdAt: new Date(farmer.createdAt).toISOString(),
+    updatedAt: new Date(farmer.updatedAt).toISOString(),
   }));
 }
 
@@ -91,8 +114,10 @@ export async function getFarmer(id: string) {
 
   const currentBalance = totalIncome - totalExpense;
 
+  const { configId, ...rest } = farmer as any;
+
   return {
-    ...farmer,
+    ...rest,
     _id: farmer._id.toString(),
     workingFields: farmer.workingFields.map(id => id.toString()),
     archivedFields: farmer.archivedFields.map(id => id.toString()),

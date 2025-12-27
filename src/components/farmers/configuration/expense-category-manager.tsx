@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Check, ChevronsUpDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Plus, Check, ChevronsUpDown, Loader2, X } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { ExpenseCategory } from "@/lib/types/ExpenseCategory";
 import EmptyState from "@/components/shared/empty-state";
@@ -24,16 +25,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      <Plus className="w-4 h-4 mr-2" />
-      {pending ? "Adding..." : "Add Category"}
-    </Button>
-  );
-}
+const formSchema = z.object({
+  category: z.string().min(1, "Category is required"),
+  name: z.string().min(1, "Name is required"),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 function DeleteButton({ id }: { id: string }) {
     const { pending } = useFormStatus();
@@ -49,26 +50,59 @@ function DeleteButton({ id }: { id: string }) {
     )
 }
 
-export default function ExpenseCategoryManager({ categories }: { categories: (Omit<ExpenseCategory, "_id"> & { _id: string })[] }) {
+export default function ExpenseCategoryManager({ categories }: { categories: (Omit<ExpenseCategory, "_id" | "createdAt"> & { _id: string, createdAt?: string | Date })[] }) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
   const [inputValue, setInputValue] = React.useState("")
+  const [isPending, startTransition] = React.useTransition();
+
+  const { register, handleSubmit, setValue, watch, setError, reset, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      category: "",
+      name: "",
+    },
+  });
+
+  const categoryValue = watch("category");
 
   // Get unique categories for the dropdown
-  const existingCategories = Array.from(new Set(categories.map(c => c.category))).sort();
+  const existingCategories = React.useMemo(() => {
+    return Array.from(new Set(categories.map(c => c.category))).sort();
+  }, [categories]);
 
-  async function clientAction(formData: FormData) {
-    const category = formData.get("category") as string;
-    const name = formData.get("name") as string;
-
-    await createExpenseCategory({
-      category,
-      name,
+  // Group categories for the table
+  const groupedCategories = React.useMemo(() => {
+    const groups: Record<string, typeof categories> = {};
+    categories.forEach(cat => {
+        if (!groups[cat.category]) {
+            groups[cat.category] = [];
+        }
+        groups[cat.category].push(cat);
     });
-    
-    // Reset form state if needed, though server action revalidation might handle some UI updates
-    setValue("");
-    setInputValue("");
+    // Sort items within groups if needed, currently they are roughly insertion order or DB sort
+    return groups;
+  }, [categories]);
+
+  async function onSubmit(data: FormValues) {
+    startTransition(async () => {
+        const formData = new FormData();
+        formData.append("category", data.category);
+        formData.append("name", data.name);
+
+        const result = await createExpenseCategory(null, formData);
+
+        if (result?.errors) {
+            if (result.errors.category) {
+                setError("category", { message: result.errors.category[0] });
+            }
+            if (result.errors.name) {
+                setError("name", { message: result.errors.name[0] });
+            }
+        } else if (result?.success) {
+            reset();
+            setInputValue("");
+        }
+    });
   }
 
   return (
@@ -78,32 +112,23 @@ export default function ExpenseCategoryManager({ categories }: { categories: (Om
         <p className="text-muted-foreground mb-4">
           Define global expense types (e.g., Fertilizer - DAP)
         </p>
-        <form action={clientAction} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2 flex flex-col">
             <Label htmlFor="category">Category</Label>
-            <input type="hidden" name="category" value={value} />
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="w-full justify-between"
+                  className={cn("w-full justify-between", !categoryValue && "text-muted-foreground")}
                 >
-                  {value
-                    ? value
-                    : "Select or type category..."}
+                  {categoryValue || "Select or type category..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0">
                 <Command>
-                    {/* 
-                        We capture the search input to allow creating new categories. 
-                        Note: CommandInput doesn't expose its value directly in a simple way for 'controlled' input w/o deeper integration, 
-                        but we can use onValueChange of CommandInput if we really needed full control. 
-                        However, cmdk handles filtering. We mostly care about the 'Create' case.
-                    */}
                   <CommandInput 
                     placeholder="Search category..." 
                     value={inputValue}
@@ -118,7 +143,7 @@ export default function ExpenseCategoryManager({ categories }: { categories: (Om
                                 size="sm" 
                                 className="w-full justify-start h-auto py-1 px-2"
                                 onClick={() => {
-                                    setValue(inputValue);
+                                    setValue("category", inputValue, { shouldValidate: true });
                                     setOpen(false);
                                 }}
                                 type="button"
@@ -134,17 +159,18 @@ export default function ExpenseCategoryManager({ categories }: { categories: (Om
                           key={category}
                           value={category}
                           onSelect={(currentValue) => {
-                            // currentValue is lowercased by default by cmdk, so we use the original category string if it matches
-                            // But here 'category' variable is the display name. 
-                            // cmdk passes the `value` prop or the text content if value not provided.
-                            setValue(category);
+                             // cmdk might lowercase values, so better to rely on our original list or explicit assignment if needed.
+                             // But since we rendered 'value={category}', usually it passes that back.
+                             // Careful: cmdk 'value' prop is usually for filtering, onSelect passes the *value*.
+                             // If logic is tricky, just use the closure 'category' variable.
+                            setValue("category", category, { shouldValidate: true });
                             setOpen(false);
                           }}
                         >
                           <Check
                             className={cn(
                               "mr-2 h-4 w-4",
-                              value === category ? "opacity-100" : "opacity-0"
+                              categoryValue === category ? "opacity-100" : "opacity-0"
                             )}
                           />
                           {category}
@@ -155,35 +181,70 @@ export default function ExpenseCategoryManager({ categories }: { categories: (Om
                 </Command>
               </PopoverContent>
             </Popover>
+            {errors.category && (
+                <p className="text-sm text-destructive">{errors.category.message}</p>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" placeholder="e.g. DAP" required />
+            <Input 
+                id="name" 
+                placeholder="e.g. DAP" 
+                {...register("name")}
+            />
+             {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
           </div>
-          <SubmitButton />
+
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
+                <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Adding...
+                </>
+            ) : (
+                <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Category
+                </>
+            )}
+            </Button>
         </form>
       </div>
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Existing Categories</h2>
-        {categories.length > 0 ? (
+        {Object.keys(groupedCategories).length > 0 ? (
           <Table className="border">
             <TableHeader>
               <TableRow>
-                <TableHead>Category</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[200px]">Category</TableHead>
+                <TableHead>Items</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((cat) => (
-                <TableRow key={cat._id}>
-                  <TableCell>{cat.category}</TableCell>
-                  <TableCell>{cat.name}</TableCell>
-                  <TableCell className="text-right">
-                    <form action={deleteExpenseCategory.bind(null, cat._id)}>
-                        <DeleteButton id={cat._id} />
-                    </form>
+              {Object.entries(groupedCategories).map(([categoryName, items]) => (
+                <TableRow key={categoryName}>
+                  <TableCell className="font-medium align-top py-4">{categoryName}</TableCell>
+                  <TableCell className="py-4">
+                    <div className="flex flex-wrap gap-2">
+                        {items.map((cat) => (
+                            <Badge  key={cat._id} variant="secondary" className="pr-1 py-1 text-base">
+                                {cat.name}
+                                <form action={deleteExpenseCategory.bind(null, cat._id)} className="ml-2">
+                                    <button 
+                                        type="submit" 
+                                        className="hover:bg-destructive/20 p-0.5 rounded-full transition-colors text-muted-foreground hover:text-destructive"
+                                    >
+                                        <X className="w-3 h-3" />
+                                        <span className="sr-only">Delete {cat.name}</span>
+                                    </button>
+                                </form>
+                            </Badge>
+                        ))}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

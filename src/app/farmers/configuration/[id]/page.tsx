@@ -1,8 +1,5 @@
-import { getFarmerConfigs } from "@/lib/newActions/farmerActions";
+import { getFarmerConfig } from "@/lib/newActions/farmerActions";
 import { getExpenseCategories } from "@/lib/newActions/expenseCategoryActions";
-import { getDbV2 } from "@/lib/db/v2";
-import { ObjectId } from "mongodb";
-import { FarmerConfig } from "@/lib/types/FarmerModel";
 import BackLink from "@/components/ui/back-link";
 import {
   Table,
@@ -15,20 +12,6 @@ import {
 import EmptyState from "@/components/shared/empty-state";
 import AddConfigExpenseForm from "@/components/farmers/configuration/add-config-expense-form";
 import { DeleteConfigExpense } from "@/components/farmers/configuration/delete-config-expense";
-
-async function getFarmerConfig(id: string) {
-    const db = await getDbV2();
-    const config = await db.collection<FarmerConfig>("farmerConfigs").findOne({ _id: new ObjectId(id) });
-    if (!config) return null;
-    return {
-        ...config,
-        _id: config._id.toString(),
-        expenseConfigs: config.expenseConfigs.map(ec => ({
-            ...ec,
-            categoryId: ec.categoryId.toString()
-        }))
-    };
-}
 
 export default async function FarmerConfigDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

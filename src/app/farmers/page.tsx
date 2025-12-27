@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import AddFarmerModal from "@/components/farmers/add-farmer-modal";
 
+import CustomSearch from "@/components/shared/search";
+
 export default async function FarmersPage() {
   const farmers = await getFarmers();
   const configs = await getFarmerConfigs();
@@ -28,7 +30,8 @@ export default async function FarmersPage() {
             Manage farmer profiles and assignments
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+            <CustomSearch data={farmers} baseUrl="/farmers" placeholder="Search farmers..." />
             <Link href="/farmers/configuration">
                 <Button variant="outline">
                     <Settings className="w-4 h-4 mr-2" />
@@ -48,6 +51,7 @@ export default async function FarmersPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>CNIC</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -71,6 +75,11 @@ export default async function FarmersPage() {
                   </TableCell>
                   <TableCell>{farmer.phone || "-"}</TableCell>
                   <TableCell>{farmer.cnic || "-"}</TableCell>
+                  <TableCell>
+                    <Link href={`/farmers/${farmer._id}`}>
+                        <Button variant="outline" size="sm">Detail</Button>
+                    </Link>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

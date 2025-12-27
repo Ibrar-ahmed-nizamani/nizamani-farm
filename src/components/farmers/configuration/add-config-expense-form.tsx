@@ -20,7 +20,7 @@ function SubmitButton() {
   );
 }
 
-export default function AddConfigExpenseForm({ configId, categories }: { configId: string, categories: (Omit<ExpenseCategory, "_id"> & { _id: string })[] }) {
+export default function AddConfigExpenseForm({ configId, categories }: { configId: string, categories: (Omit<ExpenseCategory, "_id" | "createdAt"> & { _id: string, createdAt?: string | Date })[] }) {
   const [farmerShare, setFarmerShare] = useState(50);
   const [ownerShare, setOwnerShare] = useState(50);
 
