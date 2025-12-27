@@ -58,7 +58,7 @@ export default async function FarmersPage() {
               {farmers.map((farmer) => (
                 <TableRow key={farmer._id}>
                   <TableCell>
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-12 w-12">
                       <AvatarImage src={farmer.imageUrl} alt={farmer.name} />
                       <AvatarFallback>
                         {farmer.name.substring(0, 2).toUpperCase()}

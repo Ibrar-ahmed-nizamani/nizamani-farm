@@ -155,6 +155,28 @@ export async function addExpenseToConfig(configId: string, expenseConfig: { cate
     revalidatePath(`/farmers/configuration/${configId}`);
 }
 
+export async function addMultipleExpensesToConfig(
+    configId: string, 
+    expenseConfigs: { categoryId: string; category: string; itemName: string; farmerShare: number; ownerShare: number }[]
+) {
+    const db = await getDbV2();
+    
+    const formattedConfigs = expenseConfigs.map(ec => ({
+        ...ec,
+        categoryId: new ObjectId(ec.categoryId)
+    }));
+
+    await db.collection("farmerConfigs").updateOne(
+        { _id: new ObjectId(configId) },
+        { 
+            $push: { 
+                expenseConfigs: { $each: formattedConfigs }
+            } as any 
+        }
+    );
+    revalidatePath(`/farmers/configuration/${configId}`);
+}
+
 export async function removeExpenseFromConfig(configId: string, categoryId: string) {
     const db = await getDbV2();
     await db.collection("farmerConfigs").updateOne(
